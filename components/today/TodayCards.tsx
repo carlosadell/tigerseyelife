@@ -1,5 +1,5 @@
 import { ReactNode } from 'react';
-import { Pressable, Text, View } from 'react-native';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { router } from 'expo-router';
 import {
   ArrowRight,
@@ -7,7 +7,7 @@ import {
   Calendar,
   Check,
   Clock,
-  Dumbbell,
+  Leaf,
   Moon,
   NotebookPen,
   Utensils,
@@ -16,7 +16,7 @@ import {
 
 import { todayCardStyles as styles } from './todayCardStyles';
 import { useThemeColors } from '../../hooks/useTheme';
-import { COLORS } from '../../lib/brand';
+import { COLORS, FONTS } from '../../lib/brand';
 
 type CardProps = {
   children: ReactNode;
@@ -79,26 +79,34 @@ export function WorkoutCard({
   name,
 }: WorkoutCardProps) {
   const colors = useThemeColors();
-  const title = assigned && name
+  const summary = assigned && name
     ? `${name} · ${durationMinutes ?? 30} min · ${exerciseCount ?? 6} exercises`
     : 'Awaiting program assignment';
 
   return (
     <TodayCard>
-      <Text style={[styles.kicker, { color: colors.accent }]}>TODAY'S WORKOUT</Text>
-      <Text style={[styles.title, { color: colors.text }]}>{title}</Text>
+      <View style={workoutStyles.headerStack}>
+        <Text style={[styles.kicker, { color: colors.accent }]}>TODAY'S WORKOUT</Text>
+        <Text style={[workoutStyles.summary, { color: colors.text }]}>{summary}</Text>
+      </View>
       {!assigned ? (
-        <Text style={[styles.body, { color: colors.mutedText }]}>
+        <Text style={[styles.body, { color: colors.mutedText, marginTop: 2 }]}>
           Ryan and Karen will match your intake to the right program. Train activates when your
           assignment is ready.
         </Text>
       ) : null}
       <Pressable
         onPress={() => router.push('/(tabs)/train')}
-        style={[styles.primaryAction, { backgroundColor: colors.action }]}
+        style={({ pressed }) => [
+          workoutStyles.cta,
+          { backgroundColor: colors.action, opacity: pressed ? 0.92 : 1 },
+        ]}
       >
-        <Text style={styles.primaryActionText}>{assigned ? 'Start workout' : 'View status'}</Text>
-        <ArrowRight color={COLORS.bone} size={22} />
+        <View style={workoutStyles.ctaSpacer} />
+        <Text style={workoutStyles.ctaText}>{assigned ? 'Start workout' : 'View status'}</Text>
+        <View style={workoutStyles.ctaArrow}>
+          <ArrowRight color={COLORS.bone} size={20} strokeWidth={2.2} />
+        </View>
       </Pressable>
     </TodayCard>
   );
@@ -129,18 +137,23 @@ export function NutritionCard() {
 
   return (
     <TodayCard>
-      <View style={styles.rowBetween}>
-        <View style={[styles.row, { flex: 1, minWidth: 0 }]}>
-          <Utensils color={colors.accent} size={22} />
-          <View style={{ flex: 1, minWidth: 0 }}>
+      <View style={nutritionStyles.row}>
+        <View style={nutritionStyles.leaf}>
+          <Leaf color={colors.accent} size={20} strokeWidth={1.8} />
+        </View>
+        <View style={nutritionStyles.copy}>
+          <View style={nutritionStyles.labelRow}>
             <Text style={[styles.kicker, { color: colors.accent }]}>FUEL</Text>
-            <Text style={[styles.body, { color: colors.text }]}>
-              Protein on track · Water 64 oz · Dinner planned
+            <Text style={[nutritionStyles.labelMuted, { color: colors.mutedText }]}>
+              Nutrition status
             </Text>
           </View>
+          <Text style={[nutritionStyles.body, { color: colors.text }]}>
+            Protein on track · Water 64 oz · Dinner planned
+          </Text>
         </View>
-        <View style={[styles.checkOutline, { borderColor: colors.accent }]}>
-          <Check color={colors.accent} size={18} />
+        <View style={[nutritionStyles.check, { borderColor: colors.accent }]}>
+          <Check color={colors.accent} size={16} strokeWidth={2.4} />
         </View>
       </View>
     </TodayCard>
@@ -202,8 +215,75 @@ export function getReminderIcon(key: string, color: string) {
   return <Bell color={color} size={17} />;
 }
 
-function DiagnosticMealNumber({ value }: { value: string }) {
-  const colors = useThemeColors();
+const workoutStyles = StyleSheet.create({
+  cta: {
+    alignItems: 'center',
+    borderRadius: 10,
+    flexDirection: 'row',
+    marginTop: 14,
+    minHeight: 52,
+    paddingHorizontal: 18,
+  },
+  ctaArrow: {
+    alignItems: 'flex-end',
+    width: 28,
+  },
+  ctaSpacer: {
+    width: 28,
+  },
+  ctaText: {
+    color: COLORS.bone,
+    flex: 1,
+    fontFamily: FONTS.sansBold,
+    fontSize: 15.5,
+    letterSpacing: 0.2,
+    textAlign: 'center',
+  },
+  headerStack: {
+    gap: 6,
+  },
+  summary: {
+    fontFamily: FONTS.sansMedium,
+    fontSize: 15.5,
+    lineHeight: 21,
+  },
+});
 
-  return <Text style={[styles.mealNumber, { color: colors.text }]}>{value}</Text>;
-}
+const nutritionStyles = StyleSheet.create({
+  body: {
+    fontFamily: FONTS.sans,
+    fontSize: 13.5,
+    lineHeight: 19,
+  },
+  check: {
+    alignItems: 'center',
+    borderRadius: 999,
+    borderWidth: 1.4,
+    height: 26,
+    justifyContent: 'center',
+    width: 26,
+  },
+  copy: {
+    flex: 1,
+    gap: 4,
+    minWidth: 0,
+  },
+  labelMuted: {
+    fontFamily: FONTS.sansMedium,
+    fontSize: 11,
+    letterSpacing: 0.4,
+  },
+  labelRow: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    gap: 10,
+  },
+  leaf: {
+    paddingTop: 2,
+  },
+  row: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    gap: 12,
+  },
+});

@@ -1,4 +1,4 @@
-import { format } from 'date-fns';
+import { LinearGradient } from 'expo-linear-gradient';
 import { Bell } from 'lucide-react-native';
 import { Image, Pressable, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
 import Svg, { Circle } from 'react-native-svg';
@@ -23,44 +23,57 @@ export function CreatePowerHero({ firstName, onSignOut, subtitle }: CreatePowerH
   const { width } = useWindowDimensions();
   const frameWidth = Math.min(width, 430);
   const compact = frameWidth < 370;
-  const titleSize = compact ? 23 : 25;
+  const titleSize = compact ? 26 : 30;
   const darkMode = mode === 'dark';
+  const fadeStops = darkMode
+    ? (['rgba(11,11,12,0)', 'rgba(11,11,12,0.65)', COLORS.onyx] as const)
+    : (['rgba(251,248,241,0)', 'rgba(251,248,241,0.7)', '#FBF8F1'] as const);
 
   return (
     <View style={styles.wrap}>
-      <Image
-        accessibilityIgnoresInvertColors
-        resizeMode="stretch"
-        source={darkMode ? darkTextureSource : lightTextureSource}
-        style={[styles.texture, darkMode ? styles.darkTexture : styles.lightTexture]}
-      />
-      <View style={styles.topRow}>
+      <View style={styles.bannerWrap} pointerEvents="none">
+        <Image
+          accessibilityIgnoresInvertColors
+          resizeMode="cover"
+          source={darkMode ? darkTextureSource : lightTextureSource}
+          style={styles.texture}
+        />
+        <LinearGradient
+          colors={fadeStops}
+          locations={[0, 0.55, 1]}
+          style={styles.fade}
+        />
+      </View>
+
+      <View style={[styles.topRow, { paddingHorizontal: 0 }]}>
         <Pressable onLongPress={toggleMode} style={styles.brandRow}>
-          <EyeMark color={colors.accent} size={compact ? 22 : 24} />
+          <EyeMark color={colors.accent} size={compact ? 20 : 22} />
           <Text numberOfLines={1} style={[styles.wordmark, { color: colors.accent }]}>
             TIGERS EYE LIFE
           </Text>
         </Pressable>
         <View style={styles.actions}>
           <ThemeToggle />
-          <Pressable onLongPress={onSignOut}>
-            <Bell color={colors.text} size={22} strokeWidth={1.8} />
+          <Pressable hitSlop={10} onLongPress={onSignOut}>
+            <Bell color={colors.text} size={22} strokeWidth={1.6} />
           </Pressable>
         </View>
       </View>
+
       <View style={styles.copy}>
-        <Text style={[styles.title, { color: colors.text, fontSize: titleSize, lineHeight: titleSize + 7 }]}>
+        <Text style={[styles.title, { color: colors.text, fontSize: titleSize, lineHeight: titleSize + 6 }]}>
           {getGreeting(firstName)}
         </Text>
         <Text
           numberOfLines={1}
           adjustsFontSizeToFit
           minimumFontScale={0.82}
-          style={[styles.subtitle, compact && styles.compactSubtitle, { color: colors.accent }]}
+          style={[styles.subtitle, { color: colors.accent }]}
         >
           {subtitle}
         </Text>
       </View>
+
       <StreakRing compact={compact} value={23} />
     </View>
   );
@@ -69,17 +82,39 @@ export function CreatePowerHero({ firstName, onSignOut, subtitle }: CreatePowerH
 function StreakRing({ compact, value }: { compact: boolean; value: number }) {
   const { colors, mode } = useTheme();
   const ringColor = mode === 'dark' ? COLORS.tigerGold : '#B67A12';
-  const ringSize = compact ? 86 : 94;
-  const radius = compact ? 38 : 42;
+  const ringSize = compact ? 116 : 132;
+  const radius = (ringSize - 6) / 2;
 
   return (
     <View style={styles.streakWrap}>
       <View style={[styles.ring, { height: ringSize, width: ringSize }]}>
-        <Svg height={ringSize} style={StyleSheet.absoluteFill} viewBox={`0 0 ${ringSize} ${ringSize}`} width={ringSize}>
-          <Circle cx={ringSize / 2} cy={ringSize / 2} fill="none" r={radius} stroke={colors.border} strokeWidth="2" />
-          <Circle cx={ringSize / 2} cy={ringSize / 2} fill="none" r={radius} stroke={ringColor} strokeWidth="3.5" />
+        <Svg
+          height={ringSize}
+          style={StyleSheet.absoluteFill}
+          viewBox={`0 0 ${ringSize} ${ringSize}`}
+          width={ringSize}
+        >
+          <Circle
+            cx={ringSize / 2}
+            cy={ringSize / 2}
+            fill="none"
+            r={radius}
+            stroke={ringColor}
+            strokeOpacity={0.28}
+            strokeWidth={1}
+          />
+          <Circle
+            cx={ringSize / 2}
+            cy={ringSize / 2}
+            fill="none"
+            r={radius}
+            stroke={ringColor}
+            strokeWidth={2}
+          />
         </Svg>
-        <Text style={[styles.streakValue, compact && styles.compactStreakValue, { color: colors.accent }]}>{value}</Text>
+        <Text style={[styles.streakValue, compact && styles.compactStreakValue, { color: colors.accent }]}>
+          {value}
+        </Text>
       </View>
       <Text style={[styles.streakLabel, { color: colors.accent }]}>DAY PRACTICE STREAK</Text>
     </View>
@@ -92,6 +127,14 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     gap: 10,
   },
+  bannerWrap: {
+    height: 280,
+    left: -40,
+    overflow: 'hidden',
+    position: 'absolute',
+    right: -40,
+    top: -40,
+  },
   brandRow: {
     alignItems: 'center',
     flex: 1,
@@ -99,17 +142,20 @@ const styles = StyleSheet.create({
     gap: 10,
     minWidth: 0,
   },
-  copy: {
-    gap: 5,
-    marginTop: 76,
-  },
   compactStreakValue: {
-    fontSize: 34,
-    lineHeight: 40,
+    fontSize: 40,
+    lineHeight: 46,
   },
-  compactSubtitle: {
-    fontSize: 10,
-    letterSpacing: 0.9,
+  copy: {
+    gap: 8,
+    marginTop: 60,
+  },
+  fade: {
+    bottom: 0,
+    left: 0,
+    position: 'absolute',
+    right: 0,
+    top: 0,
   },
   ring: {
     alignItems: 'center',
@@ -118,40 +164,31 @@ const styles = StyleSheet.create({
   streakLabel: {
     fontFamily: FONTS.sansMedium,
     fontSize: 11,
-    letterSpacing: 2.8,
+    letterSpacing: 3.2,
   },
   streakValue: {
     fontFamily: FONTS.sansBold,
-    fontSize: 38,
-    lineHeight: 44,
+    fontSize: 46,
+    lineHeight: 54,
   },
   streakWrap: {
     alignItems: 'center',
-    gap: 10,
-    marginTop: 12,
+    gap: 14,
+    marginTop: 28,
   },
   subtitle: {
-    fontFamily: FONTS.sansMedium,
+    fontFamily: FONTS.sansBold,
     fontSize: 11,
-    letterSpacing: 1,
+    letterSpacing: 1.6,
     textTransform: 'uppercase',
   },
   texture: {
-    height: 355,
-    left: -34,
-    position: 'absolute',
-    right: -34,
-    top: -24,
-  },
-  darkTexture: {
-    opacity: 1,
-  },
-  lightTexture: {
-    opacity: 1,
+    height: '100%',
+    width: '100%',
   },
   title: {
     fontFamily: FONTS.sansBold,
-    letterSpacing: 0,
+    letterSpacing: -0.4,
   },
   topRow: {
     alignItems: 'center',
@@ -159,12 +196,12 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
   },
   wordmark: {
-    fontFamily: FONTS.sansBold,
     flexShrink: 1,
-    fontSize: 13,
-    letterSpacing: 3.6,
+    fontFamily: FONTS.sansBold,
+    fontSize: 12,
+    letterSpacing: 3.4,
   },
   wrap: {
-    paddingTop: 32,
+    paddingTop: 18,
   },
 });

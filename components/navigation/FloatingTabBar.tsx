@@ -1,7 +1,7 @@
 import type { BottomTabBarProps } from '@react-navigation/bottom-tabs';
 import { BlurView } from 'expo-blur';
 import * as Haptics from 'expo-haptics';
-import { Dumbbell, Sprout, Sun, User, UtensilsCrossed } from 'lucide-react-native';
+import { Dumbbell, Soup, Sprout, Sun, User } from 'lucide-react-native';
 import { ComponentType } from 'react';
 import { Platform, Pressable, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
 import Animated, { useAnimatedStyle, withTiming } from 'react-native-reanimated';
@@ -15,7 +15,7 @@ type TabIcon = ComponentType<{ color: string; size: number; strokeWidth?: number
 const icons: Record<string, TabIcon> = {
   today: Sun,
   train: Dumbbell,
-  fuel: UtensilsCrossed,
+  fuel: Soup,
   grow: Sprout,
   you: User,
 };
@@ -142,6 +142,12 @@ function TabBarItem({
         </Animated.View>
       </View>
       <Text style={[styles.label, { color: focused ? activeColor : inactiveColor }]}>{label}</Text>
+      <View
+        style={[
+          styles.indicator,
+          { backgroundColor: focused ? activeColor : 'transparent' },
+        ]}
+      />
     </Pressable>
   );
 }
@@ -176,6 +182,12 @@ const styles = StyleSheet.create({
     flex: 1,
     gap: 3,
     justifyContent: 'flex-start',
+  },
+  indicator: {
+    borderRadius: 999,
+    height: 2,
+    marginTop: 4,
+    width: 18,
   },
   label: {
     fontFamily: FONTS.sansMedium,

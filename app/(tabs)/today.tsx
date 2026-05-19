@@ -2,19 +2,9 @@ import { format } from 'date-fns';
 import { Platform, ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { SectionLabel } from '../../components/brand/SectionLabel';
 import { CreatePowerHero } from '../../components/today/CreatePowerHero';
-import { DailyNudges } from '../../components/today/DailyNudges';
-import { EveningReflection } from '../../components/today/EveningReflection';
 import { IntentionInput } from '../../components/today/IntentionInput';
-import { PersonalizationCard } from '../../components/today/PersonalizationCard';
-import { TrainingSummaryCard } from '../../components/today/TrainingSummaryCard';
-import {
-  EveningCheckInCard,
-  NutritionCard,
-  UpcomingCard,
-  WorkoutCard,
-} from '../../components/today/TodayCards';
+import { NutritionCard, WorkoutCard } from '../../components/today/TodayCards';
 import { useAuth } from '../../hooks/useAuth';
 import { useDailyEntry } from '../../hooks/useDailyEntry';
 import { useProfile } from '../../hooks/useProfile';
@@ -29,12 +19,12 @@ export default function TodayScreen() {
   const { signOut } = useAuth();
   const { profile } = useProfile();
   const { todayWorkout } = useAssignedProgram();
-  const { entry, saveIntention, saveMood, toggleMovementTag } = useDailyEntry();
-  const subtitle = `${format(new Date(), 'EEEE')} · Week 4 of CREATE POWER`;
+  const { entry, saveIntention } = useDailyEntry();
+  const subtitle = `${format(new Date(), 'EEEE').toUpperCase()} · WEEK 4 OF CREATE POWER`;
   const colors = useThemeColors();
 
   return (
-    <SafeAreaView style={[styles.screen, { backgroundColor: colors.background }]}>
+    <SafeAreaView edges={['top']} style={[styles.screen, { backgroundColor: colors.background }]}>
       <View style={styles.phoneFrame}>
         <ScrollView
           contentContainerStyle={styles.content}
@@ -46,28 +36,16 @@ export default function TodayScreen() {
             onSignOut={signOut}
             subtitle={subtitle}
           />
-          <IntentionInput intention={entry.intention ?? defaultIntention} onSave={saveIntention} />
-          <WorkoutCard
-            assigned={Boolean(todayWorkout)}
-            durationMinutes={todayWorkout?.duration_minutes}
-            exerciseCount={todayWorkout?.exercise_count}
-            name={todayWorkout?.name}
-          />
-          <NutritionCard />
-          <TrainingSummaryCard />
-          <EveningCheckInCard />
-          <UpcomingCard />
-          <DailyNudges />
-          <View style={styles.section}>
-            <SectionLabel label="EVENING REFLECTION" />
-            <EveningReflection
-              mood={entry.mood}
-              movementTags={entry.movementTags}
-              onMoodPress={saveMood}
-              onTagPress={toggleMovementTag}
+          <View style={styles.stack}>
+            <IntentionInput intention={entry.intention ?? defaultIntention} onSave={saveIntention} />
+            <WorkoutCard
+              assigned={Boolean(todayWorkout)}
+              durationMinutes={todayWorkout?.duration_minutes}
+              exerciseCount={todayWorkout?.exercise_count}
+              name={todayWorkout?.name}
             />
+            <NutritionCard />
           </View>
-          <PersonalizationCard />
         </ScrollView>
       </View>
     </SafeAreaView>
@@ -76,8 +54,7 @@ export default function TodayScreen() {
 
 const styles = StyleSheet.create({
   content: {
-    gap: 14,
-    paddingBottom: 112,
+    paddingBottom: 128,
     paddingHorizontal: SPACING.screenX,
     paddingTop: 0,
   },
@@ -94,7 +71,8 @@ const styles = StyleSheet.create({
     flex: 1,
     width: '100%',
   },
-  section: {
-    gap: 12,
+  stack: {
+    gap: 14,
+    marginTop: 24,
   },
 });
