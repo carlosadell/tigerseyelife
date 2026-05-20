@@ -12,6 +12,30 @@ type Profile = {
   intakeAnswers: Record<string, unknown>;
 };
 
+const DEV_DEMO_PROFILE: Profile = {
+  assignedProgramId: '33333333-3333-4333-8333-333333333333',
+  assignedWorkoutId: 'seed-lower-body-a',
+  bigWhy: 'Stay strong enough to keep up with my kids and own my next decade.',
+  firstName: 'Karen',
+  intakeAnswers: {
+    duration: '30 min',
+    format: 'pre_recorded',
+    location: 'home_basics',
+    skill_level: ['intermediate', 'familiar_dumbbell_barbell_plates'],
+    workout_setup: {
+      days_per_week: '4',
+      duration: '30 min',
+      equipment: 'Home basics (dumbbells + bands)',
+      goals: ['strength', 'bone density', 'energy'],
+    },
+    nutrition: {
+      approach: 'protein-forward',
+    },
+    program_preference: 'pre_recorded',
+    strength_training_experience: ['intermediate', 'familiar_dumbbell_barbell_plates'],
+  },
+};
+
 export function useProfile() {
   const { isDevSession, session } = useAuth();
   const [profile, setProfile] = useState<Profile>({
@@ -39,16 +63,23 @@ export function useProfile() {
               firstName?: string;
               intakeAnswers?: Record<string, unknown>;
             };
+            const intake = parsed.intakeAnswers ?? {};
+            const isIntakeEmpty = Object.keys(intake).length === 0;
+
             setProfile({
-              assignedProgramId: parsed.assignedProgramId ?? null,
-              assignedWorkoutId: parsed.assignedWorkoutId ?? null,
-              bigWhy: parsed.bigWhy ?? null,
-              firstName: parsed.firstName ?? null,
-              intakeAnswers: parsed.intakeAnswers ?? {},
+              assignedProgramId: parsed.assignedProgramId ?? DEV_DEMO_PROFILE.assignedProgramId,
+              assignedWorkoutId: parsed.assignedWorkoutId ?? DEV_DEMO_PROFILE.assignedWorkoutId,
+              bigWhy: parsed.bigWhy ?? DEV_DEMO_PROFILE.bigWhy,
+              firstName: parsed.firstName ?? DEV_DEMO_PROFILE.firstName,
+              intakeAnswers: isIntakeEmpty ? DEV_DEMO_PROFILE.intakeAnswers : intake,
             });
             setLoading(false);
             return;
           }
+
+          setProfile(DEV_DEMO_PROFILE);
+          setLoading(false);
+          return;
         }
 
         if (mounted) {

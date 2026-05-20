@@ -3,179 +3,260 @@ import {
   ArrowRight,
   CalendarClock,
   CheckCircle2,
+  Clock,
   Dumbbell,
   ListChecks,
+  MapPin,
+  Sparkles,
+  Tv,
   Video,
 } from 'lucide-react-native';
-import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Platform, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { router } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { SectionLabel } from '../../components/brand/SectionLabel';
 import { useAssignedProgram } from '../../hooks/useAssignedProgram';
 import { useProfile } from '../../hooks/useProfile';
 import { useThemeColors } from '../../hooks/useTheme';
-import { FONTS, SPACING } from '../../lib/brand';
+import { COLORS, FONTS, SPACING } from '../../lib/brand';
 
 export default function TrainScreen() {
   const colors = useThemeColors();
+  const { profile } = useProfile();
   const { assignedProgram, todayWorkout, workouts } = useAssignedProgram();
   const isAssigned = Boolean(assignedProgram);
 
   return (
-    <SafeAreaView style={[styles.screen, { backgroundColor: colors.background }]}>
-      <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
-        <SectionLabel label="TRAIN" />
-        {isAssigned ? (
-          <>
-            <View style={[styles.heroCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
-              <Text style={[styles.kicker, { color: colors.accent }]}>CURRENT PROGRAM</Text>
-              <Text style={[styles.heroTitle, { color: colors.text }]}>{assignedProgram?.name}</Text>
-              <Text style={[styles.copy, { color: colors.mutedText }]}>{assignedProgram?.description}</Text>
-              <View style={styles.metaRow}>
-                <MetaPill label={assignedProgram?.level ?? 'Assigned'} />
-                <MetaPill label={formatDelivery(assignedProgram?.delivery_type)} />
-              </View>
-            </View>
-            <View style={[styles.workoutCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
-              <View style={styles.rowBetween}>
-                <View style={{ flex: 1, minWidth: 0 }}>
-                  <Text style={[styles.kicker, { color: colors.accent }]}>TODAY'S WORKOUT</Text>
-                  <Text style={[styles.title, { color: colors.text }]}>{todayWorkout?.name ?? 'Workout pending'}</Text>
-                  <Text style={[styles.copy, { color: colors.mutedText }]}>
-                    {todayWorkout
-                      ? `${todayWorkout.duration_minutes} min · ${todayWorkout.exercise_count} exercises · ${todayWorkout.equipment.join(' + ')}`
-                      : 'Ryan is finalizing the next session.'}
-                  </Text>
-                </View>
-                <Dumbbell color={colors.accent} size={26} />
-              </View>
-              <Pressable style={[styles.primaryAction, { backgroundColor: colors.action }]}>
-                <Text style={styles.primaryActionText}>Start assigned workout</Text>
-                <ArrowRight color="#FFFFFF" size={21} />
-              </Pressable>
-            </View>
-            <View style={styles.sectionBlock}>
-              <SectionLabel label="PROGRAM SESSIONS" />
-              {workouts.map((workout) => (
-                <View
-                  key={workout.id}
-                  style={[styles.rowCard, { backgroundColor: colors.card, borderColor: colors.border }]}
-                >
-                  <CheckCircle2 color={colors.accent} size={20} />
-                  <View style={{ flex: 1, minWidth: 0 }}>
-                    <Text style={[styles.rowTitle, { color: colors.text }]}>{workout.name}</Text>
-                    <Text style={[styles.rowMeta, { color: colors.mutedText }]}>
-                      {workout.day_label} · {workout.duration_minutes} min · {workout.exercise_count} exercises
-                    </Text>
-                  </View>
-                </View>
-              ))}
-            </View>
-            <View style={styles.sectionBlock}>
-              <SectionLabel label="TUTORIAL VIDEOS" />
-              {todayWorkout?.tutorial_urls?.length ? (
-                todayWorkout.tutorial_urls.map((tutorial) => (
-                  <PlaceholderCard
-                    icon={<Video color={colors.accent} size={21} />}
-                    key={tutorial.url}
-                    title={tutorial.title}
-                    body={tutorial.url}
-                  />
-                ))
-              ) : (
-                <PlaceholderCard
-                  icon={<Video color={colors.accent} size={21} />}
-                  title="Filtered to your assigned program"
-                  body="Ryan's tutorial clips will appear here when his program media table lands."
-                />
-              )}
-            </View>
-          </>
-        ) : (
-          <AwaitingAssignment />
-        )}
-      </ScrollView>
+    <SafeAreaView edges={['top']} style={[styles.screen, { backgroundColor: colors.background }]}>
+      <View style={styles.phoneFrame}>
+        <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+          <View style={styles.header}>
+            <Text style={[styles.headerKicker, { color: colors.accent }]}>TRAIN</Text>
+            <Text style={[styles.headerTitle, { color: colors.text }]}>
+              {isAssigned ? assignedProgram?.name : 'Your program'}
+            </Text>
+            {isAssigned && assignedProgram?.description ? (
+              <Text style={[styles.headerCopy, { color: colors.mutedText }]}>
+                {assignedProgram.description}
+              </Text>
+            ) : null}
+          </View>
+
+          {isAssigned ? (
+            <AssignedState
+              todayWorkout={todayWorkout}
+              workouts={workouts}
+              intakeAnswers={profile.intakeAnswers}
+            />
+          ) : (
+            <UnassignedState intakeAnswers={profile.intakeAnswers} />
+          )}
+        </ScrollView>
+      </View>
     </SafeAreaView>
   );
 }
 
-function AwaitingAssignment() {
+type AssignedStateProps = {
+  todayWorkout: ReturnType<typeof useAssignedProgram>['todayWorkout'];
+  workouts: ReturnType<typeof useAssignedProgram>['workouts'];
+  intakeAnswers: Record<string, unknown>;
+};
+
+function AssignedState({ todayWorkout, workouts, intakeAnswers }: AssignedStateProps) {
   const colors = useThemeColors();
-  const { profile } = useProfile();
-  const intakeSummary = getIntakeSummary(profile.intakeAnswers);
+  const summary = todayWorkout
+    ? `${todayWorkout.duration_minutes} min · ${todayWorkout.exercise_count} exercises · ${todayWorkout.equipment.join(' + ')}`
+    : 'Ryan is finalizing the next session.';
+
+  const openTodayWorkout = () => {
+    if (!todayWorkout) return;
+    router.push(`/workout/${todayWorkout.id}`);
+  };
 
   return (
-    <>
-      <View style={[styles.heroCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
-        <Text style={[styles.kicker, { color: colors.accent }]}>AWAITING ASSIGNMENT</Text>
-        <Text style={[styles.heroTitle, { color: colors.text }]}>Ryan is matching your program.</Text>
-        <Text style={[styles.copy, { color: colors.mutedText }]}>
-          Your intake is the signal. Karen and Ryan will slot you into the right live,
-          pre-recorded, or written path before workouts unlock here.
+    <View style={styles.stack}>
+      <ProgramKeyCard intakeAnswers={intakeAnswers} />
+
+      <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border }]}>
+        <Text style={[styles.kicker, { color: colors.accent }]}>TODAY'S WORKOUT</Text>
+        <Text style={[styles.workoutTitle, { color: colors.text }]}>
+          {todayWorkout?.name ?? 'Workout pending'}
         </Text>
+        <Text style={[styles.body, { color: colors.mutedText }]}>{summary}</Text>
+        <Pressable
+          onPress={openTodayWorkout}
+          style={({ pressed }) => [
+            styles.cta,
+            {
+              backgroundColor: colors.action,
+              shadowColor: colors.action,
+              opacity: pressed ? 0.92 : 1,
+            },
+          ]}
+        >
+          <Text style={styles.ctaText}>Open today's workout</Text>
+          <View style={styles.ctaArrow} pointerEvents="none">
+            <ArrowRight color={COLORS.bone} size={20} strokeWidth={2.2} />
+          </View>
+        </Pressable>
       </View>
+
       <View style={styles.sectionBlock}>
-        <SectionLabel label="ASSIGNMENT PATH" />
-        <View style={[styles.timelineCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
-          <TimelineItem active label="Intake received" detail="Your training preferences and practice baseline are saved." />
-          <TimelineItem label="Coach review" detail="Ryan uses your signals to choose the right program and workout." />
-          <TimelineItem label="Program unlocks" detail="Today and Train update automatically once assignment is set." />
+        <Text style={[styles.sectionLabel, { color: colors.mutedText }]}>PROGRAM SESSIONS</Text>
+        <View
+          style={[styles.listCard, { backgroundColor: colors.card, borderColor: colors.border }]}
+        >
+          {workouts.map((workout, index) => {
+            const isToday = workout.id === todayWorkout?.id;
+            return (
+              <View
+                key={workout.id}
+                style={[styles.sessionRow, index < workouts.length - 1 && styles.sessionRowDivider, { borderBottomColor: colors.border }]}
+              >
+                <View
+                  style={[
+                    styles.sessionDot,
+                    {
+                      backgroundColor: isToday ? colors.accent : 'transparent',
+                      borderColor: colors.accent,
+                    },
+                  ]}
+                />
+                <View style={styles.sessionCopy}>
+                  <Text style={[styles.sessionTitle, { color: colors.text }]}>{workout.name}</Text>
+                  <Text style={[styles.sessionMeta, { color: colors.mutedText }]}>
+                    {workout.day_label} · {workout.duration_minutes} min · {workout.exercise_count} exercises
+                  </Text>
+                </View>
+                {isToday ? (
+                  <Text style={[styles.todayPill, { color: colors.accent, borderColor: colors.accent }]}>
+                    TODAY
+                  </Text>
+                ) : null}
+              </View>
+            );
+          })}
         </View>
       </View>
+
       <View style={styles.sectionBlock}>
-        <SectionLabel label="SIGNALS SENT" />
-        <View style={[styles.signalCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
-          {intakeSummary.map((item) => (
-            <View key={item.label} style={styles.signalRow}>
-              <Text style={[styles.signalLabel, { color: colors.mutedText }]}>{item.label}</Text>
-              <Text style={[styles.signalValue, { color: colors.text }]}>{item.value}</Text>
+        <Text style={[styles.sectionLabel, { color: colors.mutedText }]}>
+          TUTORIALS FOR THIS WORKOUT
+        </Text>
+        {todayWorkout?.tutorial_urls?.length ? (
+          todayWorkout.tutorial_urls.map((tutorial) => (
+            <View
+              key={tutorial.url}
+              style={[styles.tutorialCard, { backgroundColor: colors.card, borderColor: colors.border }]}
+            >
+              <Video color={colors.accent} size={20} strokeWidth={1.8} />
+              <Text style={[styles.tutorialTitle, { color: colors.text }]}>{tutorial.title}</Text>
             </View>
-          ))}
-        </View>
-      </View>
-      <PlaceholderCard
-        icon={<CalendarClock color={colors.accent} size={21} />}
-        title="What happens next"
-        body="You will see your current program, today's workout, tutorials, and session history here once assigned."
-      />
-      <PlaceholderCard
-        icon={<ListChecks color={colors.accent} size={21} />}
-        title="No workout browsing"
-        body="TEL is assignment-first. Members do not pick random workouts; they follow the path Ryan designs."
-      />
-    </>
-  );
-}
-
-function MetaPill({ label }: { label: string }) {
-  const colors = useThemeColors();
-
-  return (
-    <Text style={[styles.metaPill, { backgroundColor: colors.cardAlt, color: colors.mutedText }]}>
-      {label}
-    </Text>
-  );
-}
-
-function PlaceholderCard({ body, icon, title }: { body: string; icon: ReactNode; title: string }) {
-  const colors = useThemeColors();
-
-  return (
-    <View style={[styles.rowCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
-      {icon}
-      <View style={{ flex: 1, minWidth: 0 }}>
-        <Text style={[styles.rowTitle, { color: colors.text }]}>{title}</Text>
-        <Text style={[styles.rowMeta, { color: colors.mutedText }]}>{body}</Text>
+          ))
+        ) : (
+          <View
+            style={[styles.tutorialCard, { backgroundColor: colors.card, borderColor: colors.border }]}
+          >
+            <Video color={colors.accent} size={20} strokeWidth={1.8} />
+            <Text style={[styles.tutorialTitle, { color: colors.mutedText }]}>
+              Ryan's tutorial clips will appear here scoped to this workout.
+            </Text>
+          </View>
+        )}
+        <Text style={[styles.tutorialFootnote, { color: colors.mutedText }]}>
+          Scoped to today's 4 exercises — never the full library.
+        </Text>
       </View>
     </View>
   );
 }
 
-function formatDelivery(delivery?: string) {
-  if (delivery === 'pre_recorded') return 'Pre-recorded';
-  if (delivery === 'live') return 'Live';
-  if (delivery === 'written') return 'Written + tutorials';
-  return 'Assigned';
+function ProgramKeyCard({ intakeAnswers }: { intakeAnswers: Record<string, unknown> }) {
+  const colors = useThemeColors();
+  const key = derive4AxisKey(intakeAnswers);
+
+  return (
+    <View style={[styles.card, styles.programKeyCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
+      <View style={[styles.rail, { backgroundColor: colors.accent }]} />
+      <View style={styles.programKeyBody}>
+        <Text style={[styles.kicker, { color: colors.accent }]}>YOUR PROGRAM KEY</Text>
+        <Text style={[styles.programKeyHelper, { color: colors.mutedText }]}>
+          Four axes from your intake select the same program for the same key, every time.
+        </Text>
+        <View style={styles.axisGrid}>
+          <AxisRow icon={<Clock color={colors.accent} size={16} />} label="DURATION" value={key.duration} />
+          <AxisRow icon={<Tv color={colors.accent} size={16} />} label="FORMAT" value={key.format} />
+          <AxisRow icon={<MapPin color={colors.accent} size={16} />} label="EQUIPMENT" value={key.location} />
+          <AxisRow icon={<Sparkles color={colors.accent} size={16} />} label="SKILL" value={key.skill} />
+        </View>
+      </View>
+    </View>
+  );
+}
+
+function AxisRow({ icon, label, value }: { icon: ReactNode; label: string; value: string }) {
+  const colors = useThemeColors();
+  return (
+    <View style={styles.axisRow}>
+      <View style={styles.axisIcon}>{icon}</View>
+      <Text style={[styles.axisLabel, { color: colors.mutedText }]}>{label}</Text>
+      <Text style={[styles.axisValue, { color: colors.text }]} numberOfLines={1}>
+        {value}
+      </Text>
+    </View>
+  );
+}
+
+function UnassignedState({ intakeAnswers }: { intakeAnswers: Record<string, unknown> }) {
+  const colors = useThemeColors();
+
+  return (
+    <View style={styles.stack}>
+      <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border }]}>
+        <Text style={[styles.kicker, { color: colors.accent }]}>AWAITING ASSIGNMENT</Text>
+        <Text style={[styles.workoutTitle, { color: colors.text }]}>
+          Ryan is matching your program.
+        </Text>
+        <Text style={[styles.body, { color: colors.mutedText }]}>
+          Your intake is the signal. Karen and Ryan will slot you into the right live, pre-recorded,
+          or written path before workouts unlock here.
+        </Text>
+      </View>
+
+      <ProgramKeyCard intakeAnswers={intakeAnswers} />
+
+      <View style={styles.sectionBlock}>
+        <Text style={[styles.sectionLabel, { color: colors.mutedText }]}>ASSIGNMENT PATH</Text>
+        <View
+          style={[styles.listCard, { backgroundColor: colors.card, borderColor: colors.border }]}
+        >
+          <TimelineItem
+            active
+            label="Intake received"
+            detail="Your training preferences and practice baseline are saved."
+          />
+          <TimelineItem
+            label="Coach review"
+            detail="Ryan uses your signals to choose the right program and workout."
+          />
+          <TimelineItem
+            label="Program unlocks"
+            detail="Today and Train update automatically once assignment is set."
+          />
+        </View>
+      </View>
+
+      <View
+        style={[styles.tutorialCard, { backgroundColor: colors.card, borderColor: colors.border }]}
+      >
+        <ListChecks color={colors.accent} size={20} strokeWidth={1.8} />
+        <Text style={[styles.tutorialTitle, { color: colors.text }]}>
+          No workout browsing — TEL is assignment-first.
+        </Text>
+      </View>
+    </View>
+  );
 }
 
 function TimelineItem({ active, detail, label }: { active?: boolean; detail: string; label: string }) {
@@ -186,182 +267,290 @@ function TimelineItem({ active, detail, label }: { active?: boolean; detail: str
       <View
         style={[
           styles.timelineDot,
-          { backgroundColor: active ? colors.accent : colors.cardAlt, borderColor: active ? colors.accent : colors.border },
+          {
+            backgroundColor: active ? colors.accent : 'transparent',
+            borderColor: colors.accent,
+          },
         ]}
       >
         {active ? <CheckCircle2 color={colors.inverseText} size={14} /> : null}
       </View>
-      <View style={{ flex: 1, minWidth: 0 }}>
-        <Text style={[styles.rowTitle, { color: colors.text }]}>{label}</Text>
-        <Text style={[styles.rowMeta, { color: colors.mutedText }]}>{detail}</Text>
+      <View style={styles.sessionCopy}>
+        <Text style={[styles.sessionTitle, { color: colors.text }]}>{label}</Text>
+        <Text style={[styles.sessionMeta, { color: colors.mutedText }]}>{detail}</Text>
       </View>
     </View>
   );
 }
 
-function getIntakeSummary(intakeAnswers: Record<string, unknown>) {
-  const workoutSetup = readObject(intakeAnswers.workout_setup);
-  const nutrition = readObject(intakeAnswers.nutrition);
-  const experience = Array.isArray(intakeAnswers.strength_training_experience)
-    ? intakeAnswers.strength_training_experience.map(humanizeSignal).join(', ')
-    : 'Not provided';
+function derive4AxisKey(intake: Record<string, unknown>) {
+  const workoutSetup = readObject(intake.workout_setup);
+  const formatRaw = String(intake.format ?? intake.program_preference ?? workoutSetup.format ?? '');
+  const durationRaw = String(intake.duration ?? workoutSetup.duration ?? '');
+  const locationRaw = String(intake.location ?? workoutSetup.equipment ?? '');
+  const skillRaw = intake.skill_level ?? intake.strength_training_experience;
 
-  return [
-    { label: 'Experience', value: experience },
-    { label: 'Schedule', value: [workoutSetup.days_per_week, workoutSetup.duration].filter(Boolean).join(' · ') || 'Not provided' },
-    { label: 'Equipment', value: String(workoutSetup.equipment ?? 'Not provided') },
-    { label: 'Priorities', value: Array.isArray(workoutSetup.goals) ? workoutSetup.goals.join(', ') : 'Not provided' },
-    { label: 'Program style', value: String(intakeAnswers.program_preference ?? 'Not provided') },
-    { label: 'Fuel approach', value: String(nutrition.approach ?? 'Not provided') },
-  ];
+  return {
+    duration: durationRaw || 'Not set',
+    format: humanizeFormat(formatRaw),
+    location: humanizeLocation(locationRaw),
+    skill: humanizeSkill(skillRaw),
+  };
+}
+
+function humanizeFormat(value: string) {
+  if (!value) return 'Not set';
+  if (value === 'pre_recorded') return 'Pre-recorded';
+  if (value === 'live') return 'Live';
+  if (value === 'workout_only') return 'Workout only';
+  return value;
+}
+
+function humanizeLocation(value: string) {
+  if (!value) return 'Not set';
+  if (value === 'home_basics') return 'Home basics';
+  if (value === 'home_gym') return 'Home gym';
+  if (value === 'commercial_gym') return 'Commercial gym';
+  return value;
+}
+
+function humanizeSkill(value: unknown) {
+  if (!Array.isArray(value) || value.length === 0) return 'Not set';
+  return value
+    .map((entry) => {
+      const s = String(entry);
+      if (s === 'novice') return 'Novice';
+      if (s === 'intermediate') return 'Intermediate';
+      if (s === 'familiar_dumbbell_barbell_plates') return 'DB/BB/plates';
+      if (s === 'familiar_commercial_gym') return 'Commercial gym';
+      return s.replace(/_/g, ' ');
+    })
+    .join(' · ');
 }
 
 function readObject(value: unknown): Record<string, unknown> {
-  return value && typeof value === 'object' && !Array.isArray(value) ? value as Record<string, unknown> : {};
-}
-
-function humanizeSignal(value: unknown) {
-  return String(value).replace(/_/g, ' ');
+  return value && typeof value === 'object' && !Array.isArray(value)
+    ? (value as Record<string, unknown>)
+    : {};
 }
 
 const styles = StyleSheet.create({
-  content: {
-    gap: 14,
-    paddingBottom: 126,
-    paddingHorizontal: SPACING.screenX,
-    paddingTop: 8,
-  },
-  copy: {
-    fontFamily: FONTS.sans,
-    fontSize: 15,
-    lineHeight: 22,
-  },
-  heroCard: {
-    borderRadius: 24,
-    borderWidth: 1,
-    gap: 10,
-    padding: 18,
-  },
-  heroTitle: {
-    fontFamily: FONTS.sansBold,
-    fontSize: 24,
-    lineHeight: 30,
-  },
-  kicker: {
-    fontFamily: FONTS.sansMedium,
-    fontSize: 11,
-    letterSpacing: 1.6,
-    textTransform: 'uppercase',
-  },
-  metaPill: {
-    borderRadius: 999,
-    fontFamily: FONTS.sansBold,
-    fontSize: 12,
-    overflow: 'hidden',
-    paddingHorizontal: 10,
-    paddingVertical: 7,
-  },
-  metaRow: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 8,
-  },
-  primaryAction: {
-    alignItems: 'center',
-    borderRadius: 14,
-    flexDirection: 'row',
-    justifyContent: 'center',
-    minHeight: 52,
-    paddingHorizontal: 16,
-  },
-  primaryActionText: {
-    color: '#FFFFFF',
-    flex: 1,
-    fontFamily: FONTS.sansBold,
-    fontSize: 16,
-    textAlign: 'center',
-  },
-  rowBetween: {
-    alignItems: 'flex-start',
-    flexDirection: 'row',
-    gap: 14,
-    justifyContent: 'space-between',
-  },
-  rowCard: {
-    alignItems: 'flex-start',
-    borderRadius: 20,
-    borderWidth: 1,
-    flexDirection: 'row',
+  axisGrid: {
     gap: 12,
-    padding: 16,
+    marginTop: 4,
   },
-  rowMeta: {
+  axisIcon: {
+    width: 20,
+  },
+  axisLabel: {
+    fontFamily: FONTS.sansBold,
+    fontSize: 10.5,
+    letterSpacing: 1.4,
+    width: 88,
+  },
+  axisRow: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    gap: 10,
+  },
+  axisValue: {
+    flex: 1,
+    fontFamily: FONTS.sansMedium,
+    fontSize: 14,
+    textAlign: 'right',
+  },
+  body: {
     fontFamily: FONTS.sans,
     fontSize: 14,
     lineHeight: 20,
-    marginTop: 3,
   },
-  rowTitle: {
-    fontFamily: FONTS.sansBold,
-    fontSize: 16,
-    lineHeight: 21,
-  },
-  signalCard: {
-    borderRadius: 22,
+  card: {
+    borderRadius: 12,
     borderWidth: 1,
     gap: 10,
     padding: 16,
   },
-  signalLabel: {
-    fontFamily: FONTS.sansMedium,
-    fontSize: 11,
-    letterSpacing: 1.2,
-    textTransform: 'uppercase',
+  content: {
+    gap: 18,
+    paddingBottom: 128,
+    paddingHorizontal: SPACING.screenX,
+    paddingTop: 12,
   },
-  signalRow: {
-    gap: 3,
+  cta: {
+    alignItems: 'center',
+    borderRadius: 10,
+    justifyContent: 'center',
+    marginTop: 4,
+    minHeight: 52,
+    paddingHorizontal: 18,
+    position: 'relative',
+    shadowOffset: { height: 4, width: 0 },
+    shadowOpacity: 0.22,
+    shadowRadius: 10,
   },
-  signalValue: {
+  ctaArrow: {
+    bottom: 0,
+    justifyContent: 'center',
+    position: 'absolute',
+    right: 18,
+    top: 0,
+  },
+  ctaText: {
+    color: COLORS.bone,
     fontFamily: FONTS.sansBold,
-    fontSize: 15,
+    fontSize: 15.5,
+    letterSpacing: 0.2,
+    textAlign: 'center',
+  },
+  header: {
+    gap: 8,
+  },
+  headerCopy: {
+    fontFamily: FONTS.sans,
+    fontSize: 14,
     lineHeight: 20,
-    textTransform: 'capitalize',
+  },
+  headerKicker: {
+    fontFamily: FONTS.sansBold,
+    fontSize: 11,
+    letterSpacing: 2.4,
+  },
+  headerTitle: {
+    fontFamily: FONTS.sansBold,
+    fontSize: 24,
+    letterSpacing: -0.3,
+    lineHeight: 30,
+  },
+  kicker: {
+    fontFamily: FONTS.sansBold,
+    fontSize: 10.5,
+    letterSpacing: 2.2,
+  },
+  listCard: {
+    borderRadius: 12,
+    borderWidth: 1,
+    overflow: 'hidden',
+  },
+  phoneFrame: {
+    flex: 1,
+    maxWidth: Platform.OS === 'web' ? 430 : undefined,
+    width: '100%',
+  },
+  programKeyBody: {
+    flex: 1,
+    gap: 10,
+  },
+  programKeyCard: {
+    flexDirection: 'row',
+    gap: 14,
+  },
+  programKeyHelper: {
+    fontFamily: FONTS.sans,
+    fontSize: 12.5,
+    lineHeight: 18,
+  },
+  rail: {
+    borderRadius: 999,
+    width: 2,
   },
   screen: {
+    alignItems: 'center',
     flex: 1,
   },
   sectionBlock: {
     gap: 10,
   },
-  title: {
+  sectionLabel: {
     fontFamily: FONTS.sansBold,
-    fontSize: 20,
-    lineHeight: 25,
+    fontSize: 10.5,
+    letterSpacing: 2.2,
+    paddingHorizontal: 4,
   },
-  timelineCard: {
-    borderRadius: 22,
-    borderWidth: 1,
+  sessionCopy: {
+    flex: 1,
+    gap: 3,
+    minWidth: 0,
+  },
+  sessionDot: {
+    borderRadius: 999,
+    borderWidth: 1.5,
+    height: 12,
+    marginTop: 5,
+    width: 12,
+  },
+  sessionMeta: {
+    fontFamily: FONTS.sans,
+    fontSize: 13,
+    lineHeight: 18,
+  },
+  sessionRow: {
+    alignItems: 'flex-start',
+    flexDirection: 'row',
     gap: 12,
-    padding: 16,
+    padding: 14,
+  },
+  sessionRowDivider: {
+    borderBottomWidth: StyleSheet.hairlineWidth,
+  },
+  sessionTitle: {
+    fontFamily: FONTS.sansBold,
+    fontSize: 15,
+    lineHeight: 20,
+  },
+  stack: {
+    gap: 14,
   },
   timelineDot: {
     alignItems: 'center',
     borderRadius: 13,
-    borderWidth: 1,
-    height: 26,
+    borderWidth: 1.5,
+    height: 24,
     justifyContent: 'center',
     marginTop: 1,
-    width: 26,
+    width: 24,
   },
   timelineRow: {
     alignItems: 'flex-start',
     flexDirection: 'row',
     gap: 12,
+    padding: 14,
   },
-  workoutCard: {
-    borderRadius: 24,
+  todayPill: {
+    alignSelf: 'flex-start',
+    borderRadius: 999,
     borderWidth: 1,
-    gap: 16,
-    padding: 18,
+    fontFamily: FONTS.sansBold,
+    fontSize: 9.5,
+    letterSpacing: 1.4,
+    marginTop: 4,
+    overflow: 'hidden',
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+  },
+  tutorialCard: {
+    alignItems: 'center',
+    borderRadius: 12,
+    borderWidth: 1,
+    flexDirection: 'row',
+    gap: 12,
+    padding: 14,
+  },
+  tutorialFootnote: {
+    fontFamily: FONTS.sans,
+    fontSize: 11.5,
+    paddingHorizontal: 4,
+    paddingTop: 2,
+  },
+  tutorialTitle: {
+    flex: 1,
+    fontFamily: FONTS.sansMedium,
+    fontSize: 14,
+    lineHeight: 19,
+  },
+  workoutTitle: {
+    fontFamily: FONTS.sansBold,
+    fontSize: 20,
+    letterSpacing: -0.2,
+    lineHeight: 26,
   },
 });

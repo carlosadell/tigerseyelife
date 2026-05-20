@@ -78,8 +78,21 @@ export default function WorkoutDetailScreen() {
         ))}
       </ScrollView>
       <View style={[styles.footer, { bottom: insets.bottom + 16 }]}>
-        <Pressable onPress={startWorkout} style={[styles.startButton, { backgroundColor: colors.accent }]}>
-          <Text style={[styles.startText, { color: colors.inverseText }]}>Start Workout</Text>
+        <Pressable
+          onPress={startWorkout}
+          style={({ pressed }) => [
+            styles.startButton,
+            {
+              backgroundColor: colors.action,
+              shadowColor: colors.action,
+              opacity: pressed ? 0.92 : 1,
+            },
+          ]}
+        >
+          <Text style={[styles.startText, { color: COLORS.bone }]}>Start session</Text>
+          <View style={styles.startArrow} pointerEvents="none">
+            <ChevronLeft color={COLORS.bone} size={22} strokeWidth={2.4} style={{ transform: [{ rotate: '180deg' }] }} />
+          </View>
         </Pressable>
       </View>
     </SafeAreaView>
@@ -145,21 +158,20 @@ const styles = StyleSheet.create({
     paddingTop: 4,
   },
   cover: {
-    borderBottomLeftRadius: 28,
-    borderBottomRightRadius: 28,
-    borderRadius: 22,
+    borderRadius: 14,
     justifyContent: 'flex-end',
-    minHeight: 130,
-    padding: 20,
+    minHeight: 120,
+    padding: 18,
   },
   coverTitle: {
     color: COLORS.bone,
     fontFamily: FONTS.sansBold,
-    fontSize: 28,
-    lineHeight: 33,
+    fontSize: 26,
+    letterSpacing: -0.3,
+    lineHeight: 32,
   },
   description: { fontFamily: FONTS.sans, fontSize: 15, lineHeight: 22 },
-  exercise: { borderRadius: 16, borderWidth: 1, gap: 8, padding: 12 },
+  exercise: { borderRadius: 12, borderWidth: 1, gap: 8, padding: 14 },
   exerciseName: { flex: 1, fontFamily: FONTS.sansBold, fontSize: 15 },
   exerciseTop: { alignItems: 'center', flexDirection: 'row', gap: 10 },
   footer: { left: SPACING.screenX, position: 'absolute', right: SPACING.screenX },
@@ -167,9 +179,21 @@ const styles = StyleSheet.create({
   number: { alignItems: 'center', borderRadius: 12, height: 24, justifyContent: 'center', width: 24 },
   numberText: { fontFamily: FONTS.sansBold, fontSize: 12 },
   screen: { flex: 1 },
-  startButton: { alignItems: 'center', borderRadius: 18, height: 56, justifyContent: 'center' },
-  startText: { fontFamily: FONTS.sansBold, fontSize: 16 },
-  stat: { borderRadius: 16, borderWidth: 1, flex: 1, gap: 4, padding: 12 },
+  startArrow: { position: 'absolute', right: 18 },
+  startButton: {
+    alignItems: 'center',
+    borderRadius: 12,
+    flexDirection: 'row',
+    height: 56,
+    justifyContent: 'center',
+    paddingHorizontal: 18,
+    position: 'relative',
+    shadowOffset: { height: 4, width: 0 },
+    shadowOpacity: 0.22,
+    shadowRadius: 10,
+  },
+  startText: { fontFamily: FONTS.sansBold, fontSize: 16, letterSpacing: 0.2, textAlign: 'center' },
+  stat: { borderRadius: 12, borderWidth: 1, flex: 1, gap: 4, padding: 12 },
   statLabel: { fontFamily: FONTS.sansMedium, fontSize: 10, letterSpacing: 1.2 },
   stats: { flexDirection: 'row', gap: 10 },
   statValue: { fontFamily: FONTS.sansMedium, fontSize: 14, textTransform: 'capitalize' },

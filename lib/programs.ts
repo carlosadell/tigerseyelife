@@ -34,10 +34,11 @@ export type MicrolearningModule = {
 export const programSeed: WorkoutProgram[] = [
   {
     id: '33333333-3333-4333-8333-333333333333',
-    name: 'Pre-recorded GST Level 1',
+    name: 'CREATE POWER · Foundations',
     delivery_type: 'pre_recorded',
-    level: 'Level 1',
-    description: 'Video-based program for newer members.',
+    level: 'Home basics',
+    description:
+      'Four-workout strength foundation matched to your intake. Lower / upper split, 30 minutes, scoped tutorials for each session.',
     published: true,
     sort_order: 3,
   },
@@ -57,8 +58,70 @@ export const programWorkoutSeed: ProgramWorkout[] = [
       equipment: 'Home basics',
       experience: ['novice', 'rusty'],
     },
-    tutorial_urls: [],
+    tutorial_urls: [
+      { title: 'Warm-up tutorial', url: 'https://example.com/lower-a-warmup' },
+      { title: 'Exercise playlist (6 clips)', url: 'https://example.com/lower-a-exercises' },
+      { title: 'Full session — group view', url: 'https://example.com/lower-a-group' },
+      { title: 'Full session — speaker only', url: 'https://example.com/lower-a-speaker' },
+    ],
     sort_order: 1,
+  },
+  {
+    id: 'seed-upper-body-a',
+    program_id: '33333333-3333-4333-8333-333333333333',
+    day_label: 'Workout 2',
+    name: 'Upper Body A',
+    duration_minutes: 30,
+    exercise_count: 6,
+    equipment: ['dumbbells', 'bands'],
+    slotting_tags: {
+      duration: '30 min',
+      equipment: 'Home basics',
+      experience: ['novice', 'rusty'],
+    },
+    tutorial_urls: [
+      { title: 'Warm-up tutorial', url: 'https://example.com/upper-a-warmup' },
+      { title: 'Exercise playlist (6 clips)', url: 'https://example.com/upper-a-exercises' },
+    ],
+    sort_order: 2,
+  },
+  {
+    id: 'seed-lower-body-b',
+    program_id: '33333333-3333-4333-8333-333333333333',
+    day_label: 'Workout 3',
+    name: 'Lower Body B',
+    duration_minutes: 30,
+    exercise_count: 6,
+    equipment: ['dumbbells', 'bands'],
+    slotting_tags: {
+      duration: '30 min',
+      equipment: 'Home basics',
+      experience: ['novice', 'rusty'],
+    },
+    tutorial_urls: [
+      { title: 'Warm-up tutorial', url: 'https://example.com/lower-b-warmup' },
+      { title: 'Exercise playlist (6 clips)', url: 'https://example.com/lower-b-exercises' },
+    ],
+    sort_order: 3,
+  },
+  {
+    id: 'seed-upper-body-b',
+    program_id: '33333333-3333-4333-8333-333333333333',
+    day_label: 'Workout 4',
+    name: 'Upper Body B',
+    duration_minutes: 30,
+    exercise_count: 6,
+    equipment: ['dumbbells', 'bands'],
+    slotting_tags: {
+      duration: '30 min',
+      equipment: 'Home basics',
+      experience: ['novice', 'rusty'],
+    },
+    tutorial_urls: [
+      { title: 'Warm-up tutorial', url: 'https://example.com/upper-b-warmup' },
+      { title: 'Exercise playlist (6 clips)', url: 'https://example.com/upper-b-exercises' },
+    ],
+    sort_order: 4,
   },
 ];
 

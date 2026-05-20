@@ -4,6 +4,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from './useAuth';
 import { hasSupabaseConfig, supabase } from '../lib/supabase';
 import { calculateVolume, WorkoutSession, WorkoutSetLog } from '../lib/workouts';
+import { buildWorkoutHistorySeed } from '../lib/workoutHistorySeed';
 
 const localKey = (userId: string) => `tel:workout-sessions:${userId}`;
 
@@ -88,5 +89,6 @@ async function fetchSessions(userId: string, isDevSession: boolean): Promise<Wor
 
 async function fetchLocalSessions(userId: string): Promise<WorkoutSession[]> {
   const stored = await AsyncStorage.getItem(localKey(userId));
-  return stored ? (JSON.parse(stored) as WorkoutSession[]) : [];
+  if (stored) return JSON.parse(stored) as WorkoutSession[];
+  return buildWorkoutHistorySeed(userId);
 }
