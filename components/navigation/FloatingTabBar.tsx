@@ -2,9 +2,8 @@ import type { BottomTabBarProps } from '@react-navigation/bottom-tabs';
 import { BlurView } from 'expo-blur';
 import * as Haptics from 'expo-haptics';
 import { Dumbbell, Soup, Sprout, Sun, User } from 'lucide-react-native';
-import { ComponentType } from 'react';
-import { Platform, Pressable, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
-import Animated, { useAnimatedStyle, withTiming } from 'react-native-reanimated';
+import { ComponentType, useEffect, useRef } from 'react';
+import { Animated, Easing, Platform, Pressable, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { useTheme } from '../../hooks/useTheme';
@@ -107,23 +106,30 @@ function TabBarItem({
   inactiveColor,
   onPress,
 }: TabBarItemProps) {
-  const activeStyle = useAnimatedStyle(() => ({
-    opacity: withTiming(focused ? 1 : 0, { duration: 180 }),
-    transform: [
-      {
-        scale: withTiming(focused ? 1 : 0.82, { duration: 180 }),
-      },
-    ],
-  }));
+  const progress = useRef(new Animated.Value(focused ? 1 : 0)).current;
 
-  const inactiveStyle = useAnimatedStyle(() => ({
-    opacity: withTiming(focused ? 0 : 1, { duration: 180 }),
-    transform: [
-      {
-        scale: withTiming(focused ? 0.92 : 1, { duration: 180 }),
-      },
-    ],
-  }));
+  useEffect(() => {
+    Animated.timing(progress, {
+      duration: 180,
+      easing: Easing.out(Easing.cubic),
+      toValue: focused ? 1 : 0,
+      useNativeDriver: true,
+    }).start();
+  }, [focused, progress]);
+
+  const activeOpacity = progress;
+  const inactiveOpacity = progress.interpolate({
+    inputRange: [0, 1],
+    outputRange: [1, 0],
+  });
+  const activeScale = progress.interpolate({
+    inputRange: [0, 1],
+    outputRange: [0.82, 1],
+  });
+  const inactiveScale = progress.interpolate({
+    inputRange: [0, 1],
+    outputRange: [1, 0.92],
+  });
 
   return (
     <Pressable
@@ -134,10 +140,14 @@ function TabBarItem({
       style={styles.item}
     >
       <View style={styles.iconWrap}>
-        <Animated.View style={[styles.iconLayer, activeStyle]}>
+        <Animated.View
+          style={[styles.iconLayer, { opacity: activeOpacity, transform: [{ scale: activeScale }] }]}
+        >
           <Icon color={activeColor} size={24} strokeWidth={2.1} />
         </Animated.View>
-        <Animated.View style={[styles.iconLayer, inactiveStyle]}>
+        <Animated.View
+          style={[styles.iconLayer, { opacity: inactiveOpacity, transform: [{ scale: inactiveScale }] }]}
+        >
           <Icon color={inactiveColor} size={24} strokeWidth={2} />
         </Animated.View>
       </View>

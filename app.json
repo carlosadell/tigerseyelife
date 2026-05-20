@@ -8,15 +8,12 @@
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
     "newArchEnabled": true,
-    "splash": {
-      "image": "./assets/splash-icon.png",
-      "resizeMode": "contain",
-      "backgroundColor": "#0B0B0C"
-    },
     "ios": {
+      "bundleIdentifier": "com.tigerseyelife.app",
       "supportsTablet": false
     },
     "android": {
+      "package": "com.tigerseyelife.app",
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#0B0B0C"
@@ -31,11 +28,27 @@
     "plugins": [
       "expo-router",
       "expo-font",
-      "expo-web-browser"
+      "expo-web-browser",
+      [
+        "expo-splash-screen",
+        {
+          "image": "./assets/splash-icon.png",
+          "imageWidth": 220,
+          "resizeMode": "contain",
+          "backgroundColor": "#0B0B0C"
+        }
+      ]
     ],
     "statusBar": {
       "style": "light",
       "backgroundColor": "#0B0B0C"
-    }
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "c749185c-c7a6-40c2-99fc-8b5c01ee9394"
+      }
+    },
+    "owner": "johnydev26"
   }
 }

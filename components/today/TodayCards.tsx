@@ -82,6 +82,9 @@ export function WorkoutCard({
   const summary = assigned && name
     ? `${name} · ${durationMinutes ?? 30} min · ${exerciseCount ?? 6} exercises`
     : 'Awaiting program assignment';
+  const ctaLabel = assigned ? 'Start workout' : 'View status';
+  const ctaArrowColor = assigned ? COLORS.bone : colors.accent;
+  const ctaTextColor = assigned ? COLORS.bone : colors.accent;
 
   return (
     <TodayCard>
@@ -99,13 +102,25 @@ export function WorkoutCard({
         onPress={() => router.push('/(tabs)/train')}
         style={({ pressed }) => [
           workoutStyles.cta,
-          { backgroundColor: colors.action, opacity: pressed ? 0.92 : 1 },
+          assigned
+            ? {
+                backgroundColor: colors.action,
+                shadowColor: colors.action,
+                shadowOffset: { height: 4, width: 0 },
+                shadowOpacity: 0.22,
+                shadowRadius: 10,
+              }
+            : {
+                backgroundColor: 'transparent',
+                borderColor: colors.accent,
+                borderWidth: 1,
+              },
+          { opacity: pressed ? 0.92 : 1 },
         ]}
       >
-        <View style={workoutStyles.ctaSpacer} />
-        <Text style={workoutStyles.ctaText}>{assigned ? 'Start workout' : 'View status'}</Text>
-        <View style={workoutStyles.ctaArrow}>
-          <ArrowRight color={COLORS.bone} size={20} strokeWidth={2.2} />
+        <Text style={[workoutStyles.ctaText, { color: ctaTextColor }]}>{ctaLabel}</Text>
+        <View style={workoutStyles.ctaArrow} pointerEvents="none">
+          <ArrowRight color={ctaArrowColor} size={20} strokeWidth={2.2} />
         </View>
       </Pressable>
     </TodayCard>
@@ -219,21 +234,20 @@ const workoutStyles = StyleSheet.create({
   cta: {
     alignItems: 'center',
     borderRadius: 10,
-    flexDirection: 'row',
+    justifyContent: 'center',
     marginTop: 14,
     minHeight: 52,
     paddingHorizontal: 18,
+    position: 'relative',
   },
   ctaArrow: {
-    alignItems: 'flex-end',
-    width: 28,
-  },
-  ctaSpacer: {
-    width: 28,
+    bottom: 0,
+    justifyContent: 'center',
+    position: 'absolute',
+    right: 18,
+    top: 0,
   },
   ctaText: {
-    color: COLORS.bone,
-    flex: 1,
     fontFamily: FONTS.sansBold,
     fontSize: 15.5,
     letterSpacing: 0.2,
