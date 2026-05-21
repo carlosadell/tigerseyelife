@@ -4,7 +4,8 @@
   "main": "expo-router/entry",
   "scripts": {
     "start": "expo start",
-    "start:dev-client": "expo start --dev-client",
+    "start:dev-client": "node scripts/dev-server-info.js && expo start --dev-client",
+    "dev:info": "node scripts/dev-server-info.js",
     "android": "expo start --android",
     "ios": "expo start --ios",
     "typecheck": "tsc --noEmit",
