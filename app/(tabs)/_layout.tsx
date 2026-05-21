@@ -1,6 +1,10 @@
+import type BottomSheet from '@gorhom/bottom-sheet';
 import { Redirect, Tabs } from 'expo-router';
+import { useCallback, useRef } from 'react';
 import { ActivityIndicator, StyleSheet, View } from 'react-native';
 
+import { CoachBottomSheet } from '../../components/navigation/CoachBottomSheet';
+import { CoachFloatingButton } from '../../components/navigation/CoachFloatingButton';
 import { FloatingTabBar } from '../../components/navigation/FloatingTabBar';
 import { useAuth } from '../../hooks/useAuth';
 import { useOnboardingStatus } from '../../hooks/useOnboardingStatus';
@@ -10,6 +14,11 @@ export default function TabsLayout() {
   const { loading, session } = useAuth();
   const { completed, loading: onboardingLoading } = useOnboardingStatus();
   const colors = useThemeColors();
+  const coachSheetRef = useRef<BottomSheet>(null);
+
+  const openCoach = useCallback(() => {
+    coachSheetRef.current?.snapToIndex(0);
+  }, []);
 
   if (loading || (session && onboardingLoading)) {
     return (
@@ -28,20 +37,24 @@ export default function TabsLayout() {
   }
 
   return (
-    <Tabs
-      initialRouteName="today"
-      screenOptions={{
-        headerShown: false,
-        sceneStyle: { backgroundColor: colors.background },
-      }}
-      tabBar={(props) => <FloatingTabBar {...props} />}
-    >
-      <Tabs.Screen name="today" options={{ title: 'Today' }} />
-      <Tabs.Screen name="train" options={{ title: 'Train' }} />
-      <Tabs.Screen name="fuel" options={{ title: 'Fuel' }} />
-      <Tabs.Screen name="grow" options={{ title: 'Grow' }} />
-      <Tabs.Screen name="you" options={{ title: 'You' }} />
-    </Tabs>
+    <View style={styles.root}>
+      <Tabs
+        initialRouteName="today"
+        screenOptions={{
+          headerShown: false,
+          sceneStyle: { backgroundColor: colors.background },
+        }}
+        tabBar={(props) => <FloatingTabBar {...props} />}
+      >
+        <Tabs.Screen name="today" options={{ title: 'Today' }} />
+        <Tabs.Screen name="train" options={{ title: 'Train' }} />
+        <Tabs.Screen name="fuel" options={{ title: 'Fuel' }} />
+        <Tabs.Screen name="grow" options={{ title: 'Grow' }} />
+        <Tabs.Screen name="you" options={{ title: 'You' }} />
+      </Tabs>
+      <CoachFloatingButton onPress={openCoach} />
+      <CoachBottomSheet ref={coachSheetRef} />
+    </View>
   );
 }
 
@@ -50,5 +63,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     flex: 1,
     justifyContent: 'center',
+  },
+  root: {
+    flex: 1,
   },
 });
