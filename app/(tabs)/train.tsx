@@ -85,19 +85,23 @@ function AssignedState({ todayWorkout, workouts, intakeAnswers }: AssignedStateP
         </Text>
         <Text style={[styles.body, { color: colors.mutedText }]}>{summary}</Text>
         <Pressable
+          accessibilityRole="button"
           onPress={openTodayWorkout}
-          style={({ pressed }) => [
-            styles.cta,
-            {
-              backgroundColor: colors.action,
-              shadowColor: colors.action,
-              opacity: pressed ? 0.92 : 1,
-            },
-          ]}
+          style={({ pressed }) => ({ opacity: pressed ? 0.92 : 1 })}
         >
-          <Text style={styles.ctaText}>Open today's workout</Text>
-          <View style={styles.ctaArrow} pointerEvents="none">
-            <ArrowRight color={COLORS.bone} size={20} strokeWidth={2.2} />
+          <View
+            style={[
+              styles.cta,
+              {
+                backgroundColor: COLORS.tangerine,
+                shadowColor: COLORS.tangerine,
+              },
+            ]}
+          >
+            <Text style={[styles.ctaText, { color: '#FFFFFF' }]}>Open today's workout</Text>
+            <View style={styles.ctaArrow} pointerEvents="none">
+              <ArrowRight color="#FFFFFF" size={20} strokeWidth={2.6} />
+            </View>
           </View>
         </Pressable>
       </View>
@@ -379,14 +383,15 @@ const styles = StyleSheet.create({
   cta: {
     alignItems: 'center',
     borderRadius: 10,
+    elevation: 4,
     justifyContent: 'center',
     marginTop: 4,
-    minHeight: 52,
+    minHeight: 54,
     paddingHorizontal: 18,
     position: 'relative',
     shadowOffset: { height: 4, width: 0 },
-    shadowOpacity: 0.22,
-    shadowRadius: 10,
+    shadowOpacity: 0.32,
+    shadowRadius: 12,
   },
   ctaArrow: {
     bottom: 0,
