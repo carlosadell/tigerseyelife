@@ -37,6 +37,13 @@
           "resizeMode": "contain",
           "backgroundColor": "#0B0B0C"
         }
+      ],
+      [
+        "expo-speech-recognition",
+        {
+          "microphonePermission": "Allow Tigers Eye Life to use your microphone so you can ask your coach by voice.",
+          "speechRecognitionPermission": "Allow Tigers Eye Life to convert your spoken questions into text for the coach."
+        }
       ]
     ],
     "statusBar": {

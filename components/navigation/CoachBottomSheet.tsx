@@ -1,5 +1,6 @@
+import Constants from 'expo-constants';
 import * as Haptics from 'expo-haptics';
-import { ArrowUp, Sparkles, X } from 'lucide-react-native';
+import { ArrowUp, Mic, Sparkles, X } from 'lucide-react-native';
 import { forwardRef, useCallback, useEffect, useImperativeHandle, useMemo, useRef, useState } from 'react';
 import {
   Animated,
@@ -20,7 +21,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { EyeMark } from '../brand/EyeMark';
 import { useCoachContext } from '../../hooks/useCoachContext';
 import { useTheme } from '../../hooks/useTheme';
-import { FONTS } from '../../lib/brand';
+import { COLORS, FONTS } from '../../lib/brand';
 import {
   CoachReply,
   QuickPrompt,
@@ -29,6 +30,23 @@ import {
   routeFreeform,
   routePrompt,
 } from '../../lib/coachKnowledge';
+
+// expo-speech-recognition is a native module — not available in Expo Go.
+// Lazy-require so the import doesn't crash, then gate the UI behind availability.
+const isExpoGo = Constants.executionEnvironment === 'storeClient';
+let SpeechModule: any = null;
+let useSpeechRecognitionEvent: any = null;
+if (!isExpoGo) {
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-var-requires
+    const mod = require('expo-speech-recognition');
+    SpeechModule = mod.ExpoSpeechRecognitionModule;
+    useSpeechRecognitionEvent = mod.useSpeechRecognitionEvent;
+  } catch {
+    SpeechModule = null;
+  }
+}
+const VOICE_AVAILABLE = SpeechModule !== null && typeof useSpeechRecognitionEvent === 'function';
 
 type CoachMessage = {
   id: string;
@@ -53,6 +71,7 @@ export const CoachBottomSheet = forwardRef<CoachSheetHandle>(function CoachBotto
   const [draft, setDraft] = useState('');
   const [messages, setMessages] = useState<CoachMessage[]>([]);
   const [thinking, setThinking] = useState(false);
+  const [listening, setListening] = useState(false);
   const quickPrompts = useMemo(() => getQuickPrompts(knowledge), [knowledge]);
   const translateY = useRef(new Animated.Value(SHEET_HEIGHT)).current;
   const backdropOpacity = useRef(new Animated.Value(0)).current;
@@ -248,19 +267,26 @@ export const CoachBottomSheet = forwardRef<CoachSheetHandle>(function CoachBotto
               <TextInput
                 onChangeText={setDraft}
                 onSubmitEditing={sendFreeform}
-                placeholder="Ask your coach…"
-                placeholderTextColor={colors.mutedText}
+                placeholder={listening ? 'Listening…' : 'Ask your coach…'}
+                placeholderTextColor={listening ? COLORS.tangerine : colors.mutedText}
                 returnKeyType="send"
                 style={[
                   styles.input,
                   {
                     backgroundColor: colors.cardAlt,
-                    borderColor: colors.border,
+                    borderColor: listening ? COLORS.tangerine : colors.border,
                     color: colors.text,
                   },
                 ]}
                 value={draft}
               />
+              {VOICE_AVAILABLE ? (
+                <VoiceMic
+                  listening={listening}
+                  onTranscript={setDraft}
+                  onListeningChange={setListening}
+                />
+              ) : null}
               <Pressable
                 accessibilityRole="button"
                 onPress={sendFreeform}
@@ -437,6 +463,119 @@ function TypingBubble() {
         ))}
       </View>
     </View>
+  );
+}
+
+type VoiceMicProps = {
+  listening: boolean;
+  onTranscript: (text: string) => void;
+  onListeningChange: (listening: boolean) => void;
+};
+
+function VoiceMic({ listening, onTranscript, onListeningChange }: VoiceMicProps) {
+  const { colors } = useTheme();
+  const pulse = useRef(new Animated.Value(0)).current;
+
+  // expo-speech-recognition hook — only attached when the module is loaded
+  useSpeechRecognitionEvent('result', (event: any) => {
+    const transcript = event?.results?.[0]?.transcript;
+    if (typeof transcript === 'string') {
+      onTranscript(transcript);
+    }
+  });
+  useSpeechRecognitionEvent('end', () => onListeningChange(false));
+  useSpeechRecognitionEvent('error', () => onListeningChange(false));
+
+  useEffect(() => {
+    if (!listening) {
+      pulse.setValue(0);
+      return;
+    }
+    const loop = Animated.loop(
+      Animated.sequence([
+        Animated.timing(pulse, {
+          duration: 700,
+          easing: Easing.out(Easing.quad),
+          toValue: 1,
+          useNativeDriver: true,
+        }),
+        Animated.timing(pulse, {
+          duration: 700,
+          easing: Easing.in(Easing.quad),
+          toValue: 0,
+          useNativeDriver: true,
+        }),
+      ]),
+    );
+    loop.start();
+    return () => loop.stop();
+  }, [listening, pulse]);
+
+  const toggle = async () => {
+    if (listening) {
+      try {
+        SpeechModule?.stop();
+      } catch {
+        // ignore
+      }
+      onListeningChange(false);
+      return;
+    }
+    try {
+      const perm = await SpeechModule.requestPermissionsAsync();
+      if (!perm?.granted) return;
+      Haptics.selectionAsync();
+      onListeningChange(true);
+      SpeechModule.start({
+        lang: 'en-US',
+        interimResults: true,
+        maxAlternatives: 1,
+        continuous: false,
+      });
+    } catch {
+      onListeningChange(false);
+    }
+  };
+
+  const ringScale = pulse.interpolate({ inputRange: [0, 1], outputRange: [1, 1.5] });
+  const ringOpacity = pulse.interpolate({ inputRange: [0, 1], outputRange: [0.5, 0] });
+
+  return (
+    <Pressable
+      accessibilityRole="button"
+      accessibilityLabel={listening ? 'Stop listening' : 'Speak to your coach'}
+      onPress={toggle}
+      style={styles.mic}
+    >
+      {listening ? (
+        <Animated.View
+          pointerEvents="none"
+          style={[
+            styles.micPulse,
+            {
+              borderColor: COLORS.tangerine,
+              opacity: ringOpacity,
+              transform: [{ scale: ringScale }],
+            },
+          ]}
+        />
+      ) : null}
+      <View
+        style={[
+          styles.micCircle,
+          {
+            backgroundColor: listening ? COLORS.tangerine : colors.cardAlt,
+            borderColor: listening ? COLORS.tangerine : colors.border,
+          },
+        ]}
+      >
+        <Mic
+          color={listening ? '#FFFFFF' : colors.mutedText}
+          size={18}
+          strokeWidth={2.2}
+        />
+      </View>
+    </Pressable>
   );
 }
 
@@ -622,6 +761,28 @@ const styles = StyleSheet.create({
   },
   messageBlock: {
     marginBottom: 12,
+  },
+  mic: {
+    alignItems: 'center',
+    height: 44,
+    justifyContent: 'center',
+    position: 'relative',
+    width: 44,
+  },
+  micCircle: {
+    alignItems: 'center',
+    borderRadius: 22,
+    borderWidth: 1,
+    height: 44,
+    justifyContent: 'center',
+    width: 44,
+  },
+  micPulse: {
+    borderRadius: 22,
+    borderWidth: 1.6,
+    height: 44,
+    position: 'absolute',
+    width: 44,
   },
   modalRoot: {
     flex: 1,
