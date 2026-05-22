@@ -3,7 +3,6 @@ import { useCallback, useRef } from 'react';
 import { ActivityIndicator, StyleSheet, View } from 'react-native';
 
 import { CoachBottomSheet, type CoachSheetHandle } from '../../components/navigation/CoachBottomSheet';
-import { CoachFloatingButton } from '../../components/navigation/CoachFloatingButton';
 import { FloatingTabBar } from '../../components/navigation/FloatingTabBar';
 import { useAuth } from '../../hooks/useAuth';
 import { useOnboardingStatus } from '../../hooks/useOnboardingStatus';
@@ -43,7 +42,7 @@ export default function TabsLayout() {
           headerShown: false,
           sceneStyle: { backgroundColor: colors.background },
         }}
-        tabBar={(props) => <FloatingTabBar {...props} />}
+        tabBar={(props) => <FloatingTabBar {...props} onCoachPress={openCoach} />}
       >
         <Tabs.Screen name="today" options={{ title: 'Today' }} />
         <Tabs.Screen name="train" options={{ title: 'Train' }} />
@@ -51,7 +50,6 @@ export default function TabsLayout() {
         <Tabs.Screen name="grow" options={{ title: 'Grow' }} />
         <Tabs.Screen name="you" options={{ title: 'You' }} />
       </Tabs>
-      <CoachFloatingButton onPress={openCoach} />
       <CoachBottomSheet ref={coachSheetRef} />
     </View>
   );
