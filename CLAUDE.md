@@ -74,12 +74,28 @@ Theming:
 - Brand tokens: `COLORS` (raw palette), `THEME_COLORS.dark` / `THEME_COLORS.light` (semantic), `FONTS`, `SPACING` — all from [lib/brand.ts](lib/brand.ts).
 - Read the current theme via `useTheme()` / `useThemeColors()` from [hooks/useTheme.tsx](hooks/useTheme.tsx). Never hardcode hex values in components — pull from `COLORS` or the active theme.
 - Fonts loaded in `RootLayout`: Inter (regular/medium/bold) and VT323 (the "diagnostic" display font used for stat numbers).
+- **Theme-locked surfaces (intentional exceptions):**
+  - `components/auth/AuthShell.tsx` and its children (sign-in / sign-up) are **always brand-dark**. They use the tigers-eye texture banner and `rgba()` overlays on `COLORS.onyx`. Don't refactor to `useThemeColors()` — this is the marketing-style first-impression surface and ignoring the user's theme toggle here is deliberate.
+  - The `app/onboarding.tsx` flow and everything under `components/onboarding/` is **locked to light theme** (`THEME_COLORS.light` referenced directly in [onboardingScreenStyles.ts](components/onboarding/onboardingScreenStyles.ts), [OnboardingStepStyles.ts](components/onboarding/OnboardingStepStyles.ts), [OnboardingPrimitives.tsx](components/onboarding/OnboardingPrimitives.tsx), [firstFiveStyles.ts](components/onboarding/firstFiveStyles.ts)). Same rationale — it's a one-time branded experience, intentionally cohesive with AuthShell. Audits that flag this should be told "intentional, see CLAUDE.md."
+  - `#FFFFFF` text + arrow on the tangerine `colors.action` CTA is hardcoded for max contrast in both modes (bone vs cream backgrounds wash it out). Same for the `#000` modal backdrop in `CoachBottomSheet`.
 
 ### Metro / build quirks
 
 [metro.config.js](metro.config.js) explicitly aliases `zustand` and `zustand/middleware` to their CJS entry points — without this, Metro picks the ESM build and breaks. Don't remove that resolver block.
 
 `newArchEnabled: true` in [app.json](app.json) — the app runs on React Native's new architecture.
+
+### Expo Go vs dev-client
+
+The app's real target is the EAS dev-client build (`npm run build:ios` / `npm run build:android` via [eas.json](eas.json)). Expo Go (`npm start`, scan QR) is a fallback for quick UI previews on a phone without a custom build.
+
+Libraries that pull in a Reanimated worklet runtime can crash on *import* in Expo Go on the new architecture — the symptom is `Exception in HostFunction: <unknown>` plus a Metro warning that the importing layout is "missing the required default export," with the tab bar / coach overlay silently absent. The coach overlay (`CoachFloatingButton` + `CoachBottomSheet`, both depending on `@gorhom/bottom-sheet`) is gated behind a runtime check in [app/(tabs)/_layout.tsx](app/(tabs)/_layout.tsx):
+
+```ts
+const isExpoGo = Constants.executionEnvironment === 'storeClient';
+```
+
+In Expo Go those components resolve to `null`; in the dev-client they mount normally. **Do not "clean up" the `require()` pattern back to static imports** — that would re-break Expo Go preview. When adding new deps that wrap native modules or Reanimated worklets, follow the same gate if the surface isn't critical-path.
 
 ## Product context
 
