@@ -1,9 +1,8 @@
-import type BottomSheet from '@gorhom/bottom-sheet';
 import { Redirect, Tabs } from 'expo-router';
 import { useCallback, useRef } from 'react';
 import { ActivityIndicator, StyleSheet, View } from 'react-native';
 
-import { CoachBottomSheet } from '../../components/navigation/CoachBottomSheet';
+import { CoachBottomSheet, type CoachSheetHandle } from '../../components/navigation/CoachBottomSheet';
 import { CoachFloatingButton } from '../../components/navigation/CoachFloatingButton';
 import { FloatingTabBar } from '../../components/navigation/FloatingTabBar';
 import { useAuth } from '../../hooks/useAuth';
@@ -14,7 +13,7 @@ export default function TabsLayout() {
   const { loading, session } = useAuth();
   const { completed, loading: onboardingLoading } = useOnboardingStatus();
   const colors = useThemeColors();
-  const coachSheetRef = useRef<BottomSheet>(null);
+  const coachSheetRef = useRef<CoachSheetHandle>(null);
 
   const openCoach = useCallback(() => {
     coachSheetRef.current?.snapToIndex(0);

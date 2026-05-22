@@ -83,8 +83,6 @@ export function WorkoutCard({
     ? `${name} · ${durationMinutes ?? 30} min · ${exerciseCount ?? 6} exercises`
     : 'Awaiting program assignment';
   const ctaLabel = assigned ? 'Start workout' : 'View status';
-  const ctaArrowColor = assigned ? COLORS.bone : colors.accent;
-  const ctaTextColor = assigned ? COLORS.bone : colors.accent;
 
   return (
     <TodayCard>
@@ -99,29 +97,37 @@ export function WorkoutCard({
         </Text>
       ) : null}
       <Pressable
+        accessibilityRole="button"
         onPress={() => router.push('/(tabs)/train')}
-        style={({ pressed }) => [
-          workoutStyles.cta,
-          assigned
-            ? {
-                backgroundColor: colors.action,
-                shadowColor: colors.action,
-                shadowOffset: { height: 4, width: 0 },
-                shadowOpacity: 0.22,
-                shadowRadius: 10,
-              }
-            : {
-                backgroundColor: 'transparent',
-                borderColor: colors.accent,
-                borderWidth: 1,
-              },
-          { opacity: pressed ? 0.92 : 1 },
-        ]}
+        style={({ pressed }) => ({ opacity: pressed ? 0.9 : 1 })}
       >
-        <Text style={[workoutStyles.ctaText, { color: ctaTextColor }]}>{ctaLabel}</Text>
-        <View style={workoutStyles.ctaArrow} pointerEvents="none">
-          <ArrowRight color={ctaArrowColor} size={20} strokeWidth={2.2} />
-        </View>
+        {assigned ? (
+          <View
+            style={[
+              workoutStyles.cta,
+              workoutStyles.ctaPrimary,
+              { backgroundColor: COLORS.tangerine, shadowColor: COLORS.tangerine },
+            ]}
+          >
+            <Text style={[workoutStyles.ctaText, { color: '#FFFFFF' }]}>{ctaLabel}</Text>
+            <View style={workoutStyles.ctaArrow} pointerEvents="none">
+              <ArrowRight color="#FFFFFF" size={20} strokeWidth={2.6} />
+            </View>
+          </View>
+        ) : (
+          <View
+            style={[
+              workoutStyles.cta,
+              workoutStyles.ctaGhost,
+              { backgroundColor: colors.cardAlt, borderColor: colors.accent },
+            ]}
+          >
+            <Text style={[workoutStyles.ctaText, { color: colors.accent }]}>{ctaLabel}</Text>
+            <View style={workoutStyles.ctaArrow} pointerEvents="none">
+              <ArrowRight color={colors.accent} size={20} strokeWidth={2.4} />
+            </View>
+          </View>
+        )}
       </Pressable>
     </TodayCard>
   );
@@ -236,9 +242,18 @@ const workoutStyles = StyleSheet.create({
     borderRadius: 10,
     justifyContent: 'center',
     marginTop: 14,
-    minHeight: 52,
+    minHeight: 54,
     paddingHorizontal: 18,
     position: 'relative',
+  },
+  ctaGhost: {
+    borderWidth: 1.4,
+  },
+  ctaPrimary: {
+    elevation: 4,
+    shadowOffset: { height: 4, width: 0 },
+    shadowOpacity: 0.32,
+    shadowRadius: 12,
   },
   ctaArrow: {
     bottom: 0,

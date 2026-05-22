@@ -1,28 +1,26 @@
-import BottomSheet, {
-  BottomSheetBackdrop,
-  BottomSheetScrollView,
-  BottomSheetTextInput,
-  type BottomSheetBackdropProps,
-} from '@gorhom/bottom-sheet';
 import * as Haptics from 'expo-haptics';
-import { ArrowUp, Sparkles } from 'lucide-react-native';
-import type { ElementRef } from 'react';
-import { forwardRef, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { ArrowUp, Sparkles, X } from 'lucide-react-native';
+import { forwardRef, useCallback, useEffect, useImperativeHandle, useMemo, useRef, useState } from 'react';
 import {
   Animated,
+  Dimensions,
   Easing,
   KeyboardAvoidingView,
+  Modal,
   Platform,
   Pressable,
+  ScrollView,
   StyleSheet,
   Text,
+  TextInput,
   View,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { EyeMark } from '../brand/EyeMark';
 import { useCoachContext } from '../../hooks/useCoachContext';
 import { useTheme } from '../../hooks/useTheme';
-import { COLORS, FONTS } from '../../lib/brand';
+import { FONTS } from '../../lib/brand';
 import {
   CoachReply,
   QuickPrompt,
@@ -39,49 +37,90 @@ type CoachMessage = {
   followups?: string[];
 };
 
-type CoachBottomSheetRef = ElementRef<typeof BottomSheet>;
+export type CoachSheetHandle = {
+  snapToIndex: (index: number) => void;
+  close: () => void;
+};
 
-export const CoachBottomSheet = forwardRef<CoachBottomSheetRef>(function CoachBottomSheet(_props, ref) {
-  const { colors, mode } = useTheme();
+const { height: SCREEN_HEIGHT } = Dimensions.get('window');
+const SHEET_HEIGHT = Math.round(SCREEN_HEIGHT * 0.86);
+
+export const CoachBottomSheet = forwardRef<CoachSheetHandle>(function CoachBottomSheet(_props, ref) {
+  const { colors } = useTheme();
+  const insets = useSafeAreaInsets();
   const knowledge = useCoachContext();
-  const snapPoints = useMemo(() => ['78%', '94%'], []);
+  const [visible, setVisible] = useState(false);
   const [draft, setDraft] = useState('');
   const [messages, setMessages] = useState<CoachMessage[]>([]);
   const [thinking, setThinking] = useState(false);
   const quickPrompts = useMemo(() => getQuickPrompts(knowledge), [knowledge]);
+  const translateY = useRef(new Animated.Value(SHEET_HEIGHT)).current;
+  const backdropOpacity = useRef(new Animated.Value(0)).current;
 
-  const renderBackdrop = useCallback(
-    (props: BottomSheetBackdropProps) => (
-      <BottomSheetBackdrop
-        {...props}
-        appearsOnIndex={0}
-        disappearsOnIndex={-1}
-        opacity={0.6}
-        pressBehavior="close"
-      />
-    ),
-    [],
+  const open = useCallback(() => {
+    setVisible(true);
+  }, []);
+
+  const close = useCallback(() => {
+    Animated.parallel([
+      Animated.timing(translateY, {
+        duration: 220,
+        easing: Easing.in(Easing.cubic),
+        toValue: SHEET_HEIGHT,
+        useNativeDriver: true,
+      }),
+      Animated.timing(backdropOpacity, {
+        duration: 220,
+        easing: Easing.in(Easing.cubic),
+        toValue: 0,
+        useNativeDriver: true,
+      }),
+    ]).start(() => {
+      setVisible(false);
+    });
+  }, [backdropOpacity, translateY]);
+
+  useImperativeHandle(
+    ref,
+    () => ({
+      snapToIndex: () => open(),
+      close,
+    }),
+    [close, open],
   );
 
-  const respond = useCallback(
-    (reply: CoachReply) => {
-      setThinking(true);
-      const id = `${Date.now()}-coach`;
-      setTimeout(() => {
-        setThinking(false);
-        setMessages((current) => [
-          ...current,
-          {
-            id,
-            role: 'coach',
-            content: reply.text,
-            followups: reply.followups,
-          },
-        ]);
-      }, 650);
-    },
-    [],
-  );
+  useEffect(() => {
+    if (visible) {
+      translateY.setValue(SHEET_HEIGHT);
+      backdropOpacity.setValue(0);
+      Animated.parallel([
+        Animated.timing(translateY, {
+          duration: 320,
+          easing: Easing.out(Easing.cubic),
+          toValue: 0,
+          useNativeDriver: true,
+        }),
+        Animated.timing(backdropOpacity, {
+          duration: 240,
+          easing: Easing.out(Easing.cubic),
+          toValue: 0.6,
+          useNativeDriver: true,
+        }),
+      ]).start();
+    }
+  }, [backdropOpacity, translateY, visible]);
+
+  const respond = useCallback((reply: CoachReply) => {
+    setThinking(true);
+    const id = `${Date.now()}-coach`;
+    setTimeout(() => {
+      setThinking(false);
+      setMessages((current) => [
+        ...current,
+        { id, role: 'coach', content: reply.text, followups: reply.followups },
+      ]);
+    }, 650);
+  }, []);
 
   const sendFreeform = useCallback(() => {
     const content = draft.trim();
@@ -120,107 +159,127 @@ export const CoachBottomSheet = forwardRef<CoachBottomSheetRef>(function CoachBo
   );
 
   return (
-    <BottomSheet
-      backdropComponent={renderBackdrop}
-      backgroundStyle={[styles.background, { backgroundColor: colors.card }]}
-      enablePanDownToClose
-      handleIndicatorStyle={[styles.handle, { backgroundColor: colors.accent }]}
-      index={-1}
-      keyboardBlurBehavior="restore"
-      keyboardBehavior="interactive"
-      ref={ref}
-      snapPoints={snapPoints}
-    >
-      <View style={[styles.headerRow, { borderBottomColor: colors.border }]}>
-        <View style={[styles.avatar, { backgroundColor: colors.cardAlt, borderColor: colors.accent }]}>
-          <EyeMark color={colors.accent} size={26} strokeWidth={2.1} />
-        </View>
-        <View style={styles.headerCopy}>
-          <Text style={[styles.headerKicker, { color: colors.accent }]}>YOUR COACH</Text>
-          <Text style={[styles.headerTitle, { color: colors.text }]}>Tigers Eye</Text>
-        </View>
-        <View style={[styles.statusDot, { backgroundColor: colors.success }]} />
-      </View>
+    <Modal animationType="none" onRequestClose={close} statusBarTranslucent transparent visible={visible}>
+      <View style={styles.modalRoot}>
+        <Animated.View
+          style={[styles.backdrop, { opacity: backdropOpacity }]}
+          pointerEvents={visible ? 'auto' : 'none'}
+        >
+          <Pressable onPress={close} style={StyleSheet.absoluteFill} />
+        </Animated.View>
 
-      <BottomSheetScrollView
-        contentContainerStyle={styles.thread}
-        keyboardShouldPersistTaps="handled"
-        showsVerticalScrollIndicator={false}
-      >
-        {messages.length === 0 ? (
-          <CoachIntro
-            greeting={getPersonalGreeting(knowledge)}
-            knowledge={knowledge}
-            quickPrompts={quickPrompts}
-            onPromptPress={askPrompt}
-          />
-        ) : (
-          <>
-            <Text style={[styles.threadKicker, { color: colors.mutedText }]}>
-              CONVERSATION
-            </Text>
-            {messages.map((message) => (
-              <MessageBubble key={message.id} message={message} onFollowupPress={askFollowup} />
-            ))}
-            {thinking ? <TypingBubble /> : null}
-          </>
-        )}
-      </BottomSheetScrollView>
+        <Animated.View
+          style={[
+            styles.sheet,
+            {
+              backgroundColor: colors.card,
+              height: SHEET_HEIGHT,
+              paddingBottom: insets.bottom,
+              transform: [{ translateY }],
+            },
+          ]}
+        >
+          <View style={[styles.handleContainer]}>
+            <View style={[styles.handle, { backgroundColor: colors.accent }]} />
+          </View>
 
-      <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-        keyboardVerticalOffset={16}
-      >
-        {messages.length > 0 && !thinking ? (
-          <View style={[styles.followupBar, { borderTopColor: colors.border }]}>
-            {quickPrompts.slice(0, 3).map((prompt) => (
-              <Pressable
-                key={prompt.id}
-                onPress={() => askPrompt(prompt)}
+          <View style={[styles.headerRow, { borderBottomColor: colors.border }]}>
+            <View style={[styles.avatar, { backgroundColor: colors.cardAlt, borderColor: colors.accent }]}>
+              <EyeMark color={colors.accent} size={24} strokeWidth={2.1} />
+            </View>
+            <View style={styles.headerCopy}>
+              <Text style={[styles.headerKicker, { color: colors.accent }]}>YOUR COACH</Text>
+              <Text style={[styles.headerTitle, { color: colors.text }]}>Tigers Eye</Text>
+            </View>
+            <View style={[styles.statusDot, { backgroundColor: colors.success }]} />
+            <Pressable hitSlop={10} onPress={close} style={styles.closeBtn}>
+              <X color={colors.mutedText} size={20} />
+            </Pressable>
+          </View>
+
+          <KeyboardAvoidingView
+            behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+            keyboardVerticalOffset={0}
+            style={styles.body}
+          >
+            <ScrollView
+              contentContainerStyle={styles.thread}
+              keyboardShouldPersistTaps="handled"
+              showsVerticalScrollIndicator={false}
+            >
+              {messages.length === 0 ? (
+                <CoachIntro
+                  greeting={getPersonalGreeting(knowledge)}
+                  knowledge={knowledge}
+                  quickPrompts={quickPrompts}
+                  onPromptPress={askPrompt}
+                />
+              ) : (
+                <>
+                  <Text style={[styles.threadKicker, { color: colors.mutedText }]}>CONVERSATION</Text>
+                  {messages.map((message) => (
+                    <MessageBubble key={message.id} message={message} onFollowupPress={askFollowup} />
+                  ))}
+                  {thinking ? <TypingBubble /> : null}
+                </>
+              )}
+            </ScrollView>
+
+            {messages.length > 0 && !thinking ? (
+              <View style={[styles.followupBar, { borderTopColor: colors.border }]}>
+                {quickPrompts.slice(0, 3).map((prompt) => (
+                  <Pressable
+                    key={prompt.id}
+                    onPress={() => askPrompt(prompt)}
+                    style={[
+                      styles.followupChip,
+                      { backgroundColor: colors.cardAlt, borderColor: colors.border },
+                    ]}
+                  >
+                    <Text style={[styles.followupChipText, { color: colors.text }]} numberOfLines={1}>
+                      {prompt.label}
+                    </Text>
+                  </Pressable>
+                ))}
+              </View>
+            ) : null}
+
+            <View style={[styles.composer, { borderTopColor: colors.border }]}>
+              <TextInput
+                onChangeText={setDraft}
+                onSubmitEditing={sendFreeform}
+                placeholder="Ask your coach…"
+                placeholderTextColor={colors.mutedText}
+                returnKeyType="send"
                 style={[
-                  styles.followupChip,
-                  { backgroundColor: colors.cardAlt, borderColor: colors.border },
+                  styles.input,
+                  {
+                    backgroundColor: colors.cardAlt,
+                    borderColor: colors.border,
+                    color: colors.text,
+                  },
+                ]}
+                value={draft}
+              />
+              <Pressable
+                accessibilityRole="button"
+                onPress={sendFreeform}
+                style={[
+                  styles.send,
+                  { backgroundColor: draft.trim() ? colors.accent : colors.cardAlt },
                 ]}
               >
-                <Text style={[styles.followupChipText, { color: colors.text }]} numberOfLines={1}>
-                  {prompt.label}
-                </Text>
+                <ArrowUp
+                  color={draft.trim() ? colors.inverseText : colors.mutedText}
+                  size={18}
+                  strokeWidth={2.6}
+                />
               </Pressable>
-            ))}
-          </View>
-        ) : null}
-
-        <View style={[styles.composer, { borderTopColor: colors.border }]}>
-          <BottomSheetTextInput
-            onChangeText={setDraft}
-            onSubmitEditing={sendFreeform}
-            placeholder="Ask your coach…"
-            placeholderTextColor={colors.mutedText}
-            returnKeyType="send"
-            style={[
-              styles.input,
-              {
-                backgroundColor: colors.cardAlt,
-                borderColor: colors.border,
-                color: colors.text,
-              },
-            ]}
-            value={draft}
-          />
-          <Pressable
-            accessibilityRole="button"
-            onPress={sendFreeform}
-            style={[styles.send, { backgroundColor: draft.trim() ? colors.accent : colors.cardAlt }]}
-          >
-            <ArrowUp
-              color={draft.trim() ? colors.inverseText : colors.mutedText}
-              size={18}
-              strokeWidth={2.6}
-            />
-          </Pressable>
-        </View>
-      </KeyboardAvoidingView>
-    </BottomSheet>
+            </View>
+          </KeyboardAvoidingView>
+        </Animated.View>
+      </View>
+    </Modal>
   );
 });
 
@@ -251,9 +310,7 @@ function CoachIntro({
     <View style={styles.introStack}>
       <Text style={[styles.greeting, { color: colors.text }]}>{greeting}</Text>
 
-      <View
-        style={[styles.knowCard, { backgroundColor: colors.cardAlt, borderColor: colors.border }]}
-      >
+      <View style={[styles.knowCard, { backgroundColor: colors.cardAlt, borderColor: colors.border }]}>
         <View style={[styles.knowRail, { backgroundColor: colors.accent }]} />
         <View style={styles.knowBody}>
           <View style={styles.knowHeader}>
@@ -314,12 +371,7 @@ function MessageBubble({
             : { alignSelf: 'flex-end', backgroundColor: colors.accent },
         ]}
       >
-        <Text
-          style={[
-            styles.bubbleText,
-            { color: isCoach ? colors.text : colors.inverseText },
-          ]}
-        >
+        <Text style={[styles.bubbleText, { color: isCoach ? colors.text : colors.inverseText }]}>
           {message.content}
         </Text>
       </View>
@@ -391,15 +443,22 @@ function TypingBubble() {
 const styles = StyleSheet.create({
   avatar: {
     alignItems: 'center',
-    borderRadius: 22,
+    borderRadius: 20,
     borderWidth: 1.4,
-    height: 44,
+    height: 40,
     justifyContent: 'center',
-    width: 44,
+    width: 40,
   },
-  background: {
-    borderTopLeftRadius: 22,
-    borderTopRightRadius: 22,
+  backdrop: {
+    backgroundColor: '#000',
+    bottom: 0,
+    left: 0,
+    position: 'absolute',
+    right: 0,
+    top: 0,
+  },
+  body: {
+    flex: 1,
   },
   bubble: {
     borderRadius: 16,
@@ -418,12 +477,15 @@ const styles = StyleSheet.create({
     fontSize: 14.5,
     lineHeight: 20,
   },
+  closeBtn: {
+    padding: 4,
+  },
   composer: {
     alignItems: 'center',
     borderTopWidth: StyleSheet.hairlineWidth,
     flexDirection: 'row',
     gap: 10,
-    paddingBottom: 14,
+    paddingBottom: 12,
     paddingHorizontal: 18,
     paddingTop: 12,
   },
@@ -464,8 +526,14 @@ const styles = StyleSheet.create({
     paddingHorizontal: 2,
   },
   handle: {
+    borderRadius: 999,
+    height: 4,
     opacity: 0.5,
     width: 42,
+  },
+  handleContainer: {
+    alignItems: 'center',
+    paddingTop: 8,
   },
   headerCopy: {
     flex: 1,
@@ -481,9 +549,9 @@ const styles = StyleSheet.create({
     borderBottomWidth: StyleSheet.hairlineWidth,
     flexDirection: 'row',
     gap: 12,
-    paddingBottom: 14,
+    paddingBottom: 12,
     paddingHorizontal: 18,
-    paddingTop: 6,
+    paddingTop: 12,
   },
   headerTitle: {
     fontFamily: FONTS.sansBold,
@@ -555,6 +623,10 @@ const styles = StyleSheet.create({
   messageBlock: {
     marginBottom: 12,
   },
+  modalRoot: {
+    flex: 1,
+    justifyContent: 'flex-end',
+  },
   promptCard: {
     borderRadius: 12,
     borderWidth: 1,
@@ -579,6 +651,11 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     width: 44,
   },
+  sheet: {
+    borderTopLeftRadius: 22,
+    borderTopRightRadius: 22,
+    overflow: 'hidden',
+  },
   statusDot: {
     borderRadius: 4,
     height: 8,
@@ -586,7 +663,7 @@ const styles = StyleSheet.create({
     width: 8,
   },
   thread: {
-    gap: 0,
+    paddingBottom: 8,
     paddingHorizontal: 18,
     paddingTop: 16,
   },
