@@ -1,14 +1,44 @@
+import {
+  Bell,
+  ChevronRight,
+  ClipboardList,
+  Dumbbell,
+  LogOut,
+  Settings,
+  User,
+} from 'lucide-react-native';
 import { ReactNode } from 'react';
-import { Bell, Bot, ClipboardList, Dumbbell, LogOut, Settings, User } from 'lucide-react-native';
-import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Platform, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { SectionLabel } from '../../components/brand/SectionLabel';
 import { ThemeToggle } from '../../components/brand/ThemeToggle';
 import { useAuth } from '../../hooks/useAuth';
 import { useProfile } from '../../hooks/useProfile';
 import { useTheme, useThemeColors } from '../../hooks/useTheme';
-import { FONTS, SPACING } from '../../lib/brand';
+import { COLORS, FONTS, SPACING } from '../../lib/brand';
+import { POWER_LETTERS, PowerLetter } from '../../lib/powerBlocks';
+
+const LETTER_TINT: Record<PowerLetter, string> = {
+  P: COLORS.tigerGold,
+  O: COLORS.evidenceBlue,
+  W: COLORS.tangerine,
+  E: COLORS.electricYellow,
+  R: COLORS.deepGreen,
+};
+
+const POWER_PROGRESS: Record<PowerLetter, number> = {
+  P: 72,
+  O: 48,
+  W: 81,
+  E: 60,
+  R: 55,
+};
+
+const STATS = [
+  { label: 'Streak', value: '23', sub: 'days' },
+  { label: 'Week', value: '4', sub: 'of program' },
+  { label: 'Workouts', value: '12', sub: 'completed' },
+];
 
 export default function YouScreen() {
   const colors = useThemeColors();
@@ -16,188 +46,500 @@ export default function YouScreen() {
   const { signOut } = useAuth();
   const { profile } = useProfile();
 
+  const firstName = profile.firstName ?? 'Friend';
+  const intake = readIntake(profile.intakeAnswers);
+
   return (
-    <SafeAreaView style={[styles.screen, { backgroundColor: colors.background }]}>
-      <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
-        <SectionLabel label="YOU" />
-        <View style={[styles.heroCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
-          <View style={styles.rowBetween}>
-            <View style={[styles.iconWell, { backgroundColor: colors.cardAlt }]}>
-              <User color={colors.accent} size={23} />
+    <SafeAreaView edges={['top']} style={[styles.screen, { backgroundColor: colors.background }]}>
+      <View style={styles.phoneFrame}>
+        <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+          <View style={styles.intro}>
+            <Text style={[styles.headerKicker, { color: colors.accent }]}>YOU</Text>
+            <Text style={[styles.title, { color: colors.text }]}>{firstName}</Text>
+            <Text style={[styles.subtitle, { color: colors.mutedText }]}>
+              Member · Week 4 of CREATE POWER · {mode === 'dark' ? 'Dark' : 'Light'} theme
+            </Text>
+          </View>
+
+          <View style={[styles.profileCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
+            <View style={[styles.avatar, { backgroundColor: colors.cardAlt, borderColor: colors.accent }]}>
+              <User color={colors.accent} size={26} strokeWidth={1.8} />
+            </View>
+            <View style={styles.profileCopy}>
+              <Text style={[styles.profileName, { color: colors.text }]}>{firstName}</Text>
+              <Text style={[styles.profileMeta, { color: colors.mutedText }]}>
+                Joined Tigers Eye Life · since 2026
+              </Text>
             </View>
             <ThemeToggle />
           </View>
-          <Text style={[styles.title, { color: colors.text }]}>
-            {profile.firstName ? `${profile.firstName}'s profile` : 'Your profile'}
-          </Text>
-          <Text style={[styles.copy, { color: colors.mutedText }]}>
-            Theme is set to {mode}. Your Big WHY, coach preferences, notifications, and account
-            controls live here.
-          </Text>
-        </View>
-        <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border }]}>
-          <Text style={[styles.kicker, { color: colors.accent }]}>BIG WHY</Text>
-          <Text style={[styles.body, { color: colors.text }]}>
-            {profile.bigWhy || 'Complete onboarding to save the strongest future you are building toward.'}
-          </Text>
-        </View>
-        <SettingsRow
-          icon={<ClipboardList color={colors.accent} size={20} />}
-          title="Intake summary"
-          body={formatIntakeSummary(profile.intakeAnswers)}
-        />
-        <SettingsRow
-          icon={<Dumbbell color={colors.accent} size={20} />}
-          title="Program assignment"
-          body={
-            profile.assignedProgramId
-              ? 'Your current program is active. Train shows today’s assigned workout and tutorial support.'
-              : 'Awaiting Ryan and Karen review. Train will unlock when your program is assigned.'
-          }
-        />
-        <SettingsRow
-          icon={<Bot color={colors.accent} size={20} />}
-          title="AI coach"
-          body="[ ROUND 5 ] Coach access and real AI wiring will live here."
-        />
-        <SettingsRow
-          icon={<Bell color={colors.accent} size={20} />}
-          title="Notifications"
-          body="Daily nudges and program updates will be managed here after push notifications are added."
-        />
-        <SettingsRow
-          icon={<Settings color={colors.accent} size={20} />}
-          title="Preferences"
-          body="Training preferences, live/pre-recorded choice, and accessibility settings."
-        />
-        <Pressable
-          onPress={signOut}
-          style={[styles.signOut, { backgroundColor: colors.card, borderColor: colors.border }]}
-        >
-          <LogOut color={colors.accent} size={18} />
-          <Text style={[styles.signOutText, { color: colors.accent }]}>Sign out</Text>
-        </Pressable>
-      </ScrollView>
+
+          <View style={[styles.whyCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
+            <View style={[styles.rail, { backgroundColor: colors.accent }]} />
+            <View style={styles.whyBody}>
+              <Text style={[styles.cardKicker, { color: colors.accent }]}>YOUR BIG WHY</Text>
+              <Text style={[styles.whyText, { color: colors.text }]}>
+                {profile.bigWhy ||
+                  'Stay strong enough to keep up with my kids and own my next decade.'}
+              </Text>
+            </View>
+          </View>
+
+          <View style={styles.statsRow}>
+            {STATS.map((stat) => (
+              <View
+                key={stat.label}
+                style={[styles.statCard, { backgroundColor: colors.card, borderColor: colors.border }]}
+              >
+                <Text style={[styles.statValue, { color: colors.text }]}>{stat.value}</Text>
+                <Text style={[styles.statLabel, { color: colors.mutedText }]}>
+                  {stat.label} · {stat.sub}
+                </Text>
+              </View>
+            ))}
+          </View>
+
+          <View style={styles.sectionHead}>
+            <Text style={[styles.sectionLabel, { color: colors.mutedText }]}>POWER THREADS · LIFETIME</Text>
+          </View>
+          <View style={[styles.powerCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
+            {(Object.keys(POWER_LETTERS) as PowerLetter[]).map((letter) => (
+              <PowerRow key={letter} letter={letter} percentage={POWER_PROGRESS[letter]} />
+            ))}
+          </View>
+
+          <View style={styles.sectionHead}>
+            <Text style={[styles.sectionLabel, { color: colors.mutedText }]}>YOUR PROGRAM KEY</Text>
+          </View>
+          <View style={[styles.intakeCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
+            <IntakeRow label="DURATION" value={intake.duration} />
+            <IntakeRow label="FORMAT" value={intake.format} />
+            <IntakeRow label="EQUIPMENT" value={intake.location} />
+            <IntakeRow label="SKILL" value={intake.skill} />
+          </View>
+
+          <View style={styles.sectionHead}>
+            <Text style={[styles.sectionLabel, { color: colors.mutedText }]}>SETTINGS</Text>
+          </View>
+
+          <SettingsRow
+            icon={<Dumbbell color={colors.accent} size={18} strokeWidth={1.8} />}
+            title="Training preferences"
+            body="Days per week, equipment changes, live vs pre-recorded."
+          />
+          <SettingsRow
+            icon={<ClipboardList color={colors.accent} size={18} strokeWidth={1.8} />}
+            title="Intake & assessment"
+            body="Re-take your Big WHY, POWER baseline, and dietary preferences."
+          />
+          <SettingsRow
+            icon={<Bell color={colors.accent} size={18} strokeWidth={1.8} />}
+            title="Notifications"
+            body="Daily nudges, program updates, and coach check-ins."
+            comingSoon
+          />
+          <SettingsRow
+            icon={<Settings color={colors.accent} size={18} strokeWidth={1.8} />}
+            title="Preferences & accessibility"
+            body="Text size, contrast, language, and account."
+            comingSoon
+          />
+
+          <Pressable
+            onPress={signOut}
+            style={[styles.signOut, { backgroundColor: colors.card, borderColor: colors.border }]}
+          >
+            <LogOut color={colors.accent} size={18} strokeWidth={1.8} />
+            <Text style={[styles.signOutText, { color: colors.accent }]}>Sign out</Text>
+          </Pressable>
+        </ScrollView>
+      </View>
     </SafeAreaView>
   );
 }
 
-function SettingsRow({ body, icon, title }: { body: string; icon: ReactNode; title: string }) {
+function PowerRow({ letter, percentage }: { letter: PowerLetter; percentage: number }) {
   const colors = useThemeColors();
-
+  const tint = LETTER_TINT[letter];
   return (
-    <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border }]}>
-      <View style={styles.row}>
-        <View style={[styles.iconWell, { backgroundColor: colors.cardAlt }]}>{icon}</View>
-        <View style={{ flex: 1, minWidth: 0 }}>
-          <Text style={[styles.rowTitle, { color: colors.text }]}>{title}</Text>
-          <Text style={[styles.copy, { color: colors.mutedText }]}>{body}</Text>
+    <View style={styles.powerRow}>
+      <View style={[styles.powerLetter, { backgroundColor: tint }]}>
+        <Text style={styles.powerLetterText}>{letter}</Text>
+      </View>
+      <View style={styles.powerBody}>
+        <View style={styles.powerHead}>
+          <Text style={[styles.powerName, { color: colors.text }]}>{POWER_LETTERS[letter]}</Text>
+          <Text style={[styles.powerPct, { color: colors.mutedText }]}>{percentage}%</Text>
+        </View>
+        <View style={[styles.powerTrack, { backgroundColor: colors.cardAlt }]}>
+          <View style={[styles.powerFill, { backgroundColor: tint, width: `${percentage}%` }]} />
         </View>
       </View>
     </View>
   );
 }
 
-function formatIntakeSummary(intakeAnswers: Record<string, unknown>) {
-  const workoutSetup = readObject(intakeAnswers.workout_setup);
-  const nutrition = readObject(intakeAnswers.nutrition);
-  const experience = Array.isArray(intakeAnswers.strength_training_experience)
-    ? intakeAnswers.strength_training_experience.map((item) => String(item).replace(/_/g, ' ')).join(', ')
-    : null;
-  const goals = Array.isArray(workoutSetup.goals) ? workoutSetup.goals.join(', ') : null;
-  const parts = [
-    experience ? `Experience: ${experience}` : null,
-    workoutSetup.days_per_week && workoutSetup.duration
-      ? `Training: ${workoutSetup.days_per_week} · ${workoutSetup.duration}`
-      : null,
-    goals ? `Priorities: ${goals}` : null,
-    intakeAnswers.program_preference ? `Program style: ${intakeAnswers.program_preference}` : null,
-    nutrition.approach ? `Fuel: ${nutrition.approach}` : null,
-  ].filter(Boolean);
-
-  return parts.length ? parts.join('\n') : 'Complete onboarding to save your training and nutrition context.';
+function IntakeRow({ label, value }: { label: string; value: string }) {
+  const colors = useThemeColors();
+  return (
+    <View style={styles.intakeRow}>
+      <Text style={[styles.intakeLabel, { color: colors.mutedText }]}>{label}</Text>
+      <Text style={[styles.intakeValue, { color: colors.text }]} numberOfLines={1}>
+        {value}
+      </Text>
+    </View>
+  );
 }
 
-function readObject(value: unknown): Record<string, unknown> {
-  return value && typeof value === 'object' && !Array.isArray(value) ? value as Record<string, unknown> : {};
+function SettingsRow({
+  body,
+  icon,
+  title,
+  comingSoon,
+}: {
+  body: string;
+  icon: ReactNode;
+  title: string;
+  comingSoon?: boolean;
+}) {
+  const colors = useThemeColors();
+  return (
+    <Pressable
+      style={({ pressed }) => [
+        styles.settingsCard,
+        {
+          backgroundColor: colors.card,
+          borderColor: colors.border,
+          opacity: pressed ? 0.92 : 1,
+        },
+      ]}
+    >
+      <View style={[styles.settingsIcon, { backgroundColor: colors.cardAlt }]}>{icon}</View>
+      <View style={styles.settingsBody}>
+        <View style={styles.settingsHead}>
+          <Text style={[styles.settingsTitle, { color: colors.text }]}>{title}</Text>
+          {comingSoon ? (
+            <Text style={[styles.soonBadge, { borderColor: colors.border, color: colors.mutedText }]}>
+              SOON
+            </Text>
+          ) : null}
+        </View>
+        <Text style={[styles.settingsBodyText, { color: colors.mutedText }]}>{body}</Text>
+      </View>
+      <ChevronRight color={colors.mutedText} size={18} />
+    </Pressable>
+  );
+}
+
+function readIntake(intake: Record<string, unknown>) {
+  const setup = isRecord(intake.workout_setup) ? intake.workout_setup : {};
+  const duration = String(intake.duration ?? setup.duration ?? '30 min');
+  const formatRaw = String(intake.format ?? intake.program_preference ?? '');
+  const locationRaw = String(intake.location ?? setup.equipment ?? '');
+  const skillRaw = Array.isArray(intake.skill_level)
+    ? intake.skill_level
+    : Array.isArray(intake.strength_training_experience)
+    ? intake.strength_training_experience
+    : [];
+
+  return {
+    duration,
+    format: humanizeFormat(formatRaw),
+    location: humanizeLocation(locationRaw),
+    skill: humanizeSkill(skillRaw),
+  };
+}
+
+function humanizeFormat(value: string) {
+  if (!value) return 'Pre-recorded';
+  if (value === 'pre_recorded') return 'Pre-recorded';
+  if (value === 'live') return 'Live';
+  if (value === 'workout_only') return 'Workout only';
+  return value;
+}
+
+function humanizeLocation(value: string) {
+  if (!value) return 'Home basics';
+  if (value === 'home_basics') return 'Home basics (DB + bands)';
+  if (value === 'home_gym') return 'Home gym (barbell + plates)';
+  if (value === 'commercial_gym') return 'Commercial gym';
+  return value;
+}
+
+function humanizeSkill(values: unknown[]) {
+  if (!values || values.length === 0) return 'Not set';
+  return values
+    .map((entry) => {
+      const s = String(entry);
+      if (s === 'novice') return 'Novice';
+      if (s === 'intermediate') return 'Intermediate';
+      if (s === 'familiar_dumbbell_barbell_plates') return 'DB/BB/plates';
+      if (s === 'familiar_commercial_gym') return 'Commercial gym';
+      return s.replace(/_/g, ' ');
+    })
+    .join(' · ');
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return value !== null && typeof value === 'object' && !Array.isArray(value);
 }
 
 const styles = StyleSheet.create({
-  body: {
-    fontFamily: FONTS.sans,
-    fontSize: 16,
-    lineHeight: 24,
+  avatar: {
+    alignItems: 'center',
+    borderRadius: 24,
+    borderWidth: 1.4,
+    height: 48,
+    justifyContent: 'center',
+    width: 48,
   },
-  card: {
-    borderRadius: 22,
-    borderWidth: 1,
-    padding: 16,
+  cardKicker: {
+    fontFamily: FONTS.sansBold,
+    fontSize: 10.5,
+    letterSpacing: 2.2,
   },
   content: {
     gap: 14,
-    paddingBottom: 126,
+    paddingBottom: 128,
     paddingHorizontal: SPACING.screenX,
-    paddingTop: 8,
+    paddingTop: 4,
   },
-  copy: {
-    fontFamily: FONTS.sans,
-    fontSize: 14,
-    lineHeight: 20,
-  },
-  heroCard: {
-    borderRadius: 24,
-    borderWidth: 1,
-    gap: 12,
-    padding: 18,
-  },
-  iconWell: {
-    alignItems: 'center',
-    borderRadius: 18,
-    height: 42,
-    justifyContent: 'center',
-    width: 42,
-  },
-  kicker: {
-    fontFamily: FONTS.sansMedium,
+  headerKicker: {
+    fontFamily: FONTS.sansBold,
     fontSize: 11,
-    letterSpacing: 1.6,
-    marginBottom: 9,
-    textTransform: 'uppercase',
+    letterSpacing: 2.4,
   },
-  row: {
-    alignItems: 'flex-start',
-    flexDirection: 'row',
-    gap: 12,
+  intakeCard: {
+    borderRadius: 12,
+    borderWidth: 1,
+    gap: 10,
+    padding: 14,
   },
-  rowBetween: {
+  intakeLabel: {
+    fontFamily: FONTS.sansBold,
+    fontSize: 10.5,
+    letterSpacing: 1.4,
+    width: 100,
+  },
+  intakeRow: {
     alignItems: 'center',
+    flexDirection: 'row',
+    gap: 10,
+  },
+  intakeValue: {
+    flex: 1,
+    fontFamily: FONTS.sansMedium,
+    fontSize: 13.5,
+    textAlign: 'right',
+  },
+  intro: {
+    gap: 6,
+    paddingTop: 4,
+  },
+  phoneFrame: {
+    alignSelf: 'center',
+    flex: 1,
+    maxWidth: Platform.OS === 'web' ? 430 : undefined,
+    width: '100%',
+  },
+  powerBody: {
+    flex: 1,
+    gap: 6,
+  },
+  powerCard: {
+    borderRadius: 12,
+    borderWidth: 1,
+    gap: 14,
+    padding: 16,
+  },
+  powerFill: {
+    borderRadius: 999,
+    height: '100%',
+  },
+  powerHead: {
+    alignItems: 'baseline',
     flexDirection: 'row',
     justifyContent: 'space-between',
   },
-  rowTitle: {
+  powerLetter: {
+    alignItems: 'center',
+    borderRadius: 6,
+    height: 22,
+    justifyContent: 'center',
+    width: 22,
+  },
+  powerLetterText: {
+    color: COLORS.onyx,
     fontFamily: FONTS.sansBold,
-    fontSize: 16,
-    lineHeight: 21,
+    fontSize: 11.5,
+    letterSpacing: 0.5,
+  },
+  powerName: {
+    fontFamily: FONTS.sansBold,
+    fontSize: 13.5,
+  },
+  powerPct: {
+    fontFamily: FONTS.sansBold,
+    fontSize: 12,
+  },
+  powerRow: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    gap: 12,
+  },
+  powerTrack: {
+    borderRadius: 999,
+    height: 5,
+    overflow: 'hidden',
+    width: '100%',
+  },
+  profileCard: {
+    alignItems: 'center',
+    borderRadius: 12,
+    borderWidth: 1,
+    flexDirection: 'row',
+    gap: 14,
+    padding: 14,
+  },
+  profileCopy: {
+    flex: 1,
+    gap: 2,
+  },
+  profileMeta: {
+    fontFamily: FONTS.sans,
+    fontSize: 12,
+  },
+  profileName: {
+    fontFamily: FONTS.sansBold,
+    fontSize: 17,
+    letterSpacing: -0.2,
+  },
+  rail: {
+    borderRadius: 999,
+    width: 2,
   },
   screen: {
+    alignItems: 'center',
     flex: 1,
+  },
+  sectionHead: {
+    paddingHorizontal: 4,
+    paddingTop: 6,
+  },
+  sectionLabel: {
+    fontFamily: FONTS.sansBold,
+    fontSize: 10.5,
+    letterSpacing: 2.2,
+  },
+  settingsBody: {
+    flex: 1,
+    gap: 2,
+    minWidth: 0,
+  },
+  settingsBodyText: {
+    fontFamily: FONTS.sans,
+    fontSize: 12.5,
+    lineHeight: 17,
+  },
+  settingsCard: {
+    alignItems: 'center',
+    borderRadius: 12,
+    borderWidth: 1,
+    flexDirection: 'row',
+    gap: 12,
+    padding: 14,
+  },
+  settingsHead: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    gap: 8,
+  },
+  settingsIcon: {
+    alignItems: 'center',
+    borderRadius: 10,
+    height: 36,
+    justifyContent: 'center',
+    width: 36,
+  },
+  settingsTitle: {
+    fontFamily: FONTS.sansBold,
+    fontSize: 14,
   },
   signOut: {
     alignItems: 'center',
-    borderRadius: 18,
+    borderRadius: 12,
     borderWidth: 1,
     flexDirection: 'row',
     gap: 9,
     justifyContent: 'center',
+    marginTop: 6,
     minHeight: 50,
   },
   signOutText: {
     fontFamily: FONTS.sansBold,
-    fontSize: 15,
+    fontSize: 14,
+    letterSpacing: 0.2,
+  },
+  soonBadge: {
+    borderRadius: 999,
+    borderWidth: 1,
+    fontFamily: FONTS.sansBold,
+    fontSize: 9,
+    letterSpacing: 1.4,
+    overflow: 'hidden',
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+  },
+  statCard: {
+    alignItems: 'center',
+    borderRadius: 12,
+    borderWidth: 1,
+    flex: 1,
+    gap: 2,
+    paddingHorizontal: 8,
+    paddingVertical: 14,
+  },
+  statLabel: {
+    fontFamily: FONTS.sansMedium,
+    fontSize: 10.5,
+    letterSpacing: 0.4,
+    textAlign: 'center',
+  },
+  statValue: {
+    fontFamily: FONTS.sansBold,
+    fontSize: 26,
+    letterSpacing: -0.5,
+    lineHeight: 30,
+  },
+  statsRow: {
+    flexDirection: 'row',
+    gap: 10,
+  },
+  subtitle: {
+    fontFamily: FONTS.sans,
+    fontSize: 13,
+    lineHeight: 19,
   },
   title: {
     fontFamily: FONTS.sansBold,
     fontSize: 26,
+    letterSpacing: -0.4,
     lineHeight: 32,
+  },
+  whyBody: {
+    flex: 1,
+    gap: 6,
+  },
+  whyCard: {
+    borderRadius: 12,
+    borderWidth: 1,
+    flexDirection: 'row',
+    gap: 12,
+    padding: 14,
+  },
+  whyText: {
+    fontFamily: FONTS.sans,
+    fontSize: 14,
+    lineHeight: 20,
   },
 });
