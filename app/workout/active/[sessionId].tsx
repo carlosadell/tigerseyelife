@@ -125,25 +125,44 @@ export default function ActiveWorkoutScreen() {
 
         <View style={styles.footer}>
           <Pressable
+            accessibilityRole="button"
             disabled={!allSetsDone}
             onPress={nextExercise}
-            style={({ pressed }) => [
-              styles.primary,
-              {
-                backgroundColor: allSetsDone ? colors.action : colors.cardAlt,
-                opacity: pressed ? 0.92 : 1,
-                shadowColor: allSetsDone ? colors.action : 'transparent',
-              },
-            ]}
+            style={({ pressed }) => ({ opacity: pressed ? 0.92 : 1 })}
           >
-            <Text style={[styles.primaryText, { color: allSetsDone ? COLORS.bone : colors.mutedText }]}>
-              {isLastExercise ? 'Finish workout' : 'Next exercise'}
-            </Text>
             {allSetsDone ? (
-              <View style={styles.primaryArrow} pointerEvents="none">
-                <ArrowRight color={COLORS.bone} size={20} strokeWidth={2.2} />
+              <View
+                style={[
+                  styles.primary,
+                  {
+                    backgroundColor: COLORS.tangerine,
+                    shadowColor: COLORS.tangerine,
+                  },
+                ]}
+              >
+                <Text style={[styles.primaryText, { color: '#FFFFFF' }]}>
+                  {isLastExercise ? 'Finish workout' : 'Next exercise'}
+                </Text>
+                <View style={styles.primaryArrow} pointerEvents="none">
+                  <ArrowRight color="#FFFFFF" size={20} strokeWidth={2.6} />
+                </View>
               </View>
-            ) : null}
+            ) : (
+              <View
+                style={[
+                  styles.primary,
+                  styles.primaryGhost,
+                  {
+                    backgroundColor: colors.cardAlt,
+                    borderColor: colors.border,
+                  },
+                ]}
+              >
+                <Text style={[styles.primaryText, { color: colors.mutedText }]}>
+                  {isLastExercise ? 'Log final set to finish' : 'Log all sets to advance'}
+                </Text>
+              </View>
+            )}
           </Pressable>
         </View>
       </View>
@@ -252,18 +271,27 @@ const styles = StyleSheet.create({
   primary: {
     alignItems: 'center',
     borderRadius: 12,
+    elevation: 4,
     flexDirection: 'row',
     justifyContent: 'center',
-    minHeight: 54,
+    minHeight: 56,
     paddingHorizontal: 18,
     position: 'relative',
     shadowOffset: { height: 4, width: 0 },
-    shadowOpacity: 0.22,
-    shadowRadius: 10,
+    shadowOpacity: 0.32,
+    shadowRadius: 12,
   },
   primaryArrow: {
+    bottom: 0,
+    justifyContent: 'center',
     position: 'absolute',
     right: 18,
+    top: 0,
+  },
+  primaryGhost: {
+    borderWidth: 1.4,
+    elevation: 0,
+    shadowOpacity: 0,
   },
   primaryText: {
     fontFamily: FONTS.sansBold,
