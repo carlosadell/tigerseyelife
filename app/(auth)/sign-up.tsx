@@ -1,6 +1,7 @@
 import { Link, router } from 'expo-router';
+import { ArrowRight, Lock, Mail } from 'lucide-react-native';
 import { useState } from 'react';
-import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
+import { ActivityIndicator, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 
 import { AuthShell } from '../../components/auth/AuthShell';
 import { useAuth } from '../../hooks/useAuth';
@@ -19,10 +20,9 @@ export default function SignUpScreen() {
     setError(null);
     setMessage(null);
     setSubmitting(true);
-
     try {
       await signUp(email, password);
-      setMessage('Account created. You can sign in when ready.');
+      setMessage('Account created. Sign in when you’re ready.');
     } catch (nextError) {
       setError(nextError instanceof Error ? nextError.message : 'Unable to create account.');
     } finally {
@@ -39,83 +39,147 @@ export default function SignUpScreen() {
     <AuthShell
       eyebrow="CREATE POWER"
       footer={
-        <>
+        <View style={styles.footerStack}>
           <Link href="/(auth)/sign-in" style={styles.link}>
-            Already have an account?
+            <Text style={styles.linkMuted}>Already have an account? </Text>
+            <Text style={styles.linkAccent}>Sign in</Text>
           </Link>
           {__DEV__ ? (
-            <Pressable onPress={handleDevSignIn} style={styles.devSkip}>
-              <Text style={styles.devSkipText}>Skip for dev</Text>
+            <Pressable hitSlop={8} onPress={handleDevSignIn}>
+              <Text style={styles.devSkipText}>Skip for dev preview →</Text>
             </Pressable>
           ) : null}
-        </>
+        </View>
       }
     >
       {!hasSupabaseConfig ? (
-        <View style={styles.errorCard}>
-          <Text style={styles.errorText}>
-            Supabase env values are empty. Fill .env before creating accounts.
+        <View style={styles.banner}>
+          <Text style={styles.bannerKicker}>DEV MODE</Text>
+          <Text style={styles.bannerText}>
+            Supabase keys are empty. Fill .env to create real accounts, or use Skip for dev.
           </Text>
         </View>
       ) : null}
+
       {error ? (
         <View style={styles.errorCard}>
           <Text style={styles.errorText}>{error}</Text>
         </View>
       ) : null}
+
       {message ? (
         <View style={styles.messageCard}>
           <Text style={styles.messageText}>{message}</Text>
         </View>
       ) : null}
-      <TextInput
-        autoCapitalize="none"
-        autoCorrect={false}
-        keyboardType="email-address"
-        onBlur={() => setFocusedField(null)}
-        onChangeText={setEmail}
-        onFocus={() => setFocusedField('email')}
-        placeholder="Email"
-        placeholderTextColor={COLORS.steel}
-        style={[styles.input, focusedField === 'email' && styles.inputFocused]}
-        value={email}
-      />
-      <TextInput
-        onBlur={() => setFocusedField(null)}
-        onChangeText={setPassword}
-        onFocus={() => setFocusedField('password')}
-        placeholder="Password"
-        placeholderTextColor={COLORS.steel}
-        secureTextEntry
-        style={[styles.input, focusedField === 'password' && styles.inputFocused]}
-        value={password}
-      />
+
+      <FieldGroup focused={focusedField === 'email'} icon={<Mail color={COLORS.tigerGold} size={16} />} label="EMAIL">
+        <TextInput
+          autoCapitalize="none"
+          autoCorrect={false}
+          keyboardType="email-address"
+          onBlur={() => setFocusedField(null)}
+          onChangeText={setEmail}
+          onFocus={() => setFocusedField('email')}
+          placeholder="you@example.com"
+          placeholderTextColor="rgba(168,175,184,0.5)"
+          style={styles.input}
+          value={email}
+        />
+      </FieldGroup>
+
+      <FieldGroup focused={focusedField === 'password'} icon={<Lock color={COLORS.tigerGold} size={16} />} label="PASSWORD">
+        <TextInput
+          onBlur={() => setFocusedField(null)}
+          onChangeText={setPassword}
+          onFocus={() => setFocusedField('password')}
+          placeholder="At least 8 characters"
+          placeholderTextColor="rgba(168,175,184,0.5)"
+          secureTextEntry
+          style={styles.input}
+          value={password}
+        />
+      </FieldGroup>
+
       <Pressable
+        accessibilityRole="button"
         disabled={submitting}
         onPress={handleSignUp}
-        style={[styles.primaryButton, submitting && styles.primaryButtonDisabled]}
+        style={({ pressed }) => [
+          styles.primaryButton,
+          { opacity: submitting || pressed ? 0.92 : 1 },
+        ]}
       >
         <Text style={styles.primaryButtonText}>
-          {submitting ? 'Creating...' : 'Create Account'}
+          {submitting ? 'Creating account…' : 'Create account'}
         </Text>
+        {submitting ? (
+          <View style={styles.primaryArrow}>
+            <ActivityIndicator color={COLORS.bone} size="small" />
+          </View>
+        ) : (
+          <View style={styles.primaryArrow}>
+            <ArrowRight color={COLORS.bone} size={20} strokeWidth={2.4} />
+          </View>
+        )}
       </Pressable>
     </AuthShell>
   );
 }
 
+function FieldGroup({
+  children,
+  focused,
+  icon,
+  label,
+}: {
+  children: React.ReactNode;
+  focused: boolean;
+  icon: React.ReactNode;
+  label: string;
+}) {
+  return (
+    <View style={styles.fieldGroup}>
+      <View style={styles.fieldLabelRow}>
+        {icon}
+        <Text style={[styles.fieldLabel, focused && styles.fieldLabelFocused]}>{label}</Text>
+      </View>
+      <View style={[styles.fieldWrap, focused && styles.fieldWrapFocused]}>{children}</View>
+    </View>
+  );
+}
+
 const styles = StyleSheet.create({
-  devSkip: {
-    marginTop: 10,
+  banner: {
+    backgroundColor: 'rgba(200,159,77,0.12)',
+    borderColor: 'rgba(200,159,77,0.34)',
+    borderRadius: 10,
+    borderWidth: 1,
+    gap: 4,
+    padding: 12,
+  },
+  bannerKicker: {
+    color: COLORS.tigerGold,
+    fontFamily: FONTS.sansBold,
+    fontSize: 10,
+    letterSpacing: 2,
+  },
+  bannerText: {
+    color: COLORS.bone,
+    fontFamily: FONTS.sans,
+    fontSize: 12.5,
+    lineHeight: 17,
   },
   devSkipText: {
-    color: COLORS.steel,
-    fontFamily: FONTS.sansMedium,
+    color: COLORS.tigerGold,
+    fontFamily: FONTS.sansBold,
     fontSize: 12,
+    letterSpacing: 0.2,
   },
   errorCard: {
-    backgroundColor: 'rgba(165,72,72,0.12)',
-    borderColor: 'rgba(165,72,72,0.34)',
-    borderRadius: 14,
+    backgroundColor: 'rgba(165,72,72,0.16)',
+    borderColor: 'rgba(165,72,72,0.4)',
+    borderRadius: 10,
     borderWidth: 1,
     padding: 12,
   },
@@ -125,29 +189,59 @@ const styles = StyleSheet.create({
     fontSize: 13,
     lineHeight: 18,
   },
-  input: {
-    backgroundColor: 'rgba(245,242,234,0.08)',
-    borderColor: 'rgba(245,242,234,0.12)',
-    borderRadius: 14,
-    borderWidth: 1,
-    color: COLORS.bone,
-    fontFamily: FONTS.sans,
-    fontSize: 16,
-    paddingHorizontal: 16,
-    paddingVertical: 14,
+  fieldGroup: {
+    gap: 6,
   },
-  inputFocused: {
+  fieldLabel: {
+    color: COLORS.steel,
+    fontFamily: FONTS.sansBold,
+    fontSize: 10,
+    letterSpacing: 1.6,
+  },
+  fieldLabelFocused: {
+    color: COLORS.tigerGold,
+  },
+  fieldLabelRow: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    gap: 6,
+    paddingHorizontal: 2,
+  },
+  fieldWrap: {
+    backgroundColor: 'rgba(245,242,234,0.05)',
+    borderColor: 'rgba(245,242,234,0.12)',
+    borderRadius: 10,
+    borderWidth: 1,
+  },
+  fieldWrapFocused: {
     borderColor: COLORS.tigerGold,
   },
+  footerStack: {
+    alignItems: 'center',
+    gap: 14,
+  },
+  input: {
+    color: COLORS.bone,
+    fontFamily: FONTS.sans,
+    fontSize: 15,
+    paddingHorizontal: 14,
+    paddingVertical: 13,
+  },
   link: {
+    fontFamily: FONTS.sans,
+    fontSize: 13,
+  },
+  linkAccent: {
+    color: COLORS.tigerGold,
+    fontFamily: FONTS.sansBold,
+  },
+  linkMuted: {
     color: COLORS.steel,
-    fontFamily: FONTS.sansMedium,
-    textAlign: 'center',
   },
   messageCard: {
     backgroundColor: 'rgba(30,91,69,0.18)',
     borderColor: 'rgba(30,91,69,0.45)',
-    borderRadius: 14,
+    borderRadius: 10,
     borderWidth: 1,
     padding: 12,
   },
@@ -157,19 +251,31 @@ const styles = StyleSheet.create({
     fontSize: 13,
     lineHeight: 18,
   },
+  primaryArrow: {
+    bottom: 0,
+    justifyContent: 'center',
+    position: 'absolute',
+    right: 18,
+    top: 0,
+  },
   primaryButton: {
     alignItems: 'center',
-    backgroundColor: COLORS.tigerGold,
-    borderRadius: 14,
-    minHeight: 52,
+    backgroundColor: COLORS.tangerine,
+    borderRadius: 10,
+    elevation: 4,
     justifyContent: 'center',
-  },
-  primaryButtonDisabled: {
-    opacity: 0.64,
+    minHeight: 52,
+    paddingHorizontal: 18,
+    position: 'relative',
+    shadowColor: COLORS.tangerine,
+    shadowOffset: { height: 4, width: 0 },
+    shadowOpacity: 0.32,
+    shadowRadius: 12,
   },
   primaryButtonText: {
-    color: COLORS.onyx,
+    color: '#FFFFFF',
     fontFamily: FONTS.sansBold,
-    fontSize: 16,
+    fontSize: 15.5,
+    letterSpacing: 0.2,
   },
 });
