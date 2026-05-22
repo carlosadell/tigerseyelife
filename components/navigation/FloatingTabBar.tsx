@@ -1,6 +1,7 @@
 import type { BottomTabBarProps } from '@react-navigation/bottom-tabs';
 import { BlurView } from 'expo-blur';
 import * as Haptics from 'expo-haptics';
+import { LinearGradient } from 'expo-linear-gradient';
 import { Dumbbell, Soup, Sprout, Sun, User } from 'lucide-react-native';
 import { ComponentType, useEffect, useRef } from 'react';
 import { Animated, Easing, Platform, Pressable, StyleSheet, Text, View } from 'react-native';
@@ -28,15 +29,25 @@ export function FloatingTabBar({ state, descriptors, navigation, onCoachPress }:
   const insets = useSafeAreaInsets();
   const { colors, mode } = useTheme();
 
+  const scrimHeight = insets.bottom + 76;
+  const fadeColor = colors.background;
+
   return (
-    <View pointerEvents="box-none" style={[styles.wrap, { paddingBottom: insets.bottom + 12 }]}>
-      <View style={styles.row}>
-        <View style={[styles.barShadow, { shadowColor: COLORS.onyx }]}>
-          <BlurView
-            intensity={mode === 'dark' ? 38 : 60}
-            tint={mode === 'dark' ? 'dark' : 'light'}
-            style={[styles.bar, { backgroundColor: colors.glassPanel, borderColor: colors.glassBorder }]}
-          >
+    <View pointerEvents="box-none" style={styles.wrap}>
+      <LinearGradient
+        pointerEvents="none"
+        colors={[`${fadeColor}00`, fadeColor]}
+        locations={[0, 0.65]}
+        style={[styles.scrim, { height: scrimHeight }]}
+      />
+      <View pointerEvents="box-none" style={{ paddingBottom: insets.bottom + 6 }}>
+        <View style={styles.row}>
+          <View style={[styles.barShadow, { shadowColor: COLORS.onyx }]}>
+            <BlurView
+              intensity={mode === 'dark' ? 38 : 60}
+              tint={mode === 'dark' ? 'dark' : 'light'}
+              style={[styles.bar, { backgroundColor: colors.glassPanel, borderColor: colors.glassBorder }]}
+            >
             {state.routes.map((route, index) => {
               const focused = state.index === index;
               const Icon = icons[route.name];
@@ -68,13 +79,14 @@ export function FloatingTabBar({ state, descriptors, navigation, onCoachPress }:
                 />
               );
             })}
-          </BlurView>
-        </View>
-        {onCoachPress ? (
-          <View style={styles.coachSlot}>
-            <CoachFloatingButton onPress={onCoachPress} />
+            </BlurView>
           </View>
-        ) : null}
+          {onCoachPress ? (
+            <View style={styles.coachSlot}>
+              <CoachFloatingButton onPress={onCoachPress} />
+            </View>
+          ) : null}
+        </View>
       </View>
     </View>
   );
@@ -203,6 +215,13 @@ const styles = StyleSheet.create({
     maxWidth: 380,
     paddingHorizontal: 14,
     width: '100%',
+  },
+  scrim: {
+    bottom: 0,
+    left: 0,
+    pointerEvents: 'none',
+    position: 'absolute',
+    right: 0,
   },
   wrap: {
     alignItems: 'center',
