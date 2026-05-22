@@ -30,6 +30,16 @@ const LETTER_TINT: Record<PowerLetter, string> = {
   R: COLORS.deepGreen,
 };
 
+// Each letter badge gets a contrast-optimized text color. Yellow needs dark
+// ink for readability; everything else uses pure white.
+const LETTER_INK: Record<PowerLetter, string> = {
+  P: '#FFFFFF',
+  O: '#FFFFFF',
+  W: '#FFFFFF',
+  E: COLORS.onyx,
+  R: '#FFFFFF',
+};
+
 const DAY_LABELS = ['M', 'T', 'W', 'TH', 'F', 'S', 'S'];
 
 export default function BlockDetailScreen() {
@@ -80,7 +90,7 @@ export default function BlockDetailScreen() {
               {(Object.keys(POWER_LETTERS) as PowerLetter[]).map((letter) => (
                 <View key={letter} style={styles.compassRow}>
                   <View style={[styles.letterBadge, { backgroundColor: LETTER_TINT[letter] }]}>
-                    <Text style={styles.letterBadgeText}>{letter}</Text>
+                    <Text style={[styles.letterBadgeText, { color: LETTER_INK[letter] }]}>{letter}</Text>
                   </View>
                   <Text style={[styles.compassHint, { color: colors.text }]} numberOfLines={2}>
                     {block.compass[letter]}
@@ -176,7 +186,7 @@ function ActionCard({
     <View style={[styles.actionCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
       <View style={styles.actionHeader}>
         <View style={[styles.letterBadge, { backgroundColor: tint }]}>
-          <Text style={styles.letterBadgeText}>{action.letter}</Text>
+          <Text style={[styles.letterBadgeText, { color: LETTER_INK[action.letter] }]}>{action.letter}</Text>
         </View>
         <Text style={[styles.actionTitle, { color: colors.text }]}>{action.description}</Text>
       </View>
@@ -261,7 +271,7 @@ function WeekRow({ actionId, days, label, todayKey, isChecked, onToggle }: WeekR
                   styles.dayLetter,
                   {
                     color: checked
-                      ? colors.inverseText
+                      ? '#FFFFFF'
                       : isToday
                       ? colors.action
                       : colors.mutedText,
@@ -392,7 +402,6 @@ const styles = StyleSheet.create({
     width: 22,
   },
   letterBadgeText: {
-    color: '#0B0B0C',
     fontFamily: FONTS.sansBold,
     fontSize: 11.5,
     letterSpacing: 0.5,

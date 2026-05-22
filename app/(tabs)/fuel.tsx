@@ -489,7 +489,7 @@ const styles = StyleSheet.create({
     width: 32,
   },
   mealLetterText: {
-    color: COLORS.onyx,
+    color: '#FFFFFF',
     fontFamily: FONTS.sansBold,
     fontSize: 15,
     letterSpacing: 0.4,
