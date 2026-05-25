@@ -6,10 +6,10 @@ import { Platform, Pressable, ScrollView, StyleSheet, Text, View } from 'react-n
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { LETTER_INK, LETTER_TINT } from '../../components/grow/ActionCard';
-import { useThemeColors } from '../../hooks/useTheme';
+import { useTheme, useThemeColors } from '../../hooks/useTheme';
 import { usePowerActionProgress } from '../../hooks/usePowerActionProgress';
 import { useTodayEngagement } from '../../hooks/useTodayEngagement';
-import { COLORS, FONTS, SPACING } from '../../lib/brand';
+import { COLORS, FONTS, SPACING, textTintOf } from '../../lib/brand';
 import {
   PowerFocus,
   PowerLetter,
@@ -178,7 +178,9 @@ type ThreadCardProps = {
 
 function ThreadCard({ letter, name, compass, focus, progress, onPress }: ThreadCardProps) {
   const colors = useThemeColors();
+  const { mode } = useTheme();
   const tint = LETTER_TINT[letter];
+  const tintText = textTintOf(tint, mode);
   const hasActions = progress.todayTotal > 0;
   return (
     <Pressable
@@ -206,7 +208,7 @@ function ThreadCard({ letter, name, compass, focus, progress, onPress }: ThreadC
           </Text>
         </View>
         <View style={styles.cardStat}>
-          <Text style={[styles.cardStatValue, { color: tint }]}>
+          <Text style={[styles.cardStatValue, { color: tintText }]}>
             {hasActions ? `${progress.todayDone}/${progress.todayTotal}` : '—'}
           </Text>
           <Text style={[styles.cardStatLabel, { color: colors.mutedText }]}>TODAY</Text>

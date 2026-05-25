@@ -14,8 +14,8 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { MacroPie } from './MacroPie';
-import { useThemeColors } from '../../hooks/useTheme';
-import { COLORS, FONTS } from '../../lib/brand';
+import { useTheme, useThemeColors } from '../../hooks/useTheme';
+import { COLORS, FONTS, textTintOf } from '../../lib/brand';
 import { LoggedMeal, MEAL_SLOTS, estimateCalories } from '../../lib/meals';
 
 const { height: SCREEN_HEIGHT } = Dimensions.get('window');
@@ -204,6 +204,8 @@ function LegendRow({
   grams: number;
 }) {
   const colors = useThemeColors();
+  const { mode } = useTheme();
+  const gramsColor = textTintOf(color, mode);
   return (
     <View style={styles.legendRow}>
       <View style={[styles.legendSwatch, { backgroundColor: color }]} />
@@ -212,7 +214,7 @@ function LegendRow({
         {pct !== null ? (
           <Text style={[styles.legendPct, { color: colors.mutedText }]}>{pct}% cal</Text>
         ) : null}
-        <Text style={[styles.legendGrams, { color: color }]}>{grams}g</Text>
+        <Text style={[styles.legendGrams, { color: gramsColor }]}>{grams}g</Text>
       </View>
     </View>
   );

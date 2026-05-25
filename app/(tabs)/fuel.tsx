@@ -10,9 +10,9 @@ import { FuelPrecision, MealSlotCard } from '../../components/fuel/MealSlotCard'
 import { WeekStrip } from '../../components/history/WeekStrip';
 import { useDailyMeals } from '../../hooks/useDailyMeals';
 import { useProfile } from '../../hooks/useProfile';
-import { useThemeColors } from '../../hooks/useTheme';
+import { useTheme, useThemeColors } from '../../hooks/useTheme';
 import { useTodayEngagement } from '../../hooks/useTodayEngagement';
-import { COLORS, FONTS, SPACING } from '../../lib/brand';
+import { COLORS, FONTS, SPACING, textTintOf } from '../../lib/brand';
 import { DEFAULT_TARGETS, LoggedMeal, MEAL_SLOTS, MealSlot } from '../../lib/meals';
 
 type PrecisionOption = { id: FuelPrecision; label: string; description: string };
@@ -272,11 +272,13 @@ function MacroChip({
   pct: number;
 }) {
   const colors = useThemeColors();
+  const { mode } = useTheme();
+  const textColor = textTintOf(color, mode);
   return (
     <View style={styles.chipRow}>
       <View style={[styles.chipSwatch, { backgroundColor: color }]} />
       <Text style={[styles.chipLabel, { color: colors.text }]}>{label}</Text>
-      <Text style={[styles.chipGrams, { color }]}>{grams}g</Text>
+      <Text style={[styles.chipGrams, { color: textColor }]}>{grams}g</Text>
       <Text style={[styles.chipPct, { color: colors.mutedText }]}>{pct}%</Text>
     </View>
   );
@@ -296,14 +298,16 @@ function MacroBar({
   tint: string;
 }) {
   const colors = useThemeColors();
+  const { mode } = useTheme();
   const pct = target > 0 ? Math.min(100, Math.round((value / target) * 100)) : 0;
   const left = Math.max(0, target - value);
+  const textColor = textTintOf(tint, mode);
   return (
     <View style={styles.macroBar}>
       <View style={styles.macroHead}>
         <Text style={[styles.macroLabel, { color: colors.text }]}>{label.toUpperCase()}</Text>
         <View style={styles.macroValueRow}>
-          <Text style={[styles.macroValueDiag, { color: tint }]}>{value}</Text>
+          <Text style={[styles.macroValueDiag, { color: textColor }]}>{value}</Text>
           <Text style={[styles.macroUnit, { color: colors.mutedText }]}>{unit}</Text>
         </View>
       </View>

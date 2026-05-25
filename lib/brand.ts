@@ -75,6 +75,24 @@ export const THEME_COLORS = {
 
 export type ThemeMode = keyof typeof THEME_COLORS;
 
+/**
+ * Returns a contrast-safe version of a brand color for use as TEXT on the
+ * current theme's card background. Use for diagnostic-font numbers, legend
+ * grams, thread stat values — anywhere the brand color is drawn as text
+ * rather than a fill.
+ *
+ * - Dark mode: brand colors stay as-is (they pop on dark backgrounds).
+ * - Light mode: electricYellow + tigerGold get darkened variants since their
+ *   raw values are nearly invisible on white. Other tints already have
+ *   acceptable contrast and pass through unchanged.
+ */
+export function textTintOf(color: string, mode: ThemeMode): string {
+  if (mode === 'dark') return color;
+  if (color === COLORS.electricYellow) return '#8B6E0F';
+  if (color === COLORS.tigerGold) return '#A87414';
+  return color;
+}
+
 export const fontFamily = {
   sans: 'Inter_400Regular',
   'sans-medium': 'Inter_500Medium',
