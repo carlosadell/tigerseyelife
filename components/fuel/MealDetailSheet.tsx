@@ -1,4 +1,4 @@
-import { Trash2, X } from 'lucide-react-native';
+import { Bookmark, Check, Trash2, X } from 'lucide-react-native';
 import { useEffect, useMemo, useRef } from 'react';
 import {
   Animated,
@@ -14,6 +14,7 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { MacroPie } from './MacroPie';
+import { useSavedMeals } from '../../hooks/useSavedMeals';
 import { useTheme, useThemeColors } from '../../hooks/useTheme';
 import { COLORS, FONTS, textTintOf } from '../../lib/brand';
 import { LoggedMeal, MEAL_SLOTS, estimateCalories } from '../../lib/meals';
@@ -33,6 +34,7 @@ type MealDetailSheetProps = {
 export function MealDetailSheet({ visible, meal, onClose, onRemove }: MealDetailSheetProps) {
   const colors = useThemeColors();
   const insets = useSafeAreaInsets();
+  const { saveFromLogged, isSaved } = useSavedMeals();
   const translateY = useRef(new Animated.Value(SHEET_HEIGHT)).current;
   const backdropOpacity = useRef(new Animated.Value(0)).current;
 
@@ -171,20 +173,51 @@ export function MealDetailSheet({ visible, meal, onClose, onRemove }: MealDetail
               ) : null}
             </View>
 
-            <Pressable
-              accessibilityRole="button"
-              onPress={() => {
-                onRemove(meal.id);
-                close();
-              }}
-              style={({ pressed }) => [
-                styles.removeBtn,
-                { borderColor: colors.border, opacity: pressed ? 0.7 : 1 },
-              ]}
-            >
-              <Trash2 color={colors.mutedText} size={15} strokeWidth={2} />
-              <Text style={[styles.removeText, { color: colors.mutedText }]}>Remove meal</Text>
-            </Pressable>
+            <View style={styles.actionRow}>
+              <Pressable
+                accessibilityRole="button"
+                disabled={isSaved(meal)}
+                onPress={() => saveFromLogged(meal)}
+                style={({ pressed }) => [
+                  styles.actionBtn,
+                  styles.saveBtn,
+                  {
+                    backgroundColor: isSaved(meal) ? colors.cardAlt : colors.accent,
+                    opacity: pressed ? 0.85 : 1,
+                  },
+                ]}
+              >
+                {isSaved(meal) ? (
+                  <Check color={colors.mutedText} size={15} strokeWidth={2.2} />
+                ) : (
+                  <Bookmark color={colors.inverseText} size={15} strokeWidth={2.2} />
+                )}
+                <Text
+                  style={[
+                    styles.actionText,
+                    { color: isSaved(meal) ? colors.mutedText : colors.inverseText },
+                  ]}
+                >
+                  {isSaved(meal) ? 'Saved' : 'Save as favorite'}
+                </Text>
+              </Pressable>
+
+              <Pressable
+                accessibilityRole="button"
+                onPress={() => {
+                  onRemove(meal.id);
+                  close();
+                }}
+                style={({ pressed }) => [
+                  styles.actionBtn,
+                  styles.removeBtn,
+                  { borderColor: colors.border, opacity: pressed ? 0.7 : 1 },
+                ]}
+              >
+                <Trash2 color={colors.mutedText} size={15} strokeWidth={2} />
+                <Text style={[styles.actionText, { color: colors.mutedText }]}>Remove</Text>
+              </Pressable>
+            </View>
           </ScrollView>
         </Animated.View>
       </View>
@@ -323,21 +356,31 @@ const styles = StyleSheet.create({
     position: 'relative',
     width: PIE_SIZE + 20,
   },
-  removeBtn: {
+  actionBtn: {
     alignItems: 'center',
     borderRadius: 12,
-    borderWidth: 1,
+    flex: 1,
     flexDirection: 'row',
-    gap: 8,
+    gap: 7,
     justifyContent: 'center',
-    marginHorizontal: 20,
-    marginTop: 28,
     minHeight: 48,
   },
-  removeText: {
+  actionRow: {
+    flexDirection: 'row',
+    gap: 10,
+    marginHorizontal: 20,
+    marginTop: 28,
+  },
+  actionText: {
     fontFamily: FONTS.sansBold,
     fontSize: 13.5,
     letterSpacing: 0.2,
+  },
+  removeBtn: {
+    borderWidth: 1,
+  },
+  saveBtn: {
+    // background set inline via colors.accent
   },
   root: {
     flex: 1,

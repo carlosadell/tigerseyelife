@@ -1,4 +1,4 @@
-import { X } from 'lucide-react-native';
+import { Trash2, X } from 'lucide-react-native';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import {
   Animated,
@@ -16,6 +16,7 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { useSavedMeals } from '../../hooks/useSavedMeals';
 import { useThemeColors } from '../../hooks/useTheme';
 import { FONTS } from '../../lib/brand';
 import {
@@ -23,6 +24,7 @@ import {
   LoggedMeal,
   MEAL_SLOTS,
   MealSlot,
+  SavedMeal,
   ZERO_MACROS,
   estimateCalories,
 } from '../../lib/meals';
@@ -38,11 +40,12 @@ type AddMealSheetProps = {
   onLog: (meal: Omit<LoggedMeal, 'id' | 'logged_at'>) => void | Promise<void>;
 };
 
-type Tab = 'library' | 'custom';
+type Tab = 'library' | 'favorites' | 'custom';
 
 export function AddMealSheet({ visible, slot, onClose, onLog }: AddMealSheetProps) {
   const colors = useThemeColors();
   const insets = useSafeAreaInsets();
+  const { saved: favorites, removeSaved } = useSavedMeals();
   const [tab, setTab] = useState<Tab>('library');
   const [customName, setCustomName] = useState('');
   const [customMacros, setCustomMacros] = useState<{ [k in keyof typeof ZERO_MACROS]: string }>({
@@ -109,6 +112,18 @@ export function AddMealSheet({ visible, slot, onClose, onLog }: AddMealSheetProp
     close();
   };
 
+  const logFromFavorite = async (fav: SavedMeal) => {
+    if (!slot) return;
+    await onLog({
+      slot,
+      name: fav.name,
+      macros: fav.macros,
+      source: fav.origin,
+      source_id: fav.origin_id,
+    });
+    close();
+  };
+
   const customMacrosNumeric = {
     protein: Number(customMacros.protein) || 0,
     fat: Number(customMacros.fat) || 0,
@@ -168,6 +183,11 @@ export function AddMealSheet({ visible, slot, onClose, onLog }: AddMealSheetProp
 
           <View style={[styles.tabRow, { backgroundColor: colors.cardAlt }]}>
             <TabPill active={tab === 'library'} onPress={() => setTab('library')} label="Library" />
+            <TabPill
+              active={tab === 'favorites'}
+              onPress={() => setTab('favorites')}
+              label={favorites.length > 0 ? `Favorites · ${favorites.length}` : 'Favorites'}
+            />
             <TabPill active={tab === 'custom'} onPress={() => setTab('custom')} label="Custom" />
           </View>
 
@@ -209,6 +229,64 @@ export function AddMealSheet({ visible, slot, onClose, onLog }: AddMealSheetProp
                     </Pressable>
                   );
                 })}
+              </ScrollView>
+            ) : tab === 'favorites' ? (
+              <ScrollView
+                contentContainerStyle={styles.scrollPad}
+                keyboardShouldPersistTaps="handled"
+                showsVerticalScrollIndicator={false}
+              >
+                {favorites.length === 0 ? (
+                  <View
+                    style={[
+                      styles.emptyCard,
+                      { backgroundColor: colors.cardAlt, borderColor: colors.border },
+                    ]}
+                  >
+                    <Text style={[styles.emptyTitle, { color: colors.text }]}>
+                      No favorites yet
+                    </Text>
+                    <Text style={[styles.emptyBody, { color: colors.mutedText }]}>
+                      Tap any logged meal in your Fuel slots and choose "Save as favorite" to keep
+                      it here for one-tap re-log.
+                    </Text>
+                  </View>
+                ) : (
+                  favorites.map((fav) => {
+                    const cals = estimateCalories(fav.macros);
+                    return (
+                      <View
+                        key={fav.id}
+                        style={[
+                          styles.libRow,
+                          { backgroundColor: colors.cardAlt, borderColor: colors.border },
+                        ]}
+                      >
+                        <Pressable
+                          accessibilityRole="button"
+                          onPress={() => logFromFavorite(fav)}
+                          style={({ pressed }) => [
+                            { flex: 1, minWidth: 0, opacity: pressed ? 0.7 : 1 },
+                          ]}
+                        >
+                          <Text style={[styles.libName, { color: colors.text }]}>{fav.name}</Text>
+                          <Text style={[styles.libMacros, { color: colors.mutedText, marginTop: 4 }]}>
+                            {cals} cal · P {fav.macros.protein}g · F {fav.macros.fat}g · C {fav.macros.carb}g · Fi {fav.macros.fiber}g
+                          </Text>
+                        </Pressable>
+                        <Pressable
+                          accessibilityRole="button"
+                          accessibilityLabel={`Remove ${fav.name} from favorites`}
+                          hitSlop={8}
+                          onPress={() => removeSaved(fav.id)}
+                          style={({ pressed }) => [styles.favRemove, { opacity: pressed ? 0.5 : 1 }]}
+                        >
+                          <Trash2 color={colors.mutedText} size={14} strokeWidth={2} />
+                        </Pressable>
+                      </View>
+                    );
+                  })
+                )}
               </ScrollView>
             ) : (
               <ScrollView
@@ -425,10 +503,33 @@ const styles = StyleSheet.create({
     fontSize: 14.5,
   },
   libRow: {
+    alignItems: 'center',
     borderRadius: 12,
     borderWidth: 1,
+    flexDirection: 'row',
+    gap: 10,
     marginBottom: 8,
     padding: 12,
+  },
+  emptyBody: {
+    fontFamily: FONTS.sans,
+    fontSize: 12.5,
+    lineHeight: 17,
+    marginTop: 4,
+    textAlign: 'center',
+  },
+  emptyCard: {
+    borderRadius: 12,
+    borderWidth: 1,
+    padding: 18,
+  },
+  emptyTitle: {
+    fontFamily: FONTS.sansBold,
+    fontSize: 14,
+    textAlign: 'center',
+  },
+  favRemove: {
+    padding: 6,
   },
   macroField: {
     flexBasis: '47%',

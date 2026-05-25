@@ -43,6 +43,16 @@ export type LoggedMeal = {
   source_id?: string;
 };
 
+export type SavedMeal = {
+  id: string;
+  name: string;
+  description?: string;
+  macros: Macros;
+  saved_at: string;
+  origin: 'library' | 'custom';
+  origin_id?: string;
+};
+
 export const ZERO_MACROS: Macros = { protein: 0, fat: 0, carb: 0, fiber: 0 };
 
 export function estimateCalories({ protein, fat, carb }: Macros): number {
