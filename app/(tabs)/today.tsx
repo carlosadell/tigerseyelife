@@ -4,6 +4,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { WeekStrip } from '../../components/history/WeekStrip';
 import { CreatePowerHero } from '../../components/today/CreatePowerHero';
+import { DailyAdviceCarousel } from '../../components/today/DailyAdviceCarousel';
 import { IntentionInput } from '../../components/today/IntentionInput';
 import { NutritionCard, WorkoutCard } from '../../components/today/TodayCards';
 import { useAuth } from '../../hooks/useAuth';
@@ -42,6 +43,7 @@ export default function TodayScreen() {
           />
           <View style={styles.stack}>
             <WeekStrip />
+            <DailyAdviceCarousel />
             <IntentionInput intention={entry.intention ?? defaultIntention} onSave={saveIntention} />
             <WorkoutCard
               assigned={Boolean(todayWorkout)}
