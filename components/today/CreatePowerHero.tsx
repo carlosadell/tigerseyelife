@@ -1,21 +1,25 @@
 import { router } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Bell, Droplet, Dumbbell, Footprints, Moon } from 'lucide-react-native';
-import { ComponentType } from 'react';
+import { Bell, Droplet, Moon } from 'lucide-react-native';
+import { ReactNode, useMemo } from 'react';
 import { Image, Pressable, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
 import Svg, { Circle } from 'react-native-svg';
 
 import { EyeMark } from '../brand/EyeMark';
+import { LETTER_INK, LETTER_TINT } from '../grow/ActionCard';
 import { ThemeToggle } from '../brand/ThemeToggle';
 import { useTheme, useThemeColors } from '../../hooks/useTheme';
+import { usePowerActionProgress } from '../../hooks/usePowerActionProgress';
 import { useTodayEngagement } from '../../hooks/useTodayEngagement';
 import { COLORS, FONTS } from '../../lib/brand';
 import { getGreeting } from '../../lib/greetings';
+import { getPowerBlock, POWER_LETTERS, PowerLetter } from '../../lib/powerBlocks';
 
-type OrbitIcon = ComponentType<{ color: string; size: number; strokeWidth?: number }>;
+const CURRENT_BLOCK_ID = 'commit';
 
 type OrbitItem = {
-  icon: OrbitIcon;
+  key: string;
+  indicator: ReactNode;
   label: string;
   value: string;
   active: boolean;
@@ -50,53 +54,95 @@ export function CreatePowerHero({
 
   const {
     engagement,
-    workoutDone,
     waterTarget,
-    toggleWalk,
     addWater,
     toggleSleep,
   } = useTodayEngagement();
 
-  const completedToday =
-    (workoutDone ? 1 : 0) +
-    (engagement.walk ? 1 : 0) +
-    (engagement.water >= waterTarget ? 1 : 0) +
-    (engagement.sleep ? 1 : 0);
-  const todayProgress = completedToday / 4;
+  const { isChecked, summary } = usePowerActionProgress(CURRENT_BLOCK_ID);
+  const perLetter = useMemo(() => {
+    const key = new Date().toISOString().slice(0, 10);
+    const block = getPowerBlock(CURRENT_BLOCK_ID);
+    const buckets: Record<PowerLetter, { todayDone: number; todayTotal: number }> = {
+      P: { todayDone: 0, todayTotal: 0 },
+      O: { todayDone: 0, todayTotal: 0 },
+      W: { todayDone: 0, todayTotal: 0 },
+      E: { todayDone: 0, todayTotal: 0 },
+      R: { todayDone: 0, todayTotal: 0 },
+    };
+    if (block) {
+      for (const action of block.actions) {
+        buckets[action.letter].todayTotal += 1;
+        if (isChecked(action.id, key)) buckets[action.letter].todayDone += 1;
+      }
+    }
+    return buckets;
+  }, [isChecked, summary]);
 
-  const leftItems: OrbitItem[] = [
-    {
-      icon: Dumbbell,
-      label: 'WORKOUT',
-      value: workoutDone ? 'Done' : 'Open',
-      active: workoutDone,
-      onPress: () => router.push('/(tabs)/train'),
-    },
-    {
-      icon: Footprints,
-      label: 'WALK',
-      value: engagement.walk ? 'Done' : 'Tap',
-      active: engagement.walk,
-      onPress: toggleWalk,
-    },
-  ];
+  const todayProgress = useMemo(() => {
+    let sum = 0;
+    let count = 0;
+    for (const letter of Object.keys(perLetter) as PowerLetter[]) {
+      const { todayDone, todayTotal } = perLetter[letter];
+      if (todayTotal > 0) {
+        sum += todayDone / todayTotal;
+        count += 1;
+      }
+    }
+    sum += engagement.sleep ? 1 : 0;
+    count += 1;
+    sum += Math.min(1, engagement.water / waterTarget);
+    count += 1;
+    return count > 0 ? sum / count : 0;
+  }, [perLetter, engagement.sleep, engagement.water, waterTarget]);
 
-  const rightItems: OrbitItem[] = [
-    {
-      icon: Droplet,
-      label: 'WATER',
-      value: `${engagement.water}/${waterTarget}`,
-      active: engagement.water >= waterTarget,
-      onPress: addWater,
-    },
-    {
-      icon: Moon,
-      label: 'SLEEP',
-      value: engagement.sleep ? 'Logged' : 'Tap',
-      active: engagement.sleep,
-      onPress: toggleSleep,
-    },
-  ];
+  const powerItems: OrbitItem[] = (Object.keys(POWER_LETTERS) as PowerLetter[]).map((letter) => {
+    const { todayDone, todayTotal } = perLetter[letter];
+    const active = todayTotal > 0 && todayDone === todayTotal;
+    return {
+      key: letter,
+      indicator: <LetterBadge letter={letter} dim={!active} />,
+      label: POWER_LETTERS[letter].toUpperCase(),
+      value: todayTotal > 0 ? `${todayDone}/${todayTotal}` : '—',
+      active,
+      onPress: () =>
+        router.push({ pathname: '/grow/thread', params: { block: CURRENT_BLOCK_ID, letter } }),
+    };
+  });
+
+  const sleepItem: OrbitItem = {
+    key: 'sleep',
+    indicator: (
+      <Moon
+        color={engagement.sleep ? COLORS.evidenceBlue : colors.mutedText}
+        size={13}
+        strokeWidth={engagement.sleep ? 2.4 : 1.9}
+      />
+    ),
+    label: 'SLEEP',
+    value: engagement.sleep ? 'Logged' : 'Tap',
+    active: engagement.sleep,
+    onPress: toggleSleep,
+  };
+
+  const hydrationItem: OrbitItem = {
+    key: 'water',
+    indicator: (
+      <Droplet
+        color={engagement.water >= waterTarget ? COLORS.evidenceBlue : colors.mutedText}
+        size={13}
+        strokeWidth={engagement.water >= waterTarget ? 2.4 : 1.9}
+      />
+    ),
+    label: 'WATER',
+    value: `${engagement.water}/${waterTarget}`,
+    active: engagement.water >= waterTarget,
+    onPress: addWater,
+  };
+
+  // 7 chips: 4 left + 3 right
+  const leftItems: OrbitItem[] = [powerItems[0], powerItems[1], powerItems[2], sleepItem];
+  const rightItems: OrbitItem[] = [powerItems[3], powerItems[4], hydrationItem];
 
   return (
     <View style={styles.wrap}>
@@ -164,11 +210,7 @@ export function CreatePowerHero({
 
 function OrbitStat({ item, align }: { item: OrbitItem; align: 'left' | 'right' }) {
   const colors = useThemeColors();
-  const iconColor = item.active ? colors.accent : colors.mutedText;
   const valueColor = item.active ? colors.accent : colors.text;
-  const iconNode = (
-    <item.icon color={iconColor} size={13} strokeWidth={item.active ? 2.4 : 1.9} />
-  );
   return (
     <Pressable
       accessibilityRole="button"
@@ -181,11 +223,26 @@ function OrbitStat({ item, align }: { item: OrbitItem; align: 'left' | 'right' }
     >
       <Text style={[styles.orbitLabel, { color: colors.mutedText }]}>{item.label}</Text>
       <View style={styles.orbitValueRow}>
-        {align === 'left' ? iconNode : null}
+        {align === 'left' ? item.indicator : null}
         <Text style={[styles.orbitValue, { color: valueColor }]}>{item.value}</Text>
-        {align === 'right' ? iconNode : null}
+        {align === 'right' ? item.indicator : null}
       </View>
     </Pressable>
+  );
+}
+
+function LetterBadge({ letter, dim }: { letter: PowerLetter; dim: boolean }) {
+  const tint = LETTER_TINT[letter];
+  const ink = LETTER_INK[letter];
+  return (
+    <View
+      style={[
+        styles.letterBadge,
+        { backgroundColor: dim ? `${tint}55` : tint },
+      ]}
+    >
+      <Text style={[styles.letterBadgeText, { color: ink }]}>{letter}</Text>
+    </View>
   );
 }
 
@@ -295,10 +352,22 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  orbitColumn: {
-    gap: 22,
+  letterBadge: {
+    alignItems: 'center',
+    borderRadius: 5,
+    height: 16,
     justifyContent: 'center',
-    width: 78,
+    width: 16,
+  },
+  letterBadgeText: {
+    fontFamily: FONTS.sansBold,
+    fontSize: 9.5,
+    letterSpacing: 0.4,
+  },
+  orbitColumn: {
+    gap: 18,
+    justifyContent: 'center',
+    width: 86,
   },
   orbitLabel: {
     fontFamily: FONTS.sansBold,
