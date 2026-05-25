@@ -1,11 +1,9 @@
 import { format } from 'date-fns';
-import { useState } from 'react';
 import { Platform, ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { CreatePowerHero } from '../../components/today/CreatePowerHero';
 import { IntentionInput } from '../../components/today/IntentionInput';
-import { QuickAddSheet } from '../../components/today/QuickAddSheet';
 import { NutritionCard, WorkoutCard } from '../../components/today/TodayCards';
 import { useAuth } from '../../hooks/useAuth';
 import { useDailyEntry } from '../../hooks/useDailyEntry';
@@ -24,7 +22,6 @@ export default function TodayScreen() {
   const { todayWorkout } = useAssignedProgram();
   const { entry, saveIntention } = useDailyEntry();
   const { days: streakDays } = useStreak();
-  const [quickAddOpen, setQuickAddOpen] = useState(false);
   const subtitle = `${format(new Date(), 'EEEE').toUpperCase()} · WEEK 4 OF CREATE POWER`;
   const colors = useThemeColors();
 
@@ -39,7 +36,6 @@ export default function TodayScreen() {
           <CreatePowerHero
             firstName={profile.firstName}
             onSignOut={signOut}
-            onLogMorePress={() => setQuickAddOpen(true)}
             streakDays={streakDays}
             subtitle={subtitle}
           />
@@ -55,7 +51,6 @@ export default function TodayScreen() {
           </View>
         </ScrollView>
       </View>
-      <QuickAddSheet visible={quickAddOpen} onClose={() => setQuickAddOpen(false)} />
     </SafeAreaView>
   );
 }

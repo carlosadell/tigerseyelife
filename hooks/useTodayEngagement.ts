@@ -13,10 +13,9 @@ export type EngagementState = {
   walk: boolean;
   water: number;
   sleep: boolean;
-  otherMovement: string[];
 };
 
-const empty: EngagementState = { walk: false, water: 0, sleep: false, otherMovement: [] };
+const empty: EngagementState = { walk: false, water: 0, sleep: false };
 
 export function useTodayEngagement() {
   const { session } = useAuth();
@@ -71,18 +70,8 @@ export function useTodayEngagement() {
     () => persist({ ...state, water: Math.min(WATER_CAP, state.water + 1) }),
     [persist, state],
   );
-  const resetWater = useCallback(() => persist({ ...state, water: 0 }), [persist, state]);
   const toggleSleep = useCallback(
     () => persist({ ...state, sleep: !state.sleep }),
-    [persist, state],
-  );
-  const addOtherMovement = useCallback(
-    (label: string) => {
-      const trimmed = label.trim();
-      if (!trimmed) return Promise.resolve();
-      if (state.otherMovement.includes(trimmed)) return Promise.resolve();
-      return persist({ ...state, otherMovement: [...state.otherMovement, trimmed] });
-    },
     [persist, state],
   );
 
@@ -91,11 +80,8 @@ export function useTodayEngagement() {
     loaded,
     workoutDone,
     waterTarget: WATER_TARGET,
-    waterCap: WATER_CAP,
     toggleWalk,
     addWater,
-    resetWater,
     toggleSleep,
-    addOtherMovement,
   };
 }

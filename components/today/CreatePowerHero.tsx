@@ -1,6 +1,6 @@
 import { router } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Bell, Check, Droplet, Dumbbell, Footprints, Moon, Plus } from 'lucide-react-native';
+import { Bell, Droplet, Dumbbell, Footprints, Moon } from 'lucide-react-native';
 import { ComponentType } from 'react';
 import { Image, Pressable, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
 import Svg, { Circle } from 'react-native-svg';
@@ -28,7 +28,6 @@ const lightTextureSource = require('../../assets/brand/tigers-eye-hero-light-ove
 type CreatePowerHeroProps = {
   firstName?: string | null;
   onSignOut: () => void;
-  onLogMorePress: () => void;
   streakDays: number;
   subtitle: string;
 };
@@ -36,7 +35,6 @@ type CreatePowerHeroProps = {
 export function CreatePowerHero({
   firstName,
   onSignOut,
-  onLogMorePress,
   streakDays,
   subtitle,
 }: CreatePowerHeroProps) {
@@ -58,6 +56,13 @@ export function CreatePowerHero({
     addWater,
     toggleSleep,
   } = useTodayEngagement();
+
+  const completedToday =
+    (workoutDone ? 1 : 0) +
+    (engagement.walk ? 1 : 0) +
+    (engagement.water >= waterTarget ? 1 : 0) +
+    (engagement.sleep ? 1 : 0);
+  const todayProgress = completedToday / 4;
 
   const leftItems: OrbitItem[] = [
     {
@@ -144,7 +149,7 @@ export function CreatePowerHero({
             <OrbitStat key={item.label} item={item} align="right" />
           ))}
         </View>
-        <StreakRing compact={compact} value={streakDays} />
+        <StreakRing compact={compact} progress={todayProgress} value={streakDays} />
         <View style={styles.orbitColumn}>
           {rightItems.map((item) => (
             <OrbitStat key={item.label} item={item} align="left" />
@@ -153,29 +158,6 @@ export function CreatePowerHero({
       </View>
 
       <Text style={[styles.streakLabel, { color: colors.accent }]}>DAY PRACTICE STREAK</Text>
-
-      <Pressable
-        accessibilityRole="button"
-        onPress={onLogMorePress}
-        style={({ pressed }) => [styles.logMore, { opacity: pressed ? 0.7 : 1 }]}
-      >
-        <Plus color={colors.accent} size={14} strokeWidth={2.2} />
-        <Text style={[styles.logMoreText, { color: colors.accent }]}>LOG SOMETHING ELSE</Text>
-      </Pressable>
-
-      {engagement.otherMovement.length > 0 ? (
-        <View style={styles.otherRow}>
-          {engagement.otherMovement.map((label) => (
-            <View
-              key={label}
-              style={[styles.otherChip, { backgroundColor: colors.cardAlt, borderColor: colors.border }]}
-            >
-              <Check color={colors.success} size={11} strokeWidth={2.6} />
-              <Text style={[styles.otherText, { color: colors.text }]}>{label}</Text>
-            </View>
-          ))}
-        </View>
-      ) : null}
     </View>
   );
 }
@@ -184,6 +166,9 @@ function OrbitStat({ item, align }: { item: OrbitItem; align: 'left' | 'right' }
   const colors = useThemeColors();
   const iconColor = item.active ? colors.accent : colors.mutedText;
   const valueColor = item.active ? colors.accent : colors.text;
+  const iconNode = (
+    <item.icon color={iconColor} size={13} strokeWidth={item.active ? 2.4 : 1.9} />
+  );
   return (
     <Pressable
       accessibilityRole="button"
@@ -194,18 +179,34 @@ function OrbitStat({ item, align }: { item: OrbitItem; align: 'left' | 'right' }
         { alignItems: align === 'left' ? 'flex-start' : 'flex-end', opacity: pressed ? 0.7 : 1 },
       ]}
     >
-      <item.icon color={iconColor} size={18} strokeWidth={item.active ? 2.2 : 1.8} />
       <Text style={[styles.orbitLabel, { color: colors.mutedText }]}>{item.label}</Text>
-      <Text style={[styles.orbitValue, { color: valueColor }]}>{item.value}</Text>
+      <View style={styles.orbitValueRow}>
+        {align === 'left' ? iconNode : null}
+        <Text style={[styles.orbitValue, { color: valueColor }]}>{item.value}</Text>
+        {align === 'right' ? iconNode : null}
+      </View>
     </Pressable>
   );
 }
 
-function StreakRing({ compact, value }: { compact: boolean; value: number }) {
+function StreakRing({
+  compact,
+  progress,
+  value,
+}: {
+  compact: boolean;
+  progress: number;
+  value: number;
+}) {
   const { colors, mode } = useTheme();
   const ringColor = mode === 'dark' ? COLORS.tigerGold : '#B67A12';
+  const progressColor = COLORS.deepGreen;
   const ringSize = compact ? 116 : 132;
   const radius = (ringSize - 6) / 2;
+  const circumference = 2 * Math.PI * radius;
+  const clamped = Math.max(0, Math.min(1, progress));
+  const dashOffset = circumference * (1 - clamped);
+  const center = ringSize / 2;
 
   return (
     <View style={[styles.ring, { height: ringSize, width: ringSize }]}>
@@ -216,8 +217,8 @@ function StreakRing({ compact, value }: { compact: boolean; value: number }) {
         width={ringSize}
       >
         <Circle
-          cx={ringSize / 2}
-          cy={ringSize / 2}
+          cx={center}
+          cy={center}
           fill="none"
           r={radius}
           stroke={ringColor}
@@ -225,13 +226,27 @@ function StreakRing({ compact, value }: { compact: boolean; value: number }) {
           strokeWidth={1}
         />
         <Circle
-          cx={ringSize / 2}
-          cy={ringSize / 2}
+          cx={center}
+          cy={center}
           fill="none"
           r={radius}
           stroke={ringColor}
           strokeWidth={2}
         />
+        {clamped > 0 ? (
+          <Circle
+            cx={center}
+            cy={center}
+            fill="none"
+            r={radius}
+            stroke={progressColor}
+            strokeDasharray={`${circumference} ${circumference}`}
+            strokeDashoffset={dashOffset}
+            strokeLinecap="round"
+            strokeWidth={5}
+            transform={`rotate(-90 ${center} ${center})`}
+          />
+        ) : null}
       </Svg>
       <Text style={[styles.streakValue, compact && styles.compactStreakValue, { color: colors.accent }]}>
         {value}
@@ -280,67 +295,36 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  logMore: {
-    alignItems: 'center',
-    alignSelf: 'center',
-    flexDirection: 'row',
-    gap: 6,
-    marginTop: 14,
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-  },
-  logMoreText: {
-    fontFamily: FONTS.sansBold,
-    fontSize: 10.5,
-    letterSpacing: 1.8,
-  },
   orbitColumn: {
-    flex: 1,
-    gap: 18,
+    gap: 22,
     justifyContent: 'center',
+    width: 78,
   },
   orbitLabel: {
     fontFamily: FONTS.sansBold,
     fontSize: 9,
     letterSpacing: 1.4,
-    marginTop: 4,
   },
   orbitRow: {
     alignItems: 'center',
+    alignSelf: 'center',
     flexDirection: 'row',
-    gap: 14,
+    gap: 16,
     marginTop: 28,
   },
   orbitStat: {
-    gap: 2,
+    gap: 4,
   },
   orbitValue: {
     fontFamily: FONTS.sansBold,
-    fontSize: 13,
-    letterSpacing: 0.2,
+    fontSize: 18,
+    letterSpacing: -0.2,
+    lineHeight: 22,
   },
-  otherChip: {
+  orbitValueRow: {
     alignItems: 'center',
-    borderRadius: 999,
-    borderWidth: 1,
     flexDirection: 'row',
     gap: 5,
-    paddingHorizontal: 10,
-    paddingVertical: 5,
-  },
-  otherRow: {
-    alignItems: 'center',
-    alignSelf: 'center',
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 6,
-    justifyContent: 'center',
-    marginTop: 10,
-    maxWidth: 320,
-  },
-  otherText: {
-    fontFamily: FONTS.sansMedium,
-    fontSize: 11.5,
   },
   streakLabel: {
     alignSelf: 'center',
