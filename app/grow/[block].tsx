@@ -1,6 +1,6 @@
 import { format } from 'date-fns';
 import { router, useLocalSearchParams } from 'expo-router';
-import { ChevronLeft, ChevronRight, Droplet, Moon, Plus } from 'lucide-react-native';
+import { ChevronLeft, Droplet, Moon } from 'lucide-react-native';
 import { useMemo } from 'react';
 import { Platform, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -105,7 +105,7 @@ export default function BlockDetailScreen() {
           <View style={styles.sectionHeader}>
             <Text style={[styles.sectionLabel, { color: colors.mutedText }]}>THREADS</Text>
             <Text style={[styles.sectionSub, { color: colors.mutedText }]}>
-              Tap a POWER thread to drill in
+              Today's signals
             </Text>
           </View>
 
@@ -179,50 +179,47 @@ type ThreadCardProps = {
 function ThreadCard({ letter, name, compass, focus, progress, onPress }: ThreadCardProps) {
   const colors = useThemeColors();
   const tint = LETTER_TINT[letter];
+  const hasActions = progress.todayTotal > 0;
   return (
     <Pressable
       accessibilityRole="button"
       accessibilityLabel={`${name} thread, ${progress.todayDone} of ${progress.todayTotal} today`}
       onPress={onPress}
       style={({ pressed }) => [
-        styles.threadCard,
-        { backgroundColor: colors.card, borderColor: colors.border, opacity: pressed ? 0.92 : 1 },
+        styles.card,
+        { backgroundColor: colors.card, borderColor: colors.border, opacity: pressed ? 0.96 : 1 },
       ]}
     >
-      <View style={[styles.threadBadge, { backgroundColor: tint }]}>
-        <Text style={[styles.threadBadgeText, { color: LETTER_INK[letter] }]}>{letter}</Text>
-      </View>
-      <View style={styles.threadBody}>
-        <View style={styles.threadHead}>
-          <Text style={[styles.threadName, { color: colors.text }]}>{name}</Text>
-          <Text style={[styles.threadFocus, { color: colors.mutedText }]}>
-            {FOCUS_LABEL[focus]}
+      <View style={styles.cardBody}>
+        <View style={[styles.cardBadge, { backgroundColor: tint }]}>
+          <Text style={[styles.cardBadgeText, { color: LETTER_INK[letter] }]}>{letter}</Text>
+        </View>
+        <View style={styles.cardText}>
+          <Text style={[styles.cardName, { color: colors.text }]}>
+            {name}
+            <Text style={[styles.cardModifier, { color: colors.mutedText }]}>
+              {'  ·  '}{FOCUS_LABEL[focus].toUpperCase()}
+            </Text>
+          </Text>
+          <Text style={[styles.cardCompass, { color: colors.mutedText }]} numberOfLines={1}>
+            {compass}
           </Text>
         </View>
-        <Text style={[styles.threadCompass, { color: colors.mutedText }]} numberOfLines={1}>
-          {compass}
-        </Text>
-        <View style={styles.threadMetaRow}>
-          <Text style={[styles.threadMeta, { color: colors.text }]}>
-            <Text style={{ color: tint, fontFamily: FONTS.sansBold }}>
-              {progress.todayDone}/{progress.todayTotal}
-            </Text>{' '}
-            today
+        <View style={styles.cardStat}>
+          <Text style={[styles.cardStatValue, { color: tint }]}>
+            {hasActions ? `${progress.todayDone}/${progress.todayTotal}` : '—'}
           </Text>
-          <Text style={[styles.threadMeta, { color: colors.mutedText }]}>
-            {progress.blockPct}% block
+          <Text style={[styles.cardStatLabel, { color: colors.mutedText }]}>TODAY</Text>
+          <Text style={[styles.cardStatBlock, { color: colors.mutedText }]}>
+            {progress.blockPct}% BLOCK
           </Text>
-        </View>
-        <View style={[styles.threadTrack, { backgroundColor: colors.cardAlt }]}>
-          <View
-            style={[
-              styles.threadFill,
-              { backgroundColor: tint, width: `${progress.blockPct}%` },
-            ]}
-          />
         </View>
       </View>
-      <ChevronRight color={colors.mutedText} size={18} />
+      <View style={[styles.cardBarTrack, { backgroundColor: colors.cardAlt }]}>
+        <View
+          style={[styles.cardBarFill, { backgroundColor: tint, width: `${progress.blockPct}%` }]}
+        />
+      </View>
     </Pressable>
   );
 }
@@ -236,26 +233,40 @@ function SleepCard({ logged, onToggle }: { logged: boolean; onToggle: () => void
       accessibilityLabel={`Sleep ${logged ? 'logged' : 'not logged'} today`}
       onPress={onToggle}
       style={({ pressed }) => [
-        styles.threadCard,
-        { backgroundColor: colors.card, borderColor: colors.border, opacity: pressed ? 0.92 : 1 },
+        styles.card,
+        { backgroundColor: colors.card, borderColor: colors.border, opacity: pressed ? 0.96 : 1 },
       ]}
     >
-      <View style={[styles.threadBadge, { backgroundColor: logged ? tint : colors.cardAlt }]}>
-        <Moon color={logged ? '#FFFFFF' : tint} size={14} strokeWidth={2} />
+      <View style={styles.cardBody}>
+        <View style={[styles.cardBadge, { backgroundColor: logged ? tint : colors.cardAlt }]}>
+          <Moon color={logged ? '#FFFFFF' : tint} size={16} strokeWidth={2} />
+        </View>
+        <View style={styles.cardText}>
+          <Text style={[styles.cardName, { color: colors.text }]}>
+            Sleep
+            <Text style={[styles.cardModifier, { color: colors.mutedText }]}>
+              {'  ·  '}FOUNDATION
+            </Text>
+          </Text>
+          <Text style={[styles.cardCompass, { color: colors.mutedText }]}>
+            {logged ? 'Logged today · tap to undo' : 'Tap to acknowledge tonight’s rest'}
+          </Text>
+        </View>
+        <View style={styles.cardStat}>
+          <Text style={[styles.cardStatValue, { color: logged ? tint : colors.mutedText }]}>
+            {logged ? '✓' : '—'}
+          </Text>
+          <Text style={[styles.cardStatLabel, { color: colors.mutedText }]}>TODAY</Text>
+          <Text style={[styles.cardStatBlock, { color: colors.mutedText }]}>
+            {logged ? 'LOGGED' : 'TAP TO LOG'}
+          </Text>
+        </View>
       </View>
-      <View style={styles.threadBody}>
-        <Text style={[styles.threadName, { color: colors.text }]}>Sleep</Text>
-        <Text style={[styles.threadCompass, { color: colors.mutedText }]}>
-          {logged
-            ? 'Logged today · tap to undo'
-            : 'Tap to acknowledge tonight’s rest'}
-        </Text>
+      <View style={[styles.cardBarTrack, { backgroundColor: colors.cardAlt }]}>
+        <View
+          style={[styles.cardBarFill, { backgroundColor: tint, width: logged ? '100%' : '0%' }]}
+        />
       </View>
-      {logged ? (
-        <Text style={[styles.threadStatus, { color: tint }]}>Done</Text>
-      ) : (
-        <Text style={[styles.threadStatus, { color: colors.mutedText }]}>Tap</Text>
-      )}
     </Pressable>
   );
 }
@@ -272,45 +283,43 @@ function HydrationCard({
   const colors = useThemeColors();
   const tint = COLORS.evidenceBlue;
   const pct = target > 0 ? Math.min(100, Math.round((count / target) * 100)) : 0;
+  const atTarget = count >= target;
   return (
     <Pressable
       accessibilityRole="button"
       accessibilityLabel={`Hydration ${count} of ${target} glasses, tap to add one`}
       onPress={onAdd}
       style={({ pressed }) => [
-        styles.threadCard,
-        { backgroundColor: colors.card, borderColor: colors.border, opacity: pressed ? 0.92 : 1 },
+        styles.card,
+        { backgroundColor: colors.card, borderColor: colors.border, opacity: pressed ? 0.96 : 1 },
       ]}
     >
-      <View style={[styles.threadBadge, { backgroundColor: count >= target ? tint : colors.cardAlt }]}>
-        <Droplet color={count >= target ? '#FFFFFF' : tint} size={14} strokeWidth={2} />
-      </View>
-      <View style={styles.threadBody}>
-        <View style={styles.threadHead}>
-          <Text style={[styles.threadName, { color: colors.text }]}>Hydration</Text>
-          <Text style={[styles.threadFocus, { color: colors.mutedText }]}>
-            {count * 8} oz
+      <View style={styles.cardBody}>
+        <View style={[styles.cardBadge, { backgroundColor: atTarget ? tint : colors.cardAlt }]}>
+          <Droplet color={atTarget ? '#FFFFFF' : tint} size={16} strokeWidth={2} />
+        </View>
+        <View style={styles.cardText}>
+          <Text style={[styles.cardName, { color: colors.text }]}>
+            Hydration
+            <Text style={[styles.cardModifier, { color: colors.mutedText }]}>
+              {'  ·  '}FOUNDATION
+            </Text>
+          </Text>
+          <Text style={[styles.cardCompass, { color: colors.mutedText }]}>
+            Tap card to log a glass · {count * 8} oz so far
           </Text>
         </View>
-        <Text style={[styles.threadCompass, { color: colors.mutedText }]}>
-          Tap card to log a glass
-        </Text>
-        <View style={styles.threadMetaRow}>
-          <Text style={[styles.threadMeta, { color: colors.text }]}>
-            <Text style={{ color: tint, fontFamily: FONTS.sansBold }}>
-              {count}/{target}
-            </Text>{' '}
-            today
+        <View style={styles.cardStat}>
+          <Text style={[styles.cardStatValue, { color: tint }]}>
+            {count}/{target}
           </Text>
-          <Text style={[styles.threadMeta, { color: colors.mutedText }]}>
-            {pct}% of target
-          </Text>
-        </View>
-        <View style={[styles.threadTrack, { backgroundColor: colors.cardAlt }]}>
-          <View style={[styles.threadFill, { backgroundColor: tint, width: `${pct}%` }]} />
+          <Text style={[styles.cardStatLabel, { color: colors.mutedText }]}>TODAY</Text>
+          <Text style={[styles.cardStatBlock, { color: colors.mutedText }]}>{pct}% BLOCK</Text>
         </View>
       </View>
-      <Plus color={colors.mutedText} size={18} strokeWidth={2.2} />
+      <View style={[styles.cardBarTrack, { backgroundColor: colors.cardAlt }]}>
+        <View style={[styles.cardBarFill, { backgroundColor: tint, width: `${pct}%` }]} />
+      </View>
     </Pressable>
   );
 }
@@ -409,78 +418,83 @@ const styles = StyleSheet.create({
     letterSpacing: -0.2,
     lineHeight: 24,
   },
-  threadBadge: {
+  card: {
+    borderRadius: 12,
+    borderWidth: 1,
+    overflow: 'hidden',
+  },
+  cardBadge: {
     alignItems: 'center',
     borderRadius: 8,
-    height: 32,
+    height: 38,
     justifyContent: 'center',
-    width: 32,
+    width: 38,
   },
-  threadBadgeText: {
+  cardBadgeText: {
     fontFamily: FONTS.sansBold,
-    fontSize: 14,
-    letterSpacing: 0.5,
+    fontSize: 17,
+    letterSpacing: 0.6,
   },
-  threadBody: {
+  cardBarFill: {
+    height: '100%',
+  },
+  cardBarTrack: {
+    height: 3,
+    width: '100%',
+  },
+  cardBody: {
+    alignItems: 'flex-start',
+    flexDirection: 'row',
+    gap: 14,
+    paddingBottom: 18,
+    paddingHorizontal: 16,
+    paddingTop: 16,
+  },
+  cardCompass: {
+    fontFamily: FONTS.sans,
+    fontSize: 12.5,
+    lineHeight: 17,
+  },
+  cardModifier: {
+    fontFamily: FONTS.sansBold,
+    fontSize: 10,
+    letterSpacing: 1.4,
+  },
+  cardName: {
+    fontFamily: FONTS.sansBold,
+    fontSize: 15,
+    letterSpacing: -0.1,
+    lineHeight: 19,
+  },
+  cardStat: {
+    alignItems: 'flex-end',
+    gap: 1,
+    minWidth: 64,
+    paddingTop: 2,
+  },
+  cardStatBlock: {
+    fontFamily: FONTS.sansBold,
+    fontSize: 9,
+    letterSpacing: 1.4,
+    marginTop: 1,
+  },
+  cardStatLabel: {
+    fontFamily: FONTS.sansBold,
+    fontSize: 9,
+    letterSpacing: 1.6,
+    marginTop: -1,
+  },
+  cardStatValue: {
+    fontFamily: FONTS.diagnostic,
+    fontSize: 32,
+    letterSpacing: 0.5,
+    lineHeight: 32,
+  },
+  cardText: {
     flex: 1,
     gap: 4,
     minWidth: 0,
-  },
-  threadCard: {
-    alignItems: 'center',
-    borderRadius: 12,
-    borderWidth: 1,
-    flexDirection: 'row',
-    gap: 12,
-    padding: 14,
-  },
-  threadCompass: {
-    fontFamily: FONTS.sans,
-    fontSize: 12,
-    lineHeight: 16,
-  },
-  threadFill: {
-    borderRadius: 999,
-    height: '100%',
-  },
-  threadFocus: {
-    fontFamily: FONTS.sansBold,
-    fontSize: 10,
-    letterSpacing: 1.2,
-    textTransform: 'uppercase',
-  },
-  threadHead: {
-    alignItems: 'center',
-    flexDirection: 'row',
-    gap: 10,
-    justifyContent: 'space-between',
-  },
-  threadMeta: {
-    fontFamily: FONTS.sans,
-    fontSize: 11.5,
-  },
-  threadMetaRow: {
-    flexDirection: 'row',
-    gap: 10,
-    justifyContent: 'space-between',
-    marginTop: 2,
-  },
-  threadName: {
-    fontFamily: FONTS.sansBold,
-    fontSize: 14.5,
-    letterSpacing: -0.1,
-  },
-  threadStatus: {
-    fontFamily: FONTS.sansBold,
-    fontSize: 11,
-    letterSpacing: 1.4,
-  },
-  threadTrack: {
-    borderRadius: 999,
-    height: 4,
-    marginTop: 2,
-    overflow: 'hidden',
-    width: '100%',
+    paddingTop: 3,
   },
   totals: {
     borderRadius: 12,
