@@ -4,6 +4,7 @@ import { Platform, Pressable, ScrollView, StyleSheet, Text, View } from 'react-n
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { AddMealSheet } from '../../components/fuel/AddMealSheet';
+import { MacroPie } from '../../components/fuel/MacroPie';
 import { MealDetailSheet } from '../../components/fuel/MealDetailSheet';
 import { FuelPrecision, MealSlotCard } from '../../components/fuel/MealSlotCard';
 import { WeekStrip } from '../../components/history/WeekStrip';
@@ -167,29 +168,18 @@ function NutritionSnapshot({ precision, mealsLogged, totalCalories, totals }: Sn
               unit="cal"
               tint={COLORS.tangerine}
             />
-            <MacroBar
-              label="Protein"
-              value={totals.protein}
-              target={DEFAULT_TARGETS.protein}
-              unit="g"
-              tint={COLORS.deepGreen}
-            />
+            {precision === 'aware' ? (
+              <MacroBar
+                label="Protein"
+                value={totals.protein}
+                target={DEFAULT_TARGETS.protein}
+                unit="g"
+                tint={COLORS.deepGreen}
+              />
+            ) : null}
             {precision === 'macro' ? (
               <>
-                <MacroBar
-                  label="Fat"
-                  value={totals.fat}
-                  target={DEFAULT_TARGETS.fat}
-                  unit="g"
-                  tint={COLORS.tigerGold}
-                />
-                <MacroBar
-                  label="Carbs"
-                  value={totals.carb}
-                  target={DEFAULT_TARGETS.carb}
-                  unit="g"
-                  tint={COLORS.electricYellow}
-                />
+                <MacroMixRow totals={totals} />
                 <MacroBar
                   label="Fiber"
                   value={totals.fiber}
@@ -222,6 +212,72 @@ function HandPortionsView({ mealsLogged }: { mealsLogged: number }) {
         Hand portions mode — just acknowledge balanced meals. Switch to Calories + protein or Full
         macros below if you want numbers.
       </Text>
+    </View>
+  );
+}
+
+function MacroMixRow({
+  totals,
+}: {
+  totals: { protein: number; fat: number; carb: number; fiber: number };
+}) {
+  const colors = useThemeColors();
+  const proteinCal = totals.protein * 4;
+  const fatCal = totals.fat * 9;
+  const carbCal = totals.carb * 4;
+  const macroCalTotal = Math.max(1, proteinCal + fatCal + carbCal);
+  const pctProtein = Math.round((proteinCal / macroCalTotal) * 100);
+  const pctFat = Math.round((fatCal / macroCalTotal) * 100);
+  const pctCarb = Math.round((carbCal / macroCalTotal) * 100);
+
+  return (
+    <View style={styles.mixRow}>
+      <View style={styles.mixPieWrap}>
+        <MacroPie
+          protein={totals.protein}
+          fat={totals.fat}
+          carb={totals.carb}
+          size={108}
+        />
+      </View>
+      <View style={styles.mixChips}>
+        <MacroChip
+          label="PROTEIN"
+          color={COLORS.deepGreen}
+          grams={totals.protein}
+          pct={pctProtein}
+        />
+        <MacroChip
+          label="CARBS"
+          color={COLORS.electricYellow}
+          grams={totals.carb}
+          pct={pctCarb}
+        />
+        <MacroChip label="FAT" color={COLORS.tigerGold} grams={totals.fat} pct={pctFat} />
+        <Text style={[styles.mixHelper, { color: colors.mutedText }]}>% of macro calories</Text>
+      </View>
+    </View>
+  );
+}
+
+function MacroChip({
+  label,
+  color,
+  grams,
+  pct,
+}: {
+  label: string;
+  color: string;
+  grams: number;
+  pct: number;
+}) {
+  const colors = useThemeColors();
+  return (
+    <View style={styles.chipRow}>
+      <View style={[styles.chipSwatch, { backgroundColor: color }]} />
+      <Text style={[styles.chipLabel, { color: colors.text }]}>{label}</Text>
+      <Text style={[styles.chipGrams, { color }]}>{grams}g</Text>
+      <Text style={[styles.chipPct, { color: colors.mutedText }]}>{pct}%</Text>
     </View>
   );
 }
@@ -438,8 +494,60 @@ const styles = StyleSheet.create({
     gap: 6,
     paddingTop: 4,
   },
+  chipGrams: {
+    fontFamily: FONTS.diagnostic,
+    fontSize: 20,
+    letterSpacing: 0.4,
+    lineHeight: 20,
+    minWidth: 38,
+    textAlign: 'right',
+  },
+  chipLabel: {
+    flex: 1,
+    fontFamily: FONTS.sansBold,
+    fontSize: 10.5,
+    letterSpacing: 1.4,
+  },
+  chipPct: {
+    fontFamily: FONTS.sansBold,
+    fontSize: 10,
+    letterSpacing: 0.6,
+    minWidth: 30,
+    textAlign: 'right',
+  },
+  chipRow: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    gap: 8,
+  },
+  chipSwatch: {
+    borderRadius: 3,
+    height: 12,
+    width: 12,
+  },
   macroBar: {
     gap: 5,
+  },
+  mixChips: {
+    flex: 1,
+    gap: 7,
+    paddingTop: 4,
+  },
+  mixHelper: {
+    fontFamily: FONTS.sans,
+    fontSize: 10,
+    fontStyle: 'italic',
+    marginTop: 2,
+  },
+  mixPieWrap: {
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  mixRow: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    gap: 14,
+    paddingVertical: 6,
   },
   macroFill: {
     borderRadius: 999,
