@@ -4,6 +4,7 @@ import { Platform, Pressable, ScrollView, StyleSheet, Text, View } from 'react-n
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { AddMealSheet } from '../../components/fuel/AddMealSheet';
+import { MealDetailSheet } from '../../components/fuel/MealDetailSheet';
 import { FuelPrecision, MealSlotCard } from '../../components/fuel/MealSlotCard';
 import { WeekStrip } from '../../components/history/WeekStrip';
 import { useDailyMeals } from '../../hooks/useDailyMeals';
@@ -11,7 +12,7 @@ import { useProfile } from '../../hooks/useProfile';
 import { useThemeColors } from '../../hooks/useTheme';
 import { useTodayEngagement } from '../../hooks/useTodayEngagement';
 import { COLORS, FONTS, SPACING } from '../../lib/brand';
-import { DEFAULT_TARGETS, MEAL_SLOTS, MealSlot } from '../../lib/meals';
+import { DEFAULT_TARGETS, LoggedMeal, MEAL_SLOTS, MealSlot } from '../../lib/meals';
 
 type PrecisionOption = { id: FuelPrecision; label: string; description: string };
 
@@ -28,6 +29,7 @@ export default function FuelScreen() {
   const { engagement, waterTarget, addWater } = useTodayEngagement();
   const [precision, setPrecision] = useState<FuelPrecision>('hand');
   const [addingSlot, setAddingSlot] = useState<MealSlot | null>(null);
+  const [detailMeal, setDetailMeal] = useState<LoggedMeal | null>(null);
 
   const greeting = profile.firstName ? `Hey ${profile.firstName.split(' ')[0]}.` : 'Hey there.';
 
@@ -74,6 +76,7 @@ export default function FuelScreen() {
               precision={precision}
               onAdd={() => setAddingSlot(slot.id)}
               onRemove={removeMeal}
+              onMealPress={setDetailMeal}
             />
           ))}
 
@@ -126,6 +129,12 @@ export default function FuelScreen() {
         slot={addingSlot}
         onClose={() => setAddingSlot(null)}
         onLog={logMeal}
+      />
+      <MealDetailSheet
+        visible={detailMeal !== null}
+        meal={detailMeal}
+        onClose={() => setDetailMeal(null)}
+        onRemove={removeMeal}
       />
     </SafeAreaView>
   );

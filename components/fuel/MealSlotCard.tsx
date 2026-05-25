@@ -15,6 +15,7 @@ type MealSlotCardProps = {
   precision: FuelPrecision;
   onAdd: () => void;
   onRemove: (id: string) => void;
+  onMealPress?: (meal: LoggedMeal) => void;
 };
 
 export function MealSlotCard({
@@ -25,6 +26,7 @@ export function MealSlotCard({
   precision,
   onAdd,
   onRemove,
+  onMealPress,
 }: MealSlotCardProps) {
   const colors = useThemeColors();
   const hasMeals = meals.length > 0;
@@ -71,7 +73,16 @@ export function MealSlotCard({
               const cals = estimateCalories(meal.macros);
               const macroLine = buildMacroLine(meal, cals, precision);
               return (
-                <View key={meal.id} style={[styles.mealRow, { borderTopColor: colors.border }]}>
+                <Pressable
+                  accessibilityRole="button"
+                  accessibilityLabel={`Open ${meal.name} details`}
+                  key={meal.id}
+                  onPress={() => onMealPress?.(meal)}
+                  style={({ pressed }) => [
+                    styles.mealRow,
+                    { borderTopColor: colors.border, opacity: pressed ? 0.7 : 1 },
+                  ]}
+                >
                   <View style={{ flex: 1, minWidth: 0 }}>
                     <Text style={[styles.mealName, { color: colors.text }]} numberOfLines={1}>
                       {meal.name}
@@ -84,12 +95,15 @@ export function MealSlotCard({
                     accessibilityRole="button"
                     accessibilityLabel={`Remove ${meal.name}`}
                     hitSlop={8}
-                    onPress={() => onRemove(meal.id)}
+                    onPress={(e) => {
+                      e.stopPropagation();
+                      onRemove(meal.id);
+                    }}
                     style={({ pressed }) => [styles.removeBtn, { opacity: pressed ? 0.5 : 1 }]}
                   >
                     <X color={colors.mutedText} size={14} strokeWidth={2} />
                   </Pressable>
-                </View>
+                </Pressable>
               );
             })}
           </View>
