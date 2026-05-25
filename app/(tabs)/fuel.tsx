@@ -5,6 +5,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { AddMealSheet } from '../../components/fuel/AddMealSheet';
 import { FuelPrecision, MealSlotCard } from '../../components/fuel/MealSlotCard';
+import { WeekStrip } from '../../components/history/WeekStrip';
 import { useDailyMeals } from '../../hooks/useDailyMeals';
 import { useProfile } from '../../hooks/useProfile';
 import { useThemeColors } from '../../hooks/useTheme';
@@ -46,6 +47,8 @@ export default function FuelScreen() {
               Tap a meal slot to log from Karen and Ryan's library, or build your own.
             </Text>
           </View>
+
+          <WeekStrip />
 
           <NutritionSnapshot
             precision={precision}

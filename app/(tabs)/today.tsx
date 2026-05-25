@@ -2,6 +2,7 @@ import { format } from 'date-fns';
 import { Platform, ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { WeekStrip } from '../../components/history/WeekStrip';
 import { CreatePowerHero } from '../../components/today/CreatePowerHero';
 import { IntentionInput } from '../../components/today/IntentionInput';
 import { NutritionCard, WorkoutCard } from '../../components/today/TodayCards';
@@ -40,6 +41,7 @@ export default function TodayScreen() {
             subtitle={subtitle}
           />
           <View style={styles.stack}>
+            <WeekStrip />
             <IntentionInput intention={entry.intention ?? defaultIntention} onSave={saveIntention} />
             <WorkoutCard
               assigned={Boolean(todayWorkout)}
