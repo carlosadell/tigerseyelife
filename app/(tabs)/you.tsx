@@ -1,3 +1,4 @@
+import { router } from 'expo-router';
 import {
   Bell,
   ChevronRight,
@@ -5,6 +6,7 @@ import {
   Dumbbell,
   LogOut,
   Settings,
+  Sparkles,
   User,
 } from 'lucide-react-native';
 import { ReactNode, useMemo } from 'react';
@@ -117,6 +119,12 @@ export default function YouScreen() {
           </View>
 
           <SettingsRow
+            icon={<Sparkles color={colors.accent} size={18} strokeWidth={1.8} />}
+            title="Coach preferences"
+            body="Communication style, tone, response length, science depth."
+            onPress={() => router.push('/coach-preferences')}
+          />
+          <SettingsRow
             icon={<Dumbbell color={colors.accent} size={18} strokeWidth={1.8} />}
             title="Training preferences"
             body="Days per week, equipment changes, live vs pre-recorded."
@@ -190,15 +198,20 @@ function SettingsRow({
   icon,
   title,
   comingSoon,
+  onPress,
 }: {
   body: string;
   icon: ReactNode;
   title: string;
   comingSoon?: boolean;
+  onPress?: () => void;
 }) {
   const colors = useThemeColors();
   return (
     <Pressable
+      accessibilityRole="button"
+      disabled={comingSoon || !onPress}
+      onPress={onPress}
       style={({ pressed }) => [
         styles.settingsCard,
         {
