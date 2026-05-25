@@ -4,7 +4,6 @@ import { Platform, ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { CreatePowerHero } from '../../components/today/CreatePowerHero';
-import { EngagementOrbit } from '../../components/today/EngagementOrbit';
 import { IntentionInput } from '../../components/today/IntentionInput';
 import { QuickAddSheet } from '../../components/today/QuickAddSheet';
 import { NutritionCard, WorkoutCard } from '../../components/today/TodayCards';
@@ -40,10 +39,10 @@ export default function TodayScreen() {
           <CreatePowerHero
             firstName={profile.firstName}
             onSignOut={signOut}
+            onLogMorePress={() => setQuickAddOpen(true)}
             streakDays={streakDays}
             subtitle={subtitle}
           />
-          <EngagementOrbit onLogMorePress={() => setQuickAddOpen(true)} />
           <View style={styles.stack}>
             <IntentionInput intention={entry.intention ?? defaultIntention} onSave={saveIntention} />
             <WorkoutCard
