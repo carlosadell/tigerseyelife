@@ -116,9 +116,11 @@ function replyTodaysWorkout(k: CoachKnowledge): CoachReply {
   const w = k.todayWorkout;
   return {
     text: `Today is ${w.name} — ${w.duration_minutes} min, ${w.exercise_count} exercises, ${w.equipment.join(' + ')}. Open Train to start, or tap one tutorial first if you want a warm-up cue.`,
-    followups: ['Walk me through the exercises', 'Why this workout?'],
+    followups: ['Open tutorials for today', 'Why this workout?'],
   };
 }
+
+export const TUTORIALS_DEEPLINK_LABEL = 'Open tutorials for today';
 
 function replyWhereToStart(k: CoachKnowledge): CoachReply {
   if (k.todayWorkout) {
@@ -187,7 +189,7 @@ function replyBoxBreathing(): CoachReply {
 
 function replyNutrition(k: CoachKnowledge): CoachReply {
   return {
-    text: 'Balance your plate with protein and healthy fats. The simplest version of "good enough":\n\n• 1 palm of protein per meal\n• 1-2 fists of vegetables\n• 1 thumb of healthy fat\n• Stop at 80% full\n\nKaren\'s ABC Power Meal framework lives in your Grow tab if you want the full module.',
+    text: 'Balance your plate with protein and healthy fats. The simplest version of "good enough":\n\n• 1 palm of protein per meal\n• 1-2 fists of vegetables\n• 1 thumb of healthy fat\n• Stop at 80% full\n\nKaren and Ryan\'s ABC Power Meal framework lives in your Grow tab if you want the full module.',
   };
 }
 

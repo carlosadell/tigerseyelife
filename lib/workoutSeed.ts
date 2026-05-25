@@ -17,7 +17,7 @@ export const workoutLibrarySeed: WorkoutLibraryItem[] = [
     ],
     focus_area: 'lower',
     id: 'seed-lower-body-a',
-    name: 'Lower Body A',
+    name: 'Workout 1',
     order_index: 0,
   },
   {
@@ -36,7 +36,7 @@ export const workoutLibrarySeed: WorkoutLibraryItem[] = [
     ],
     focus_area: 'upper',
     id: 'seed-upper-body-a',
-    name: 'Upper Body A',
+    name: 'Workout 2',
     order_index: 0,
   },
   {
@@ -55,7 +55,7 @@ export const workoutLibrarySeed: WorkoutLibraryItem[] = [
     ],
     focus_area: 'lower',
     id: 'seed-lower-body-b',
-    name: 'Lower Body B',
+    name: 'Workout 3',
     order_index: 0,
   },
   {
@@ -74,7 +74,7 @@ export const workoutLibrarySeed: WorkoutLibraryItem[] = [
     ],
     focus_area: 'upper',
     id: 'seed-upper-body-b',
-    name: 'Upper Body B',
+    name: 'Workout 4',
     order_index: 0,
   },
   {

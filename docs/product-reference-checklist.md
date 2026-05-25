@@ -243,3 +243,49 @@ What works (preserve in tuning):
 5. Build Round 5 Grow dashboard, microlearning, community, and real AI coach.
 
 Timeline note: the beta cohort wraps Sun **2026-06-21**. Mon **2026-06-22** is **not** a hard launch date — Karen has explicitly relaxed it (Loom, 2026-05-19). Clients who continue past the beta can keep working their current program and practicing commit/refine-block skills during any gap, so schedule fluidly and prioritize doing it right.
+
+## Karen feedback intake — 2026-05-25
+
+Karen sent 11 numbered comments + a Loom walkthrough referencing the current RN app and an MyNetDiary screenshot for data-density inspiration. Items landed in code are tracked in commit history; items that need spec-level alignment are listed below.
+
+### Deferred for product discussion
+
+**1. Mid-program precision-level switching (Karen #6).**
+A member who starts the 12 weeks on "Hand portions" may decide partway through they want "Calorie aware" or "Full macros." Today the precision toggle in [app/(tabs)/fuel.tsx](app/(tabs)/fuel.tsx) is local UI state — no migration of meal history, no data-shape change. Open question: can a member switch precision mid-program without losing logged history, and what does the transition look like? Also redefine **"Calorie aware"** — Karen clarified this is really "protein tracking + calories," not "calories alone." Update the chip label or its tooltip when this lands.
+
+**2. MyNetDiary-style compact home + drill-in for action tracking (Karen #8).**
+Karen shared MyNetDiary screenshots showing a compact home (single streak circle + summary numbers) with deep drill-in screens per category (per-meal entry with nutrient breakdown, etc.). She's flagging that the current POWER-blocks UI in [app/grow/[block].tsx](app/grow/[block].tsx) — long rows of checkboxes per action — may feel visually cluttered as the block count grows. Possible direction: collapse each thread (P/O/W/E/R, plus Sleep and Hydration) into a single tappable card on the home that drills into a detail screen for that day's actions. Needs a design exploration before any code work.
+
+**3. Workout-done acknowledgment that feeds the streak (Karen #9 + Loom).**
+The workout completion screen at [app/workout/complete/[sessionId].tsx](app/workout/complete/[sessionId].tsx) lets a member save volume/effort/notes, but it's unclear whether that save writes a streak-eligible engagement event. Verify the wire-up. Also: members on a 2-workouts-per-week program must not lose their streak on the 5 non-training days — engagement (any logged event) must count, not workout completion specifically. See memory `streak-definition` for the rule.
+
+**4. POWER thread bar calculation (Karen #10).**
+The bars in the Lifetime POWER threads card on [app/(tabs)/you.tsx](app/(tabs)/you.tsx) are currently hardcoded (P=72%, O=48%, W=81%, E=60%, R=55%). Karen is asking: when these go dynamic, what drives the percentage? Best guess from her Loom: the number of completed actions across the rows in each block, but she wants explicit alignment before we wire it. Defer until she confirms the formula.
+
+**5. AI coach quick-action buttons (Karen #11).**
+The current Coach sheet ([components/navigation/CoachBottomSheet.tsx](components/navigation/CoachBottomSheet.tsx)) shows quick-prompt chips like "walk me through the exercises" and "why this workout." Karen wants Ryan's input on whether "walk me through the exercises" should bounce the user back to the workout tutorial section rather than start a chat. Longer-term she suspects the quick-actions section could disappear entirely as members' needs from the coach diversify. Hold the current chips until Ryan weighs in.
+
+**6. Terminology nit: "Novice" / "Rusty Novice".**
+Karen flagged in her Loom that "Rusty Novice" feels imprecise — it currently covers both "never trained" and "trained before, fell off." Not a hard rule, but a better split (or a different overall label) is wanted. Touches [app/(tabs)/train.tsx:326](app/(tabs)/train.tsx) and [app/(tabs)/you.tsx:274](app/(tabs)/you.tsx) display strings, plus the underlying skill_level enum from intake. Defer until Karen proposes the replacement language.
+
+**7. Diamond logo as corner brand mark.**
+Karen wants the EyeMark diamond ([components/brand/EyeMark.tsx](components/brand/EyeMark.tsx)) to appear as a small corner mark wherever there's currently a "Tigers Eye Life" text logo placeholder. Verify where the brand mark should persist (header? launch screen? both?) before placing it.
+
+### Landed in code on 2026-05-25
+
+- Workouts renamed to **Workout 1/2/3/4** across seed data and UI (Karen #2).
+- Meal slots changed from A/B/C (Morning/Midday/Evening) to **1/2/3/S (First meal/Second meal/Third meal/Snack)** in Fuel (Karen #4).
+- Macro toggles changed from Protein/Plant/Smart carb to **Protein/Fat/Carbs/Fiber**; snapshot grid updated to match (Karen #5).
+- Content attributions on Grow, onboarding placeholder, and coach reply updated from "Karen" to **"Karen and Ryan"** (Karen #7).
+- **Streak (#9) wired up.** New [hooks/useStreak.ts](hooks/useStreak.ts) computes consecutive engagement days from workouts + daily entries + POWER actions + new engagement scope; writers invalidate the streak query so it ticks up immediately; hardcoded 23-day value removed from [components/today/CreatePowerHero.tsx](components/today/CreatePowerHero.tsx) and [hooks/useCoachContext.ts](hooks/useCoachContext.ts).
+- **Precision chip (#6 partial) renamed** "Calorie aware" → **"Calories + protein"** in [app/(tabs)/fuel.tsx](app/(tabs)/fuel.tsx). Mid-program precision *switching* architecture still deferred; the chip itself is now clearer.
+- **Skill terminology** updated in [app/(tabs)/train.tsx](app/(tabs)/train.tsx) and [app/(tabs)/you.tsx](app/(tabs)/you.tsx) — "Novice"/"rusty" raw labels replaced with "New to strength" / "Returning" / "Using a gym app" / "In a program" / "Free weights" / "Gym machines."
+- **POWER thread bars (#10) dynamic.** [app/(tabs)/you.tsx](app/(tabs)/you.tsx) no longer hardcodes P=72/O=48/W=81/E=60/R=55. A new local `usePowerThreadProgress()` aggregator sums completed/target across all five blocks per letter and computes the percentage live.
+- **Coach quick-prompt routing (#11 partial).** "Walk me through the exercises" followup replaced with **"Open tutorials for today"** in [lib/coachKnowledge.ts](lib/coachKnowledge.ts); [components/navigation/CoachBottomSheet.tsx](components/navigation/CoachBottomSheet.tsx) intercepts that label and routes to `/(tabs)/train` instead of generating a chat reply. The broader "should the section have buttons at all" question still defers to Ryan.
+- **Orbital engagement on Today (#8 adapted).** New [components/today/EngagementOrbit.tsx](components/today/EngagementOrbit.tsx) renders four tappable chips under the streak ring (Workout / Walk / Water / Sleep). Each tap toggles or increments through [hooks/useTodayEngagement.ts](hooks/useTodayEngagement.ts), persists to `tel:engagement:<userId>:<date>`, and invalidates the streak query so the ring updates live. A "Log something else" CTA opens [components/today/QuickAddSheet.tsx](components/today/QuickAddSheet.tsx) for tagging other movement (pickleball, yoga, etc.) and resetting water. Adapted from MyNetDiary's compact-home pattern using TEL brand chrome (no calorie budgets, no nutrient pies).
+
+### Still deferred
+
+- **Precision-level mid-program switching architecture** (#6) — chip label is fixed, but persisting the precision choice across sessions and migrating logged data when a member switches still needs product alignment.
+- **AI coach "Why this workout?" followup** (#11) — Karen wanted Ryan's input on whether to keep this chip at all; left in place pending his answer.
+- **Diamond logo as a universal corner mark** — EyeMark already shows on the Today hero next to the wordmark; whether to repeat it across every tab header still needs a brand call.

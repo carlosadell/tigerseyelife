@@ -1,4 +1,5 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useQueryClient } from '@tanstack/react-query';
 import { format } from 'date-fns';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
@@ -16,6 +17,7 @@ type DailyEntry = {
 
 export function useDailyEntry() {
   const { session, isDevSession } = useAuth();
+  const queryClient = useQueryClient();
   const today = useMemo(() => format(new Date(), 'yyyy-MM-dd'), []);
   const [entry, setEntry] = useState<DailyEntry>({
     intention: null,
@@ -41,6 +43,7 @@ export function useDailyEntry() {
 
       if (isDevSession || !supabase) {
         await AsyncStorage.setItem(storageKey, JSON.stringify(nextEntry));
+        queryClient.invalidateQueries({ queryKey: ['engagement-dates', session.user.id] });
         return;
       }
 
@@ -61,8 +64,10 @@ export function useDailyEntry() {
       if (error) {
         throw error;
       }
+
+      queryClient.invalidateQueries({ queryKey: ['engagement-dates', session.user.id] });
     },
-    [entry, isDevSession, session, storageKey, today],
+    [entry, isDevSession, queryClient, session, storageKey, today],
   );
 
   useEffect(() => {

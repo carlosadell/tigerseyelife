@@ -55,14 +55,16 @@ export function TodayCard({ children, tone = 'default' }: CardProps) {
   );
 }
 
-export function PatternNudgeCard() {
+export function PatternNudgeCard({ streakDays }: { streakDays: number }) {
   const colors = useThemeColors();
 
   return (
     <TodayCard tone="gold">
       <View style={styles.row}>
         <Text style={styles.flame}>🔥</Text>
-        <Text style={[styles.streak, { color: colors.text }]}>23 day practice streak</Text>
+        <Text style={[styles.streak, { color: colors.text }]}>
+          {streakDays} day practice streak
+        </Text>
       </View>
       <Text style={[styles.kicker, { color: colors.mutedText }]}>This week · Patterns</Text>
       <Text style={[styles.title, { color: colors.text }]}>
@@ -145,7 +147,7 @@ export function BuddyCard() {
         <View style={{ flex: 1, minWidth: 0 }}>
           <Text style={[styles.kicker, { color: colors.mutedText }]}>Your buddy Jen C.</Text>
           <Text style={[styles.body, { color: colors.mutedText }]}>
-            Completed Upper Body B today · 🔥 18 day streak
+            Completed Workout 4 today · 🔥 18 day streak
           </Text>
         </View>
       </View>

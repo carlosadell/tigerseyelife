@@ -187,7 +187,7 @@ export function buildWorkoutHistorySeed(userId: string): WorkoutSession[] {
     sessions.push({
       completed_at: completedAt.toISOString(),
       id: `seed-history-${daysAgo}`,
-      name: 'Lower Body A',
+      name: 'Workout 1',
       notes: null,
       perceived_effort: 7,
       set_logs: setLogs,

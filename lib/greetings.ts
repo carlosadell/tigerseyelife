@@ -16,7 +16,8 @@ export function getDayPeriod(date = new Date()): DayPeriod {
 
 export function getGreeting(firstName?: string | null, date = new Date()) {
   const period = getDayPeriod(date);
-  return `Good ${period}, ${firstName?.trim() || 'Friend'}.`;
+  const first = firstName?.trim().split(/\s+/)[0];
+  return `Good ${period}, ${first || 'Friend'}.`;
 }
 
 export function getCoachMessage(date = new Date(), sessionIndex = 0) {

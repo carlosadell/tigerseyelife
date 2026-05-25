@@ -34,7 +34,7 @@ export function PowerStep({ baseline, updateBaseline }: PowerStepProps) {
       <StepLabel>Practice Baseline</StepLabel>
       <Text style={stepStyles.title}>Where are you right now?</Text>
       <Text style={stepStyles.copy}>
-        These thread names are placeholders while Karen finalizes the framework language.
+        These thread names are placeholders while Karen and Ryan finalize the framework language.
       </Text>
       {practiceBaselineQuestions.map(([key, label, copy]) => (
         <View key={key} style={stepStyles.question}>

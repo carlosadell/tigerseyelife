@@ -1,13 +1,17 @@
 import { format } from 'date-fns';
+import { useState } from 'react';
 import { Platform, ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { CreatePowerHero } from '../../components/today/CreatePowerHero';
+import { EngagementOrbit } from '../../components/today/EngagementOrbit';
 import { IntentionInput } from '../../components/today/IntentionInput';
+import { QuickAddSheet } from '../../components/today/QuickAddSheet';
 import { NutritionCard, WorkoutCard } from '../../components/today/TodayCards';
 import { useAuth } from '../../hooks/useAuth';
 import { useDailyEntry } from '../../hooks/useDailyEntry';
 import { useProfile } from '../../hooks/useProfile';
+import { useStreak } from '../../hooks/useStreak';
 import { useThemeColors } from '../../hooks/useTheme';
 import { useAssignedProgram } from '../../hooks/useAssignedProgram';
 import { SPACING } from '../../lib/brand';
@@ -20,6 +24,8 @@ export default function TodayScreen() {
   const { profile } = useProfile();
   const { todayWorkout } = useAssignedProgram();
   const { entry, saveIntention } = useDailyEntry();
+  const { days: streakDays } = useStreak();
+  const [quickAddOpen, setQuickAddOpen] = useState(false);
   const subtitle = `${format(new Date(), 'EEEE').toUpperCase()} · WEEK 4 OF CREATE POWER`;
   const colors = useThemeColors();
 
@@ -34,8 +40,10 @@ export default function TodayScreen() {
           <CreatePowerHero
             firstName={profile.firstName}
             onSignOut={signOut}
+            streakDays={streakDays}
             subtitle={subtitle}
           />
+          <EngagementOrbit onLogMorePress={() => setQuickAddOpen(true)} />
           <View style={styles.stack}>
             <IntentionInput intention={entry.intention ?? defaultIntention} onSave={saveIntention} />
             <WorkoutCard
@@ -48,6 +56,7 @@ export default function TodayScreen() {
           </View>
         </ScrollView>
       </View>
+      <QuickAddSheet visible={quickAddOpen} onClose={() => setQuickAddOpen(false)} />
     </SafeAreaView>
   );
 }

@@ -43,7 +43,7 @@ export default function GrowScreen() {
           <View style={styles.section}>
             <Text style={[styles.sectionLabel, { color: colors.mutedText }]}>MICROLEARNING</Text>
             <Text style={[styles.sectionHelper, { color: colors.mutedText }]}>
-              Karen’s modules stay full-length by design. Cards open the current Tiiny version in-app.
+              Karen and Ryan’s modules stay full-length by design. Cards open the current Tiiny version in-app.
             </Text>
           </View>
 

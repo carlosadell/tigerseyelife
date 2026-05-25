@@ -1,4 +1,5 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useQueryClient } from '@tanstack/react-query';
 import { addDays, format, startOfWeek, subWeeks } from 'date-fns';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
@@ -48,6 +49,7 @@ function buildSeedProgress(blockId: string, actions: PowerAction[], days: Date[]
 
 export function usePowerActionProgress(blockId: string) {
   const { session, isDevSession } = useAuth();
+  const queryClient = useQueryClient();
   const userId = session?.user.id ?? 'anonymous';
   const block = getPowerBlock(blockId);
 
@@ -105,11 +107,12 @@ export function usePowerActionProgress(blockId: string) {
         } else {
           await AsyncStorage.setItem(storageKey(userId, blockId), JSON.stringify(next));
         }
+        queryClient.invalidateQueries({ queryKey: ['engagement-dates', userId] });
       } catch (err) {
         // best effort — keep optimistic UI
       }
     },
-    [blockId, isDevSession, progress, userId],
+    [blockId, isDevSession, progress, queryClient, userId],
   );
 
   const summary = useMemo(() => {

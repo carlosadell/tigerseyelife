@@ -7,12 +7,13 @@ import {
   Settings,
   User,
 } from 'lucide-react-native';
-import { ReactNode } from 'react';
+import { ReactNode, useMemo } from 'react';
 import { Platform, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { ThemeToggle } from '../../components/brand/ThemeToggle';
 import { useAuth } from '../../hooks/useAuth';
+import { usePowerActionProgress } from '../../hooks/usePowerActionProgress';
 import { useProfile } from '../../hooks/useProfile';
 import { useTheme, useThemeColors } from '../../hooks/useTheme';
 import { COLORS, FONTS, SPACING } from '../../lib/brand';
@@ -26,14 +27,6 @@ const LETTER_TINT: Record<PowerLetter, string> = {
   R: COLORS.deepGreen,
 };
 
-const POWER_PROGRESS: Record<PowerLetter, number> = {
-  P: 72,
-  O: 48,
-  W: 81,
-  E: 60,
-  R: 55,
-};
-
 const STATS = [
   { label: 'Streak', value: '23', sub: 'days' },
   { label: 'Week', value: '4', sub: 'of program' },
@@ -45,6 +38,7 @@ export default function YouScreen() {
   const { mode } = useTheme();
   const { signOut } = useAuth();
   const { profile } = useProfile();
+  const powerProgress = usePowerThreadProgress();
 
   const firstName = profile.firstName ?? 'Friend';
   const intake = readIntake(profile.intakeAnswers);
@@ -104,7 +98,7 @@ export default function YouScreen() {
           </View>
           <View style={[styles.powerCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
             {(Object.keys(POWER_LETTERS) as PowerLetter[]).map((letter) => (
-              <PowerRow key={letter} letter={letter} percentage={POWER_PROGRESS[letter]} />
+              <PowerRow key={letter} letter={letter} percentage={powerProgress[letter]} />
             ))}
           </View>
 
@@ -231,6 +225,40 @@ function SettingsRow({
   );
 }
 
+function usePowerThreadProgress(): Record<PowerLetter, number> {
+  const commit = usePowerActionProgress('commit');
+  const refine = usePowerActionProgress('refine');
+  const evolve = usePowerActionProgress('evolve');
+  const adapt = usePowerActionProgress('adapt');
+  const thrive = usePowerActionProgress('thrive');
+
+  return useMemo(() => {
+    const totals: Record<PowerLetter, { completed: number; target: number }> = {
+      P: { completed: 0, target: 0 },
+      O: { completed: 0, target: 0 },
+      W: { completed: 0, target: 0 },
+      E: { completed: 0, target: 0 },
+      R: { completed: 0, target: 0 },
+    };
+    const blocks = [commit, refine, evolve, adapt, thrive];
+    for (const { block, summary } of blocks) {
+      if (!block) continue;
+      for (const action of block.actions) {
+        const stat = summary.perAction[action.id];
+        if (!stat) continue;
+        totals[action.letter].completed += stat.completed;
+        totals[action.letter].target += stat.target;
+      }
+    }
+    const result: Record<PowerLetter, number> = { P: 0, O: 0, W: 0, E: 0, R: 0 };
+    for (const letter of Object.keys(totals) as PowerLetter[]) {
+      const { completed, target } = totals[letter];
+      result[letter] = target > 0 ? Math.min(100, Math.round((completed / target) * 100)) : 0;
+    }
+    return result;
+  }, [commit.summary, refine.summary, evolve.summary, adapt.summary, thrive.summary]);
+}
+
 function readIntake(intake: Record<string, unknown>) {
   const setup = isRecord(intake.workout_setup) ? intake.workout_setup : {};
   const duration = String(intake.duration ?? setup.duration ?? '30 min');
@@ -271,9 +299,14 @@ function humanizeSkill(values: unknown[]) {
   return values
     .map((entry) => {
       const s = String(entry);
-      if (s === 'novice') return 'Novice';
+      if (s === 'novice' || s === 'new') return 'New to strength';
+      if (s === 'rusty') return 'Returning';
+      if (s === 'gym_app') return 'Using a gym app';
+      if (s === 'designed_program') return 'In a program';
+      if (s === 'free_weights_comfortable') return 'Free weights';
+      if (s === 'machines_comfortable') return 'Gym machines';
       if (s === 'intermediate') return 'Intermediate';
-      if (s === 'familiar_dumbbell_barbell_plates') return 'DB/BB/plates';
+      if (s === 'familiar_dumbbell_barbell_plates') return 'Free weights';
       if (s === 'familiar_commercial_gym') return 'Commercial gym';
       return s.replace(/_/g, ' ');
     })

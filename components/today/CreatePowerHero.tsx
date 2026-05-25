@@ -15,10 +15,11 @@ const lightTextureSource = require('../../assets/brand/tigers-eye-hero-light-ove
 type CreatePowerHeroProps = {
   firstName?: string | null;
   onSignOut: () => void;
+  streakDays: number;
   subtitle: string;
 };
 
-export function CreatePowerHero({ firstName, onSignOut, subtitle }: CreatePowerHeroProps) {
+export function CreatePowerHero({ firstName, onSignOut, streakDays, subtitle }: CreatePowerHeroProps) {
   const { colors, mode, toggleMode } = useTheme();
   const { width } = useWindowDimensions();
   const frameWidth = Math.min(width, 430);
@@ -74,7 +75,7 @@ export function CreatePowerHero({ firstName, onSignOut, subtitle }: CreatePowerH
         </Text>
       </View>
 
-      <StreakRing compact={compact} value={23} />
+      <StreakRing compact={compact} value={streakDays} />
     </View>
   );
 }

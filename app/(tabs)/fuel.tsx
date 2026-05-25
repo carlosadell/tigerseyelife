@@ -7,27 +7,29 @@ import { useProfile } from '../../hooks/useProfile';
 import { useThemeColors } from '../../hooks/useTheme';
 import { COLORS, FONTS, SPACING } from '../../lib/brand';
 
-type MealSlot = 'A' | 'B' | 'C';
-type Component = 'protein' | 'plant' | 'carb';
+type MealSlot = '1' | '2' | '3' | 'S';
+type Component = 'protein' | 'fat' | 'carb' | 'fiber';
 
 type MealState = {
   slot: MealSlot;
   label: string;
   hint: string;
   protein: boolean;
-  plant: boolean;
+  fat: boolean;
   carb: boolean;
+  fiber: boolean;
 };
 
 const INITIAL_MEALS: MealState[] = [
-  { slot: 'A', label: 'Morning', hint: 'Eggs + greens + sourdough', protein: true, plant: true, carb: true },
-  { slot: 'B', label: 'Midday', hint: 'Chicken bowl + roasted veg', protein: true, plant: true, carb: false },
-  { slot: 'C', label: 'Evening', hint: 'Plan tonight', protein: false, plant: false, carb: false },
+  { slot: '1', label: 'First meal', hint: 'Eggs + avocado + sourdough', protein: true, fat: true, carb: true, fiber: false },
+  { slot: '2', label: 'Second meal', hint: 'Chicken bowl + roasted veg', protein: true, fat: false, carb: false, fiber: true },
+  { slot: '3', label: 'Third meal', hint: 'Plan tonight', protein: false, fat: false, carb: false, fiber: false },
+  { slot: 'S', label: 'Snack', hint: 'Optional · protein-forward', protein: false, fat: false, carb: false, fiber: false },
 ];
 
 const PRECISION_LEVELS = [
   { id: 'hand', label: 'Hand portions' },
-  { id: 'aware', label: 'Calorie aware' },
+  { id: 'aware', label: 'Calories + protein' },
   { id: 'macro', label: 'Full macros' },
 ];
 
@@ -42,10 +44,11 @@ export default function FuelScreen() {
     return meals.reduce(
       (acc, meal) => ({
         protein: acc.protein + (meal.protein ? 1 : 0),
-        plant: acc.plant + (meal.plant ? 1 : 0),
+        fat: acc.fat + (meal.fat ? 1 : 0),
         carb: acc.carb + (meal.carb ? 1 : 0),
+        fiber: acc.fiber + (meal.fiber ? 1 : 0),
       }),
-      { protein: 0, plant: 0, carb: 0 },
+      { protein: 0, fat: 0, carb: 0, fiber: 0 },
     );
   }, [meals]);
 
@@ -61,7 +64,7 @@ export default function FuelScreen() {
   const removeWater = () => setWater((w) => Math.max(0, w - 1));
 
   const greeting = profile.firstName ? `Hey ${profile.firstName.split(' ')[0]}.` : 'Hey there.';
-  const proteinOnTrack = totals.protein >= 2;
+  const proteinOnTrack = totals.protein >= 3;
 
   return (
     <SafeAreaView edges={['top']} style={[styles.screen, { backgroundColor: colors.background }]}>
@@ -71,7 +74,7 @@ export default function FuelScreen() {
             <Text style={[styles.headerKicker, { color: colors.accent }]}>FUEL</Text>
             <Text style={[styles.title, { color: colors.text }]}>{greeting}</Text>
             <Text style={[styles.subtitle, { color: colors.mutedText }]}>
-              Lean into the simple version today — protein, plants, smart carbs. Stop at 80% full.
+              Lean into the simple version today — protein, fat, carbs, fiber. Stop at 80% full.
             </Text>
           </View>
 
@@ -82,32 +85,32 @@ export default function FuelScreen() {
               <View style={styles.snapshotGrid}>
                 <SnapshotStat
                   label="Protein"
-                  value={`${totals.protein}/3`}
+                  value={`${totals.protein}/4`}
                   state={proteinOnTrack ? 'good' : 'pending'}
                 />
                 <SnapshotStat
-                  label="Plants"
-                  value={`${totals.plant}/3`}
-                  state={totals.plant >= 2 ? 'good' : 'pending'}
+                  label="Fat"
+                  value={`${totals.fat}/4`}
+                  state={totals.fat >= 2 ? 'good' : 'pending'}
                 />
                 <SnapshotStat
                   label="Carbs"
-                  value={`${totals.carb}/3`}
-                  state={totals.carb >= 1 ? 'good' : 'pending'}
+                  value={`${totals.carb}/4`}
+                  state={totals.carb >= 2 ? 'good' : 'pending'}
                 />
                 <SnapshotStat
-                  label="Water"
-                  value={`${water * 8} oz`}
-                  state={water >= 8 ? 'good' : 'pending'}
+                  label="Fiber"
+                  value={`${totals.fiber}/4`}
+                  state={totals.fiber >= 2 ? 'good' : 'pending'}
                 />
               </View>
             </View>
           </View>
 
           <View style={styles.sectionHead}>
-            <Text style={[styles.sectionLabel, { color: colors.mutedText }]}>ABC POWER MEALS · TODAY</Text>
+            <Text style={[styles.sectionLabel, { color: colors.mutedText }]}>POWER MEALS · TODAY</Text>
             <Text style={[styles.sectionSub, { color: colors.mutedText }]}>
-              Each meal = Protein · Plant · Smart Carb
+              Each meal = Protein · Fat · Carbs · Fiber
             </Text>
           </View>
 
@@ -260,7 +263,7 @@ function MealCard({
   onToggle: (slot: MealSlot, component: Component) => void;
 }) {
   const colors = useThemeColors();
-  const complete = meal.protein && meal.plant && meal.carb;
+  const complete = meal.protein && meal.fat && meal.carb && meal.fiber;
 
   return (
     <View style={[styles.mealCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
@@ -289,14 +292,19 @@ function MealCard({
           onPress={() => onToggle(meal.slot, 'protein')}
         />
         <ComponentToggle
-          label="Plant"
-          active={meal.plant}
-          onPress={() => onToggle(meal.slot, 'plant')}
+          label="Fat"
+          active={meal.fat}
+          onPress={() => onToggle(meal.slot, 'fat')}
         />
         <ComponentToggle
-          label="Smart carb"
+          label="Carbs"
           active={meal.carb}
           onPress={() => onToggle(meal.slot, 'carb')}
+        />
+        <ComponentToggle
+          label="Fiber"
+          active={meal.fiber}
+          onPress={() => onToggle(meal.slot, 'fiber')}
         />
       </View>
     </View>

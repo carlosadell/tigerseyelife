@@ -1,5 +1,6 @@
 import Constants from 'expo-constants';
 import * as Haptics from 'expo-haptics';
+import { router } from 'expo-router';
 import { ArrowUp, Mic, Sparkles, X } from 'lucide-react-native';
 import { forwardRef, useCallback, useEffect, useImperativeHandle, useMemo, useRef, useState } from 'react';
 import {
@@ -25,6 +26,7 @@ import { COLORS, FONTS } from '../../lib/brand';
 import {
   CoachReply,
   QuickPrompt,
+  TUTORIALS_DEEPLINK_LABEL,
   getPersonalGreeting,
   getQuickPrompts,
   routeFreeform,
@@ -168,13 +170,18 @@ export const CoachBottomSheet = forwardRef<CoachSheetHandle>(function CoachBotto
   const askFollowup = useCallback(
     (label: string) => {
       Haptics.selectionAsync();
+      if (label === TUTORIALS_DEEPLINK_LABEL) {
+        close();
+        router.push('/(tabs)/train');
+        return;
+      }
       setMessages((current) => [
         ...current,
         { id: `${Date.now()}-user`, role: 'user', content: label },
       ]);
       respond(routeFreeform(label, knowledge));
     },
-    [knowledge, respond],
+    [close, knowledge, respond],
   );
 
   return (

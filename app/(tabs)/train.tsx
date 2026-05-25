@@ -323,9 +323,14 @@ function humanizeSkill(value: unknown) {
   return value
     .map((entry) => {
       const s = String(entry);
-      if (s === 'novice') return 'Novice';
+      if (s === 'novice' || s === 'new') return 'New to strength';
+      if (s === 'rusty') return 'Returning';
+      if (s === 'gym_app') return 'Using a gym app';
+      if (s === 'designed_program') return 'In a program';
+      if (s === 'free_weights_comfortable') return 'Free weights';
+      if (s === 'machines_comfortable') return 'Gym machines';
       if (s === 'intermediate') return 'Intermediate';
-      if (s === 'familiar_dumbbell_barbell_plates') return 'DB/BB/plates';
+      if (s === 'familiar_dumbbell_barbell_plates') return 'Free weights';
       if (s === 'familiar_commercial_gym') return 'Commercial gym';
       return s.replace(/_/g, ' ');
     })

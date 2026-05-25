@@ -3,14 +3,14 @@ import { useMemo } from 'react';
 import { useAssignedProgram } from './useAssignedProgram';
 import { useDailyEntry } from './useDailyEntry';
 import { useProfile } from './useProfile';
+import { useStreak } from './useStreak';
 import { CoachKnowledge } from '../lib/coachKnowledge';
-
-const SEED_STREAK = 23;
 
 export function useCoachContext(): CoachKnowledge {
   const { profile } = useProfile();
   const { assignedProgram, todayWorkout } = useAssignedProgram();
   const { entry } = useDailyEntry();
+  const { days: streakDays } = useStreak();
 
   return useMemo(
     () => ({
@@ -19,7 +19,7 @@ export function useCoachContext(): CoachKnowledge {
       todayWorkout,
       intention: entry.intention ?? null,
       intakeAnswers: profile.intakeAnswers,
-      streakDays: SEED_STREAK,
+      streakDays,
     }),
     [
       profile.firstName,
@@ -27,6 +27,7 @@ export function useCoachContext(): CoachKnowledge {
       assignedProgram,
       todayWorkout,
       entry.intention,
+      streakDays,
     ],
   );
 }
