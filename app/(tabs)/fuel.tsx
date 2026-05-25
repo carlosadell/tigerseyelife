@@ -1,31 +1,16 @@
-import { Check, Droplet, Leaf, Plus } from 'lucide-react-native';
-import { useMemo, useState } from 'react';
+import { Droplet, Plus } from 'lucide-react-native';
+import { useState } from 'react';
 import { Platform, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { AddMealSheet } from '../../components/fuel/AddMealSheet';
+import { MealSlotCard } from '../../components/fuel/MealSlotCard';
+import { useDailyMeals } from '../../hooks/useDailyMeals';
 import { useProfile } from '../../hooks/useProfile';
 import { useThemeColors } from '../../hooks/useTheme';
+import { useTodayEngagement } from '../../hooks/useTodayEngagement';
 import { COLORS, FONTS, SPACING } from '../../lib/brand';
-
-type MealSlot = '1' | '2' | '3' | 'S';
-type Component = 'protein' | 'fat' | 'carb' | 'fiber';
-
-type MealState = {
-  slot: MealSlot;
-  label: string;
-  hint: string;
-  protein: boolean;
-  fat: boolean;
-  carb: boolean;
-  fiber: boolean;
-};
-
-const INITIAL_MEALS: MealState[] = [
-  { slot: '1', label: 'First meal', hint: 'Eggs + avocado + sourdough', protein: true, fat: true, carb: true, fiber: false },
-  { slot: '2', label: 'Second meal', hint: 'Chicken bowl + roasted veg', protein: true, fat: false, carb: false, fiber: true },
-  { slot: '3', label: 'Third meal', hint: 'Plan tonight', protein: false, fat: false, carb: false, fiber: false },
-  { slot: 'S', label: 'Snack', hint: 'Optional · protein-forward', protein: false, fat: false, carb: false, fiber: false },
-];
+import { DEFAULT_TARGETS, MEAL_SLOTS, MealSlot } from '../../lib/meals';
 
 const PRECISION_LEVELS = [
   { id: 'hand', label: 'Hand portions' },
@@ -36,35 +21,12 @@ const PRECISION_LEVELS = [
 export default function FuelScreen() {
   const colors = useThemeColors();
   const { profile } = useProfile();
-  const [meals, setMeals] = useState<MealState[]>(INITIAL_MEALS);
-  const [water, setWater] = useState(8);
+  const { bySlot, totals, totalCalories, logMeal, removeMeal } = useDailyMeals();
+  const { engagement, waterTarget, addWater } = useTodayEngagement();
   const [precision, setPrecision] = useState('hand');
-
-  const totals = useMemo(() => {
-    return meals.reduce(
-      (acc, meal) => ({
-        protein: acc.protein + (meal.protein ? 1 : 0),
-        fat: acc.fat + (meal.fat ? 1 : 0),
-        carb: acc.carb + (meal.carb ? 1 : 0),
-        fiber: acc.fiber + (meal.fiber ? 1 : 0),
-      }),
-      { protein: 0, fat: 0, carb: 0, fiber: 0 },
-    );
-  }, [meals]);
-
-  const toggleComponent = (slot: MealSlot, component: Component) => {
-    setMeals((current) =>
-      current.map((meal) =>
-        meal.slot === slot ? { ...meal, [component]: !meal[component] } : meal,
-      ),
-    );
-  };
-
-  const addWater = () => setWater((w) => Math.min(14, w + 1));
-  const removeWater = () => setWater((w) => Math.max(0, w - 1));
+  const [addingSlot, setAddingSlot] = useState<MealSlot | null>(null);
 
   const greeting = profile.firstName ? `Hey ${profile.firstName.split(' ')[0]}.` : 'Hey there.';
-  const proteinOnTrack = totals.protein >= 3;
 
   return (
     <SafeAreaView edges={['top']} style={[styles.screen, { backgroundColor: colors.background }]}>
@@ -74,7 +36,7 @@ export default function FuelScreen() {
             <Text style={[styles.headerKicker, { color: colors.accent }]}>FUEL</Text>
             <Text style={[styles.title, { color: colors.text }]}>{greeting}</Text>
             <Text style={[styles.subtitle, { color: colors.mutedText }]}>
-              Lean into the simple version today — protein, fat, carbs, fiber. Stop at 80% full.
+              Tap a meal slot to log from Karen and Ryan's library, or build your own.
             </Text>
           </View>
 
@@ -82,58 +44,78 @@ export default function FuelScreen() {
             <View style={[styles.rail, { backgroundColor: colors.accent }]} />
             <View style={styles.snapshotBody}>
               <Text style={[styles.cardKicker, { color: colors.accent }]}>NUTRITION SNAPSHOT</Text>
-              <View style={styles.snapshotGrid}>
-                <SnapshotStat
-                  label="Protein"
-                  value={`${totals.protein}/4`}
-                  state={proteinOnTrack ? 'good' : 'pending'}
-                />
-                <SnapshotStat
-                  label="Fat"
-                  value={`${totals.fat}/4`}
-                  state={totals.fat >= 2 ? 'good' : 'pending'}
-                />
-                <SnapshotStat
-                  label="Carbs"
-                  value={`${totals.carb}/4`}
-                  state={totals.carb >= 2 ? 'good' : 'pending'}
-                />
-                <SnapshotStat
-                  label="Fiber"
-                  value={`${totals.fiber}/4`}
-                  state={totals.fiber >= 2 ? 'good' : 'pending'}
-                />
-              </View>
+              <MacroBar
+                label="Calories"
+                value={totalCalories}
+                target={DEFAULT_TARGETS.calories}
+                unit="cal"
+                tint={COLORS.tangerine}
+                emphasize
+              />
+              <MacroBar
+                label="Protein"
+                value={totals.protein}
+                target={DEFAULT_TARGETS.protein}
+                unit="g"
+                tint={COLORS.deepGreen}
+              />
+              <MacroBar
+                label="Fat"
+                value={totals.fat}
+                target={DEFAULT_TARGETS.fat}
+                unit="g"
+                tint={COLORS.tigerGold}
+              />
+              <MacroBar
+                label="Carbs"
+                value={totals.carb}
+                target={DEFAULT_TARGETS.carb}
+                unit="g"
+                tint={COLORS.electricYellow}
+              />
+              <MacroBar
+                label="Fiber"
+                value={totals.fiber}
+                target={DEFAULT_TARGETS.fiber}
+                unit="g"
+                tint={COLORS.evidenceBlue}
+              />
             </View>
           </View>
 
           <View style={styles.sectionHead}>
-            <Text style={[styles.sectionLabel, { color: colors.mutedText }]}>POWER MEALS · TODAY</Text>
+            <Text style={[styles.sectionLabel, { color: colors.mutedText }]}>TODAY'S MEALS</Text>
             <Text style={[styles.sectionSub, { color: colors.mutedText }]}>
-              Each meal = Protein · Fat · Carbs · Fiber
+              First, second, third, snack — your rhythm, your choice.
             </Text>
           </View>
 
-          {meals.map((meal) => (
-            <MealCard key={meal.slot} meal={meal} onToggle={toggleComponent} />
+          {MEAL_SLOTS.map((slot) => (
+            <MealSlotCard
+              key={slot.id}
+              slot={slot.id}
+              label={slot.label}
+              hint={slot.hint}
+              meals={bySlot[slot.id]}
+              onAdd={() => setAddingSlot(slot.id)}
+              onRemove={removeMeal}
+            />
           ))}
 
           <View style={styles.sectionHead}>
             <Text style={[styles.sectionLabel, { color: colors.mutedText }]}>HYDRATION</Text>
             <Text style={[styles.sectionSub, { color: colors.mutedText }]}>
-              {water}/14 glasses · {water * 8} oz
+              {engagement.water}/{waterTarget} glasses · {engagement.water * 8} oz
             </Text>
           </View>
 
           <View style={[styles.hydration, { backgroundColor: colors.card, borderColor: colors.border }]}>
             <View style={styles.hydrationGrid}>
-              {Array.from({ length: 14 }).map((_, index) => {
-                const filled = index < water;
+              {Array.from({ length: waterTarget }).map((_, index) => {
+                const filled = index < engagement.water;
                 return (
-                  <Pressable
+                  <View
                     key={index}
-                    hitSlop={4}
-                    onPress={() => setWater(index + 1)}
                     style={[
                       styles.dropCell,
                       {
@@ -147,31 +129,30 @@ export default function FuelScreen() {
                       fill={filled ? '#FFFFFF' : 'transparent'}
                       size={14}
                     />
-                  </Pressable>
+                  </View>
                 );
               })}
             </View>
-            <View style={styles.hydrationActions}>
-              <Pressable
-                onPress={removeWater}
-                style={[styles.hydrationButton, { borderColor: colors.border }]}
-              >
-                <Text style={[styles.hydrationButtonText, { color: colors.mutedText }]}>−</Text>
-              </Pressable>
-              <Pressable
-                onPress={addWater}
-                style={[
-                  styles.hydrationButton,
-                  { backgroundColor: colors.accent, borderColor: colors.accent },
-                ]}
-              >
-                <Plus color={colors.inverseText} size={16} strokeWidth={2.6} />
-              </Pressable>
-            </View>
+            <Pressable
+              accessibilityRole="button"
+              onPress={addWater}
+              style={({ pressed }) => [
+                styles.hydrationButton,
+                { backgroundColor: colors.accent, borderColor: colors.accent, opacity: pressed ? 0.85 : 1 },
+              ]}
+            >
+              <Plus color={colors.inverseText} size={16} strokeWidth={2.6} />
+              <Text style={[styles.hydrationButtonText, { color: colors.inverseText }]}>
+                Log a glass
+              </Text>
+            </Pressable>
           </View>
 
           <View style={styles.sectionHead}>
             <Text style={[styles.sectionLabel, { color: colors.mutedText }]}>PRECISION LEVEL</Text>
+            <Text style={[styles.sectionSub, { color: colors.mutedText }]}>
+              How much detail you want surfaced — change anytime.
+            </Text>
           </View>
           <View style={styles.precisionRow}>
             {PRECISION_LEVELS.map((level) => {
@@ -200,147 +181,51 @@ export default function FuelScreen() {
               );
             })}
           </View>
-
-          <View style={[styles.deferred, { backgroundColor: colors.card, borderColor: colors.border }]}>
-            <Leaf color={colors.accent} size={20} strokeWidth={1.8} />
-            <View style={styles.deferredBody}>
-              <Text style={[styles.deferredTitle, { color: colors.text }]}>
-                Full meal builder · macro tracker · saved meals
-              </Text>
-              <Text style={[styles.deferredCopy, { color: colors.mutedText }]}>
-                Coming in Round 4. The simple version (this screen) stays as the default for members
-                who want food to be light-touch.
-              </Text>
-            </View>
-          </View>
         </ScrollView>
       </View>
+      <AddMealSheet
+        visible={addingSlot !== null}
+        slot={addingSlot}
+        onClose={() => setAddingSlot(null)}
+        onLog={logMeal}
+      />
     </SafeAreaView>
   );
 }
 
-function SnapshotStat({
+function MacroBar({
   label,
   value,
-  state,
+  target,
+  unit,
+  tint,
+  emphasize,
 }: {
   label: string;
-  value: string;
-  state: 'good' | 'pending';
+  value: number;
+  target: number;
+  unit: string;
+  tint: string;
+  emphasize?: boolean;
 }) {
   const colors = useThemeColors();
+  const pct = target > 0 ? Math.min(100, Math.round((value / target) * 100)) : 0;
+  const left = Math.max(0, target - value);
   return (
-    <View style={styles.snapshotItem}>
-      <Text style={[styles.snapshotLabel, { color: colors.mutedText }]}>{label}</Text>
-      <View style={styles.snapshotValueRow}>
-        <Text
-          style={[
-            styles.snapshotValue,
-            { color: state === 'good' ? colors.text : colors.mutedText },
-          ]}
-        >
-          {value}
+    <View style={styles.macroBar}>
+      <View style={styles.macroHead}>
+        <Text style={[styles.macroLabel, { color: colors.text }]}>{label}</Text>
+        <Text style={[styles.macroValue, { color: emphasize ? tint : colors.text }]}>
+          {value} {unit}
         </Text>
-        <View
-          style={[
-            styles.snapshotDot,
-            {
-              backgroundColor: state === 'good' ? colors.success : colors.mutedText,
-              opacity: state === 'good' ? 1 : 0.4,
-            },
-          ]}
-        />
       </View>
-    </View>
-  );
-}
-
-function MealCard({
-  meal,
-  onToggle,
-}: {
-  meal: MealState;
-  onToggle: (slot: MealSlot, component: Component) => void;
-}) {
-  const colors = useThemeColors();
-  const complete = meal.protein && meal.fat && meal.carb && meal.fiber;
-
-  return (
-    <View style={[styles.mealCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
-      <View style={styles.mealHead}>
-        <View style={styles.mealHeadLeft}>
-          <View style={[styles.mealLetter, { backgroundColor: colors.accent }]}>
-            <Text style={styles.mealLetterText}>{meal.slot}</Text>
-          </View>
-          <View style={{ flex: 1, minWidth: 0 }}>
-            <Text style={[styles.mealLabel, { color: colors.text }]}>{meal.label}</Text>
-            <Text style={[styles.mealHint, { color: colors.mutedText }]} numberOfLines={1}>
-              {meal.hint}
-            </Text>
-          </View>
-        </View>
-        {complete ? (
-          <View style={[styles.completeBadge, { borderColor: colors.success }]}>
-            <Check color={colors.success} size={14} strokeWidth={2.6} />
-          </View>
-        ) : null}
+      <View style={[styles.macroTrack, { backgroundColor: colors.cardAlt }]}>
+        <View style={[styles.macroFill, { backgroundColor: tint, width: `${pct}%` }]} />
       </View>
-      <View style={styles.componentRow}>
-        <ComponentToggle
-          label="Protein"
-          active={meal.protein}
-          onPress={() => onToggle(meal.slot, 'protein')}
-        />
-        <ComponentToggle
-          label="Fat"
-          active={meal.fat}
-          onPress={() => onToggle(meal.slot, 'fat')}
-        />
-        <ComponentToggle
-          label="Carbs"
-          active={meal.carb}
-          onPress={() => onToggle(meal.slot, 'carb')}
-        />
-        <ComponentToggle
-          label="Fiber"
-          active={meal.fiber}
-          onPress={() => onToggle(meal.slot, 'fiber')}
-        />
-      </View>
-    </View>
-  );
-}
-
-function ComponentToggle({
-  label,
-  active,
-  onPress,
-}: {
-  label: string;
-  active: boolean;
-  onPress: () => void;
-}) {
-  const colors = useThemeColors();
-  return (
-    <Pressable
-      onPress={onPress}
-      style={[
-        styles.componentChip,
-        {
-          backgroundColor: active ? colors.action : 'transparent',
-          borderColor: active ? colors.action : colors.border,
-        },
-      ]}
-    >
-      {active ? (
-        <Check color="#FFFFFF" size={12} strokeWidth={3} />
-      ) : (
-        <View style={[styles.componentEmpty, { borderColor: colors.mutedText }]} />
-      )}
-      <Text style={[styles.componentLabel, { color: active ? '#FFFFFF' : colors.mutedText }]}>
-        {label}
+      <Text style={[styles.macroMeta, { color: colors.mutedText }]}>
+        {pct}% of {target} {unit} · {left} {unit} left
       </Text>
-    </Pressable>
+    </View>
   );
 }
 
@@ -350,74 +235,17 @@ const styles = StyleSheet.create({
     fontSize: 10.5,
     letterSpacing: 2.2,
   },
-  completeBadge: {
-    alignItems: 'center',
-    borderRadius: 999,
-    borderWidth: 1.4,
-    height: 22,
-    justifyContent: 'center',
-    width: 22,
-  },
-  componentChip: {
-    alignItems: 'center',
-    borderRadius: 999,
-    borderWidth: 1,
-    flex: 1,
-    flexDirection: 'row',
-    gap: 6,
-    justifyContent: 'center',
-    minHeight: 34,
-    paddingHorizontal: 8,
-  },
-  componentEmpty: {
-    borderRadius: 6,
-    borderWidth: 1,
-    height: 10,
-    width: 10,
-  },
-  componentLabel: {
-    fontFamily: FONTS.sansBold,
-    fontSize: 11,
-    letterSpacing: 0.2,
-  },
-  componentRow: {
-    flexDirection: 'row',
-    gap: 6,
-  },
   content: {
     gap: 14,
     paddingBottom: 128,
     paddingHorizontal: SPACING.screenX,
     paddingTop: 4,
   },
-  deferred: {
-    alignItems: 'flex-start',
-    borderRadius: 12,
-    borderWidth: 1,
-    flexDirection: 'row',
-    gap: 12,
-    marginTop: 6,
-    padding: 14,
-  },
-  deferredBody: {
-    flex: 1,
-    gap: 4,
-  },
-  deferredCopy: {
-    fontFamily: FONTS.sans,
-    fontSize: 12.5,
-    lineHeight: 17,
-  },
-  deferredTitle: {
-    fontFamily: FONTS.sansBold,
-    fontSize: 13,
-    lineHeight: 18,
-  },
   dropCell: {
     alignItems: 'center',
     borderRadius: 999,
     borderWidth: 1,
-    flexBasis: '12.6%',
+    flexBasis: '11%',
     height: 30,
     justifyContent: 'center',
   },
@@ -432,23 +260,20 @@ const styles = StyleSheet.create({
     gap: 12,
     padding: 14,
   },
-  hydrationActions: {
-    flexDirection: 'row',
-    gap: 8,
-    justifyContent: 'flex-end',
-  },
   hydrationButton: {
     alignItems: 'center',
-    borderRadius: 999,
+    borderRadius: 10,
     borderWidth: 1,
-    height: 32,
+    flexDirection: 'row',
+    gap: 6,
     justifyContent: 'center',
-    width: 32,
+    minHeight: 38,
+    paddingHorizontal: 14,
   },
   hydrationButtonText: {
     fontFamily: FONTS.sansBold,
-    fontSize: 18,
-    lineHeight: 18,
+    fontSize: 13,
+    letterSpacing: 0.2,
   },
   hydrationGrid: {
     flexDirection: 'row',
@@ -459,48 +284,36 @@ const styles = StyleSheet.create({
     gap: 6,
     paddingTop: 4,
   },
-  mealCard: {
-    borderRadius: 12,
-    borderWidth: 1,
-    gap: 12,
-    padding: 14,
+  macroBar: {
+    gap: 5,
   },
-  mealHead: {
-    alignItems: 'center',
+  macroFill: {
+    borderRadius: 999,
+    height: '100%',
+  },
+  macroHead: {
+    alignItems: 'baseline',
     flexDirection: 'row',
-    gap: 12,
     justifyContent: 'space-between',
   },
-  mealHeadLeft: {
-    alignItems: 'center',
-    flex: 1,
-    flexDirection: 'row',
-    gap: 12,
-    minWidth: 0,
+  macroLabel: {
+    fontFamily: FONTS.sansBold,
+    fontSize: 13,
   },
-  mealHint: {
+  macroMeta: {
     fontFamily: FONTS.sans,
-    fontSize: 12.5,
-    lineHeight: 17,
+    fontSize: 11,
   },
-  mealLabel: {
+  macroTrack: {
+    borderRadius: 999,
+    height: 6,
+    overflow: 'hidden',
+    width: '100%',
+  },
+  macroValue: {
     fontFamily: FONTS.sansBold,
-    fontSize: 15,
-    letterSpacing: -0.1,
-    lineHeight: 19,
-  },
-  mealLetter: {
-    alignItems: 'center',
-    borderRadius: 8,
-    height: 32,
-    justifyContent: 'center',
-    width: 32,
-  },
-  mealLetterText: {
-    color: '#FFFFFF',
-    fontFamily: FONTS.sansBold,
-    fontSize: 15,
-    letterSpacing: 0.4,
+    fontSize: 14,
+    letterSpacing: -0.2,
   },
   phoneFrame: {
     alignSelf: 'center',
@@ -557,35 +370,6 @@ const styles = StyleSheet.create({
   snapshotBody: {
     flex: 1,
     gap: 12,
-  },
-  snapshotDot: {
-    borderRadius: 3,
-    height: 6,
-    width: 6,
-  },
-  snapshotGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 12,
-  },
-  snapshotItem: {
-    flexBasis: '46%',
-    gap: 2,
-  },
-  snapshotLabel: {
-    fontFamily: FONTS.sansBold,
-    fontSize: 10.5,
-    letterSpacing: 1.4,
-  },
-  snapshotValue: {
-    fontFamily: FONTS.sansBold,
-    fontSize: 17,
-    letterSpacing: -0.2,
-  },
-  snapshotValueRow: {
-    alignItems: 'center',
-    flexDirection: 'row',
-    gap: 6,
   },
   subtitle: {
     fontFamily: FONTS.sans,

@@ -71,6 +71,7 @@ async function fetchEngagementDates(userId: string, isDevSession: boolean): Prom
 
   const powerPrefix = `tel:power-progress:${userId}:`;
   const engagementPrefix = `tel:engagement:${userId}:`;
+  const mealsPrefix = `tel:meals-logged:${userId}:`;
   const allKeys = await AsyncStorage.getAllKeys();
 
   const powerKeys = allKeys.filter((key) => key.startsWith(powerPrefix));
@@ -91,6 +92,8 @@ async function fetchEngagementDates(userId: string, isDevSession: boolean): Prom
   for (const key of allKeys) {
     if (key.startsWith(engagementPrefix)) {
       dates.add(key.slice(engagementPrefix.length));
+    } else if (key.startsWith(mealsPrefix)) {
+      dates.add(key.slice(mealsPrefix.length));
     }
   }
 
