@@ -1,9 +1,11 @@
-import { Trash2, X } from 'lucide-react-native';
+import { Camera, ImageIcon, Sparkles, Trash2, X } from 'lucide-react-native';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import {
+  ActivityIndicator,
   Animated,
   Dimensions,
   Easing,
+  Image,
   KeyboardAvoidingView,
   Modal,
   Platform,
@@ -16,6 +18,7 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { useFoodVision } from '../../hooks/useFoodVision';
 import { useSavedMeals } from '../../hooks/useSavedMeals';
 import { useThemeColors } from '../../hooks/useTheme';
 import { FONTS } from '../../lib/brand';
@@ -46,6 +49,7 @@ export function AddMealSheet({ visible, slot, onClose, onLog }: AddMealSheetProp
   const colors = useThemeColors();
   const insets = useSafeAreaInsets();
   const { saved: favorites, removeSaved } = useSavedMeals();
+  const vision = useFoodVision();
   const [tab, setTab] = useState<Tab>('library');
   const [customName, setCustomName] = useState('');
   const [customMacros, setCustomMacros] = useState<{ [k in keyof typeof ZERO_MACROS]: string }>({
@@ -64,6 +68,7 @@ export function AddMealSheet({ visible, slot, onClose, onLog }: AddMealSheetProp
       setTab('library');
       setCustomName('');
       setCustomMacros({ protein: '', fat: '', carb: '', fiber: '' });
+      vision.reset();
       translateY.setValue(SHEET_HEIGHT);
       backdropOpacity.setValue(0);
       Animated.parallel([
@@ -81,7 +86,22 @@ export function AddMealSheet({ visible, slot, onClose, onLog }: AddMealSheetProp
         }),
       ]).start();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [backdropOpacity, translateY, visible]);
+
+  // When vision succeeds, auto-fill the Custom tab and jump to it so the user reviews + confirms.
+  useEffect(() => {
+    if (vision.status === 'success' && vision.result) {
+      setCustomName(vision.result.name);
+      setCustomMacros({
+        protein: String(vision.result.macros.protein),
+        fat: String(vision.result.macros.fat),
+        carb: String(vision.result.macros.carb),
+        fiber: String(vision.result.macros.fiber),
+      });
+      setTab('custom');
+    }
+  }, [vision.status, vision.result]);
 
   const close = () => {
     Animated.parallel([
@@ -294,7 +314,113 @@ export function AddMealSheet({ visible, slot, onClose, onLog }: AddMealSheetProp
                 keyboardShouldPersistTaps="handled"
                 showsVerticalScrollIndicator={false}
               >
-                <Text style={[styles.formLabel, { color: colors.mutedText }]}>MEAL NAME</Text>
+                <View style={[styles.scanCard, { backgroundColor: colors.cardAlt, borderColor: colors.border }]}>
+                  {vision.status === 'idle' && !vision.result ? (
+                    <>
+                      <View style={styles.scanHeadRow}>
+                        <Sparkles color={colors.accent} size={14} strokeWidth={2.2} />
+                        <Text style={[styles.scanKicker, { color: colors.accent }]}>
+                          SCAN WITH AI
+                        </Text>
+                      </View>
+                      <Text style={[styles.scanBody, { color: colors.mutedText }]}>
+                        Take a photo or pick one from your library. Claude identifies the food
+                        and pre-fills the macros below.
+                      </Text>
+                      <View style={styles.scanButtonRow}>
+                        <Pressable
+                          accessibilityRole="button"
+                          onPress={vision.captureFromCamera}
+                          style={({ pressed }) => [
+                            styles.scanBtn,
+                            {
+                              backgroundColor: colors.accent,
+                              opacity: pressed ? 0.85 : 1,
+                            },
+                          ]}
+                        >
+                          <Camera color={colors.inverseText} size={15} strokeWidth={2.2} />
+                          <Text style={[styles.scanBtnText, { color: colors.inverseText }]}>
+                            Camera
+                          </Text>
+                        </Pressable>
+                        <Pressable
+                          accessibilityRole="button"
+                          onPress={vision.pickFromLibrary}
+                          style={({ pressed }) => [
+                            styles.scanBtn,
+                            styles.scanBtnGhost,
+                            { borderColor: colors.border, opacity: pressed ? 0.7 : 1 },
+                          ]}
+                        >
+                          <ImageIcon color={colors.text} size={15} strokeWidth={2.2} />
+                          <Text style={[styles.scanBtnText, { color: colors.text }]}>
+                            Library
+                          </Text>
+                        </Pressable>
+                      </View>
+                    </>
+                  ) : null}
+
+                  {(vision.status === 'picking' || vision.status === 'scanning') ? (
+                    <View style={styles.scanProgress}>
+                      {vision.image ? (
+                        <Image source={{ uri: vision.image.uri }} style={styles.scanThumb} />
+                      ) : null}
+                      <View style={{ flex: 1, gap: 4 }}>
+                        <Text style={[styles.scanKicker, { color: colors.accent }]}>
+                          {vision.status === 'picking' ? 'OPENING…' : 'IDENTIFYING FOOD…'}
+                        </Text>
+                        <Text style={[styles.scanBody, { color: colors.mutedText }]}>
+                          {vision.status === 'picking'
+                            ? 'Pick a photo of the meal you want to log.'
+                            : 'Claude is reading the photo. Usually 2–4 seconds.'}
+                        </Text>
+                      </View>
+                      <ActivityIndicator color={colors.accent} />
+                    </View>
+                  ) : null}
+
+                  {vision.status === 'success' && vision.result ? (
+                    <View style={styles.scanProgress}>
+                      {vision.image ? (
+                        <Image source={{ uri: vision.image.uri }} style={styles.scanThumb} />
+                      ) : null}
+                      <View style={{ flex: 1, gap: 4 }}>
+                        <Text style={[styles.scanKicker, { color: colors.accent }]}>
+                          DETECTED · {vision.result.confidence.toUpperCase()} CONFIDENCE
+                        </Text>
+                        <Text style={[styles.scanResultName, { color: colors.text }]} numberOfLines={1}>
+                          {vision.result.name}
+                        </Text>
+                        <Text style={[styles.scanBody, { color: colors.mutedText }]} numberOfLines={2}>
+                          {vision.result.components.length} component
+                          {vision.result.components.length === 1 ? '' : 's'}
+                          {vision.result.notes ? ` · ${vision.result.notes}` : ''}
+                        </Text>
+                        <Pressable onPress={vision.reset} hitSlop={6}>
+                          <Text style={[styles.scanLink, { color: colors.accent }]}>
+                            Try another photo
+                          </Text>
+                        </Pressable>
+                      </View>
+                    </View>
+                  ) : null}
+
+                  {vision.status === 'error' && vision.error ? (
+                    <View style={{ gap: 6 }}>
+                      <Text style={[styles.scanKicker, { color: colors.danger ?? colors.accent }]}>
+                        SCAN FAILED
+                      </Text>
+                      <Text style={[styles.scanBody, { color: colors.mutedText }]}>{vision.error}</Text>
+                      <Pressable onPress={vision.reset} hitSlop={6}>
+                        <Text style={[styles.scanLink, { color: colors.accent }]}>Try again</Text>
+                      </Pressable>
+                    </View>
+                  ) : null}
+                </View>
+
+                <Text style={[styles.formLabel, { color: colors.mutedText, marginTop: 16 }]}>MEAL NAME</Text>
                 <TextInput
                   onChangeText={setCustomName}
                   placeholder="e.g. Chicken stir fry"
@@ -572,6 +698,71 @@ const styles = StyleSheet.create({
     fontFamily: FONTS.sansBold,
     fontSize: 15,
     letterSpacing: 0.2,
+  },
+  scanBody: {
+    fontFamily: FONTS.sans,
+    fontSize: 12.5,
+    lineHeight: 17,
+  },
+  scanBtn: {
+    alignItems: 'center',
+    borderRadius: 10,
+    flex: 1,
+    flexDirection: 'row',
+    gap: 6,
+    justifyContent: 'center',
+    minHeight: 40,
+  },
+  scanBtnGhost: {
+    backgroundColor: 'transparent',
+    borderWidth: 1,
+  },
+  scanBtnText: {
+    fontFamily: FONTS.sansBold,
+    fontSize: 13,
+    letterSpacing: 0.2,
+  },
+  scanButtonRow: {
+    flexDirection: 'row',
+    gap: 8,
+    marginTop: 4,
+  },
+  scanCard: {
+    borderRadius: 12,
+    borderWidth: 1,
+    gap: 8,
+    padding: 14,
+  },
+  scanHeadRow: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    gap: 6,
+  },
+  scanKicker: {
+    fontFamily: FONTS.sansBold,
+    fontSize: 10,
+    letterSpacing: 1.6,
+  },
+  scanLink: {
+    fontFamily: FONTS.sansBold,
+    fontSize: 11.5,
+    letterSpacing: 0.4,
+    marginTop: 4,
+  },
+  scanProgress: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    gap: 12,
+  },
+  scanResultName: {
+    fontFamily: FONTS.sansBold,
+    fontSize: 14,
+    letterSpacing: -0.1,
+  },
+  scanThumb: {
+    borderRadius: 8,
+    height: 56,
+    width: 56,
   },
   scrollPad: {
     paddingBottom: 24,
