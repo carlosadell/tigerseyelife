@@ -1,126 +1,156 @@
-import { ChevronDown, ChevronUp } from 'lucide-react-native';
-import { useState } from 'react';
+import { ArrowRight } from 'lucide-react-native';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { useThemeColors } from '../../hooks/useTheme';
 import { COLORS, FONTS } from '../../lib/brand';
 
 const STEPS = [
-  {
-    letter: 'A',
-    title: 'Anchor',
-    tint: COLORS.deepGreen,
-    body: 'Pick your protein first, at the right proportion for your day. This is the load-bearing piece of the meal.',
-  },
-  {
-    letter: 'B',
-    title: 'Build',
-    tint: COLORS.tangerine,
-    body: "Layer in fiber, carbs, and fat based on what your energy and body composition actually need.",
-  },
-  {
-    letter: 'C',
-    title: 'Complete',
-    tint: COLORS.evidenceBlue,
-    body: 'Add the thing that makes it feel like a meal you chose — herbs, a sauce, a sprinkle of nuts. Never deprivation.',
-  },
+  { letter: 'A', title: 'ANCHOR', tint: COLORS.deepGreen, body: 'Protein, picked first.' },
+  { letter: 'B', title: 'BUILD', tint: COLORS.tangerine, body: 'Fiber, carbs, fat — round it out.' },
+  { letter: 'C', title: 'COMPLETE', tint: COLORS.evidenceBlue, body: 'Herbs, sauce, the joy. Never deprivation.' },
 ];
 
-export function AbcExplainer() {
+type AbcExplainerProps = {
+  libraryMealsLogged: number;
+  totalMealsLogged: number;
+  onBuildPress?: () => void;
+};
+
+export function AbcExplainer({
+  libraryMealsLogged,
+  totalMealsLogged,
+  onBuildPress,
+}: AbcExplainerProps) {
   const colors = useThemeColors();
-  const [expanded, setExpanded] = useState(false);
-  const Chevron = expanded ? ChevronUp : ChevronDown;
+  const statusLine = formatStatusLine(libraryMealsLogged, totalMealsLogged);
+  const allFramework = totalMealsLogged > 0 && libraryMealsLogged === totalMealsLogged;
 
   return (
     <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border }]}>
-      <Pressable
-        accessibilityRole="button"
-        accessibilityHint={expanded ? 'Tap to collapse' : 'Tap to expand'}
-        onPress={() => setExpanded((v) => !v)}
-        style={({ pressed }) => [styles.head, { opacity: pressed ? 0.85 : 1 }]}
-      >
-        <View style={{ flex: 1 }}>
-          <Text style={[styles.kicker, { color: colors.accent }]}>ABC POWER MEALS</Text>
-          <Text style={[styles.title, { color: colors.text }]}>
-            Anchor · Build · Complete
-          </Text>
-          <Text style={[styles.tagline, { color: colors.mutedText }]}>
-            Karen and Ryan's framework for putting a meal together without counting.
-          </Text>
-        </View>
-        <View style={[styles.chevWrap, { backgroundColor: colors.cardAlt }]}>
-          <Chevron color={colors.mutedText} size={18} strokeWidth={2} />
-        </View>
-      </Pressable>
+      <View style={styles.head}>
+        <Text style={[styles.kicker, { color: colors.accent }]}>ABC POWER MEALS</Text>
+        <Text style={[styles.attribution, { color: colors.mutedText }]}>KAREN + RYAN</Text>
+      </View>
 
-      {expanded ? (
-        <View style={[styles.body, { borderTopColor: colors.border }]}>
-          {STEPS.map((step) => (
-            <View key={step.letter} style={styles.step}>
-              <View style={[styles.stepBadge, { backgroundColor: step.tint }]}>
-                <Text style={styles.stepBadgeText}>{step.letter}</Text>
-              </View>
-              <View style={{ flex: 1, minWidth: 0 }}>
-                <Text style={[styles.stepTitle, { color: colors.text }]}>{step.title}</Text>
-                <Text style={[styles.stepBody, { color: colors.mutedText }]}>{step.body}</Text>
-              </View>
+      <View style={styles.steps}>
+        {STEPS.map((step) => (
+          <View key={step.letter} style={styles.step}>
+            <View style={[styles.badge, { backgroundColor: step.tint }]}>
+              <Text style={styles.badgeText}>{step.letter}</Text>
             </View>
-          ))}
-        </View>
-      ) : null}
+            <View style={styles.stepBody}>
+              <Text style={[styles.stepTitle, { color: colors.text }]}>{step.title}</Text>
+              <Text style={[styles.stepLine, { color: colors.mutedText }]}>{step.body}</Text>
+            </View>
+          </View>
+        ))}
+      </View>
+
+      <View style={[styles.footer, { borderTopColor: colors.border }]}>
+        <Text
+          style={[
+            styles.status,
+            { color: allFramework ? colors.accent : colors.mutedText },
+          ]}
+        >
+          {statusLine}
+        </Text>
+        {onBuildPress ? (
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="Build a meal"
+            onPress={onBuildPress}
+            style={({ pressed }) => [styles.cta, { opacity: pressed ? 0.7 : 1 }]}
+          >
+            <Text style={[styles.ctaText, { color: colors.accent }]}>BUILD A MEAL</Text>
+            <ArrowRight color={colors.accent} size={14} strokeWidth={2.4} />
+          </Pressable>
+        ) : null}
+      </View>
     </View>
   );
 }
 
+function formatStatusLine(library: number, total: number): string {
+  if (total === 0) return 'NO MEALS LOGGED TODAY';
+  if (library === total) {
+    return total === 1
+      ? '1 MEAL · BUILT WITH FRAMEWORK ✓'
+      : `ALL ${total} MEALS · BUILT WITH FRAMEWORK ✓`;
+  }
+  return `${library} OF ${total} MEALS · BUILT WITH FRAMEWORK`;
+}
+
 const styles = StyleSheet.create({
-  body: {
-    borderTopWidth: StyleSheet.hairlineWidth,
-    gap: 14,
-    paddingHorizontal: 16,
-    paddingVertical: 16,
+  attribution: {
+    fontFamily: FONTS.sansBold,
+    fontSize: 9.5,
+    letterSpacing: 1.6,
+  },
+  badge: {
+    alignItems: 'center',
+    borderRadius: 7,
+    height: 28,
+    justifyContent: 'center',
+    width: 28,
+  },
+  badgeText: {
+    color: '#FFFFFF',
+    fontFamily: FONTS.sansBold,
+    fontSize: 13,
+    letterSpacing: 0.5,
   },
   card: {
     borderRadius: 12,
     borderWidth: 1,
-    overflow: 'hidden',
+    padding: 16,
   },
-  chevWrap: {
-    alignItems: 'center',
-    borderRadius: 999,
-    height: 30,
-    justifyContent: 'center',
-    width: 30,
-  },
-  head: {
+  cta: {
     alignItems: 'center',
     flexDirection: 'row',
-    gap: 12,
-    padding: 16,
+    gap: 5,
+  },
+  ctaText: {
+    fontFamily: FONTS.sansBold,
+    fontSize: 10.5,
+    letterSpacing: 1.6,
+  },
+  footer: {
+    alignItems: 'center',
+    borderTopWidth: StyleSheet.hairlineWidth,
+    flexDirection: 'row',
+    gap: 10,
+    justifyContent: 'space-between',
+    marginTop: 14,
+    paddingTop: 12,
+  },
+  head: {
+    alignItems: 'baseline',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 12,
   },
   kicker: {
     fontFamily: FONTS.sansBold,
     fontSize: 10.5,
     letterSpacing: 2.2,
   },
+  status: {
+    flex: 1,
+    fontFamily: FONTS.sansBold,
+    fontSize: 10,
+    letterSpacing: 1.4,
+  },
   step: {
     alignItems: 'flex-start',
     flexDirection: 'row',
     gap: 12,
   },
-  stepBadge: {
-    alignItems: 'center',
-    borderRadius: 7,
-    height: 30,
-    justifyContent: 'center',
-    width: 30,
-  },
-  stepBadgeText: {
-    color: '#FFFFFF',
-    fontFamily: FONTS.sansBold,
-    fontSize: 14,
-    letterSpacing: 0.5,
-  },
   stepBody: {
+    flex: 1,
+    minWidth: 0,
+  },
+  stepLine: {
     fontFamily: FONTS.sans,
     fontSize: 12.5,
     lineHeight: 17,
@@ -128,19 +158,10 @@ const styles = StyleSheet.create({
   },
   stepTitle: {
     fontFamily: FONTS.sansBold,
-    fontSize: 14,
-    letterSpacing: -0.1,
+    fontSize: 12,
+    letterSpacing: 1.4,
   },
-  tagline: {
-    fontFamily: FONTS.sans,
-    fontSize: 12.5,
-    lineHeight: 17,
-    marginTop: 4,
-  },
-  title: {
-    fontFamily: FONTS.sansBold,
-    fontSize: 15.5,
-    letterSpacing: -0.1,
-    marginTop: 2,
+  steps: {
+    gap: 10,
   },
 });

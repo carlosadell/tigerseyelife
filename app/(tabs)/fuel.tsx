@@ -40,6 +40,24 @@ export default function FuelScreen() {
     [bySlot],
   );
 
+  const totalMealsLogged = useMemo(
+    () => MEAL_SLOTS.reduce((n, s) => n + bySlot[s.id].length, 0),
+    [bySlot],
+  );
+  const libraryMealsLogged = useMemo(
+    () =>
+      MEAL_SLOTS.reduce(
+        (n, s) => n + bySlot[s.id].filter((m) => m.source === 'library').length,
+        0,
+      ),
+    [bySlot],
+  );
+
+  const openFirstEmptySlot = () => {
+    const firstEmpty = MEAL_SLOTS.find((s) => bySlot[s.id].length === 0);
+    setAddingSlot(firstEmpty ? firstEmpty.id : '1');
+  };
+
   return (
     <SafeAreaView edges={['top']} style={[styles.screen, { backgroundColor: colors.background }]}>
       <View style={styles.phoneFrame}>
@@ -61,7 +79,11 @@ export default function FuelScreen() {
             totals={totals}
           />
 
-          <AbcExplainer />
+          <AbcExplainer
+            libraryMealsLogged={libraryMealsLogged}
+            totalMealsLogged={totalMealsLogged}
+            onBuildPress={openFirstEmptySlot}
+          />
 
           <View style={styles.sectionHead}>
             <Text style={[styles.sectionLabel, { color: colors.mutedText }]}>TODAY'S MEALS</Text>
