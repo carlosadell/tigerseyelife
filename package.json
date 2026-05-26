@@ -14,7 +14,6 @@
     "build:android": "eas build --profile development --platform android"
   },
   "dependencies": {
-    "@anthropic-ai/sdk": "^0.98.0",
     "@expo-google-fonts/inter": "^0.4.2",
     "@expo-google-fonts/vt323": "^0.4.1",
     "@gorhom/bottom-sheet": "^5.2.13",

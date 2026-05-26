@@ -1,16 +1,19 @@
-import Anthropic from '@anthropic-ai/sdk';
-
 import { Macros } from './meals';
 
 /**
  * Food vision — sends a photo to Claude Haiku 4.5 and returns identified
  * meal name + macros + per-component breakdown.
  *
- * SECURITY NOTE: This calls the Anthropic API directly from the device using
- * an API key bundled into the app via EXPO_PUBLIC_ANTHROPIC_API_KEY. That key
- * IS extractable from the app binary — fine for the beta cohort, but the
- * production path is a Supabase Edge Function proxy that holds the key
- * server-side. Track that in the spec doc before public launch.
+ * We call the Messages API via fetch directly rather than @anthropic-ai/sdk
+ * because the SDK has Node-only credential-loading code paths
+ * (`await import('node:fs')`) that Metro can't bundle for React Native.
+ * The Messages API is plain JSON in/out — fetch is the right tool here.
+ *
+ * SECURITY: this calls the Anthropic API directly from the device using an
+ * API key bundled into the app via EXPO_PUBLIC_ANTHROPIC_API_KEY. That key
+ * IS extractable from the app binary — fine for beta, but the production
+ * path is a Supabase Edge Function proxy that holds the key server-side.
+ * Track that in the spec doc before public launch.
  */
 
 export type FoodConfidence = 'low' | 'medium' | 'high';
@@ -94,9 +97,23 @@ const FOOD_VISION_SCHEMA = {
     },
   },
   required: ['name', 'components', 'macros', 'confidence', 'notes'],
-} as const;
+};
 
 export type MediaType = 'image/jpeg' | 'image/png' | 'image/webp' | 'image/gif';
+
+type AnthropicMessagesResponse = {
+  content: Array<
+    | { type: 'text'; text: string }
+    | { type: string; [k: string]: unknown }
+  >;
+  stop_reason: string;
+  usage?: { input_tokens: number; output_tokens: number };
+};
+
+type AnthropicErrorResponse = {
+  type?: string;
+  error?: { type?: string; message?: string };
+};
 
 export async function scanFood({
   base64,
@@ -112,36 +129,59 @@ export async function scanFood({
     );
   }
 
-  const client = new Anthropic({ apiKey, dangerouslyAllowBrowser: true });
-
-  const response = await client.messages.create({
-    model: 'claude-haiku-4-5',
-    max_tokens: 1024,
-    system: SYSTEM_PROMPT,
-    messages: [
-      {
-        role: 'user',
-        content: [
-          {
-            type: 'image',
-            source: { type: 'base64', media_type: mediaType, data: base64 },
-          },
-          {
-            type: 'text',
-            text: 'Identify the food and estimate macros for the serving shown. Return the structured JSON only.',
-          },
-        ],
-      },
-    ],
-    output_config: {
-      format: { type: 'json_schema', schema: FOOD_VISION_SCHEMA },
+  const response = await fetch('https://api.anthropic.com/v1/messages', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'x-api-key': apiKey,
+      'anthropic-version': '2023-06-01',
     },
+    body: JSON.stringify({
+      model: 'claude-haiku-4-5',
+      max_tokens: 1024,
+      system: SYSTEM_PROMPT,
+      messages: [
+        {
+          role: 'user',
+          content: [
+            {
+              type: 'image',
+              source: { type: 'base64', media_type: mediaType, data: base64 },
+            },
+            {
+              type: 'text',
+              text: 'Identify the food and estimate macros for the serving shown. Return the structured JSON only.',
+            },
+          ],
+        },
+      ],
+      output_config: {
+        format: { type: 'json_schema', schema: FOOD_VISION_SCHEMA },
+      },
+    }),
   });
 
-  // Structured outputs guarantee the response shape; parse from the text block.
-  const textBlock = response.content.find((b) => b.type === 'text');
-  if (!textBlock || textBlock.type !== 'text') {
+  if (!response.ok) {
+    let detail = `${response.status} ${response.statusText}`;
+    try {
+      const errBody = (await response.json()) as AnthropicErrorResponse;
+      if (errBody?.error?.message) detail = errBody.error.message;
+    } catch {
+      // body wasn't JSON; keep the status line
+    }
+    throw new Error(`Anthropic API error: ${detail}`);
+  }
+
+  const data = (await response.json()) as AnthropicMessagesResponse;
+  const textBlock = data.content.find(
+    (b): b is { type: 'text'; text: string } => b.type === 'text',
+  );
+  if (!textBlock) {
     throw new Error('Food vision response missing text content.');
   }
-  return JSON.parse(textBlock.text) as FoodVisionResult;
+  try {
+    return JSON.parse(textBlock.text) as FoodVisionResult;
+  } catch {
+    throw new Error('Food vision response was not valid JSON.');
+  }
 }
