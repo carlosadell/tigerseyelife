@@ -62,8 +62,8 @@ export function AbcExplainer({
             onPress={onBuildPress}
             style={({ pressed }) => [styles.cta, { opacity: pressed ? 0.7 : 1 }]}
           >
-            <Text style={[styles.ctaText, { color: colors.accent }]}>BUILD A MEAL</Text>
             <ArrowRight color={colors.accent} size={14} strokeWidth={2.4} />
+            <Text style={[styles.ctaText, { color: colors.accent }]}>BUILD A MEAL</Text>
           </Pressable>
         ) : null}
       </View>
@@ -107,8 +107,10 @@ const styles = StyleSheet.create({
   },
   cta: {
     alignItems: 'center',
+    alignSelf: 'flex-end',
     flexDirection: 'row',
-    gap: 5,
+    gap: 6,
+    paddingVertical: 2,
   },
   ctaText: {
     fontFamily: FONTS.sansBold,
@@ -116,11 +118,8 @@ const styles = StyleSheet.create({
     letterSpacing: 1.6,
   },
   footer: {
-    alignItems: 'center',
     borderTopWidth: StyleSheet.hairlineWidth,
-    flexDirection: 'row',
-    gap: 10,
-    justifyContent: 'space-between',
+    gap: 8,
     marginTop: 14,
     paddingTop: 12,
   },
@@ -136,7 +135,6 @@ const styles = StyleSheet.create({
     letterSpacing: 2.2,
   },
   status: {
-    flex: 1,
     fontFamily: FONTS.sansBold,
     fontSize: 10,
     letterSpacing: 1.4,
