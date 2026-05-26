@@ -17,7 +17,8 @@ import { MacroPie } from './MacroPie';
 import { useSavedMeals } from '../../hooks/useSavedMeals';
 import { useTheme, useThemeColors } from '../../hooks/useTheme';
 import { COLORS, FONTS, textTintOf } from '../../lib/brand';
-import { LoggedMeal, MEAL_SLOTS, estimateCalories } from '../../lib/meals';
+import { LoggedMeal, MEAL_SLOTS, estimateCalories, getLibraryMealById } from '../../lib/meals';
+import { mealLibrarySeed } from '../../lib/mealLibrarySeed';
 
 const { height: SCREEN_HEIGHT } = Dimensions.get('window');
 const SHEET_HEIGHT = Math.round(SCREEN_HEIGHT * 0.78);
@@ -173,6 +174,8 @@ export function MealDetailSheet({ visible, meal, onClose, onRemove }: MealDetail
               ) : null}
             </View>
 
+            <MealBuildSection meal={meal} />
+
             <View style={styles.actionRow}>
               <Pressable
                 accessibilityRole="button"
@@ -222,6 +225,37 @@ export function MealDetailSheet({ visible, meal, onClose, onRemove }: MealDetail
         </Animated.View>
       </View>
     </Modal>
+  );
+}
+
+function MealBuildSection({ meal }: { meal: LoggedMeal }) {
+  const colors = useThemeColors();
+  const library = getLibraryMealById(mealLibrarySeed, meal.source_id);
+  if (!library || meal.source !== 'library') return null;
+
+  const steps: { letter: 'A' | 'B' | 'C'; title: string; tint: string; lines: string[] }[] = [
+    { letter: 'A', title: 'Anchor', tint: COLORS.deepGreen, lines: [library.anchor] },
+    { letter: 'B', title: 'Build', tint: COLORS.tangerine, lines: library.build },
+    { letter: 'C', title: 'Complete', tint: COLORS.evidenceBlue, lines: library.complete },
+  ];
+
+  return (
+    <View style={styles.buildSection}>
+      <Text style={[styles.buildKicker, { color: colors.mutedText }]}>MEAL BUILD</Text>
+      {steps.map((step) => (
+        <View key={step.letter} style={styles.buildStep}>
+          <View style={[styles.buildBadge, { backgroundColor: step.tint }]}>
+            <Text style={styles.buildBadgeText}>{step.letter}</Text>
+          </View>
+          <View style={{ flex: 1, minWidth: 0 }}>
+            <Text style={[styles.buildStepTitle, { color: colors.text }]}>{step.title}</Text>
+            <Text style={[styles.buildStepLines, { color: colors.mutedText }]}>
+              {step.lines.join(' · ')}
+            </Text>
+          </View>
+        </View>
+      ))}
+    </View>
   );
 }
 
@@ -288,6 +322,45 @@ const styles = StyleSheet.create({
     fontFamily: FONTS.sansBold,
     fontSize: 10.5,
     letterSpacing: 2.2,
+  },
+  buildBadge: {
+    alignItems: 'center',
+    borderRadius: 7,
+    height: 28,
+    justifyContent: 'center',
+    width: 28,
+  },
+  buildBadgeText: {
+    color: '#FFFFFF',
+    fontFamily: FONTS.sansBold,
+    fontSize: 13,
+    letterSpacing: 0.5,
+  },
+  buildKicker: {
+    fontFamily: FONTS.sansBold,
+    fontSize: 10.5,
+    letterSpacing: 2.2,
+  },
+  buildSection: {
+    gap: 12,
+    paddingHorizontal: 20,
+    paddingTop: 22,
+  },
+  buildStep: {
+    alignItems: 'flex-start',
+    flexDirection: 'row',
+    gap: 12,
+  },
+  buildStepLines: {
+    fontFamily: FONTS.sans,
+    fontSize: 12.5,
+    lineHeight: 17,
+    marginTop: 1,
+  },
+  buildStepTitle: {
+    fontFamily: FONTS.sansBold,
+    fontSize: 13.5,
+    letterSpacing: -0.1,
   },
   legend: {
     gap: 10,

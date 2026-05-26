@@ -31,7 +31,21 @@ export type LibraryMeal = {
   name: string;
   description: string;
   macros: Macros;
+  /** A · ANCHOR — the protein source. Pick this first. */
+  anchor: string;
+  /** B · BUILD — fiber, carbs, fat components that round out the meal. */
+  build: string[];
+  /** C · COMPLETE — embellishments (sauces, herbs, nuts) that make it feel like a meal you'd choose. */
+  complete: string[];
 };
+
+export function getLibraryMealById(
+  library: readonly LibraryMeal[],
+  id: string | undefined,
+): LibraryMeal | undefined {
+  if (!id) return undefined;
+  return library.find((meal) => meal.id === id);
+}
 
 export type LoggedMeal = {
   id: string;

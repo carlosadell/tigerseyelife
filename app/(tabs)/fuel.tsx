@@ -3,6 +3,7 @@ import { useMemo, useState } from 'react';
 import { Platform, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { AbcExplainer } from '../../components/fuel/AbcExplainer';
 import { AddMealSheet } from '../../components/fuel/AddMealSheet';
 import { MacroPie } from '../../components/fuel/MacroPie';
 import { MealDetailSheet } from '../../components/fuel/MealDetailSheet';
@@ -59,6 +60,8 @@ export default function FuelScreen() {
             totalCalories={totalCalories}
             totals={totals}
           />
+
+          <AbcExplainer />
 
           <View style={styles.sectionHead}>
             <Text style={[styles.sectionLabel, { color: colors.mutedText }]}>TODAY'S MEALS</Text>
