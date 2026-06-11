@@ -289,3 +289,204 @@ Karen wants the EyeMark diamond ([components/brand/EyeMark.tsx](components/brand
 - **Precision-level mid-program switching architecture** (#6) — chip label is fixed, but persisting the precision choice across sessions and migrating logged data when a member switches still needs product alignment.
 - **AI coach "Why this workout?" followup** (#11) — Karen wanted Ryan's input on whether to keep this chip at all; left in place pending his answer.
 - **Diamond logo as a universal corner mark** — EyeMark already shows on the Today hero next to the wordmark; whether to repeat it across every tab header still needs a brand call.
+
+## Ryan direction memo — 2026-06-07 (pre-meeting, not yet committed)
+
+Ryan voice-memoed John on 2026-06-07 with product direction, along with 13 screenshots of a competitor app (Jeremy Ethier / Built With Science style) as reference patterns. **John, Ryan, and Carlos meet 2026-06-10 (Wed)** to refine. Everything in this section is **shaping, not shipping** — do not start spec-aligned code work on these themes before that meeting. See memory `[[wednesday-2026-06-10-app-direction-meeting]]`.
+
+Karen responded on 2026-06-08 with a reframing that changes how Ryan's direction lands — see "Karen's response" below. The Ryan-detail subsections that follow still describe Ryan's pitch faithfully; read Karen's response first for the scope it should be evaluated against.
+
+### Karen's response — 2026-06-08 (two-track framing + food-tracking precision levels)
+
+Karen sent John two voice memos on 2026-06-08 in response to Ryan's 2026-06-07 memo. **Captured verbatim below for the Wednesday 2026-06-10 meeting; not yet analyzed or routed into per-feature decisions.** Karen is the source for both.
+
+#### Memo 1 — Two app tracks (Create Power supplement vs general public)
+
+> Hey, John. Glad that was helpful for you. Let's think about this in two separate tracks. Number one is the app that has a function that supports the people in the Create Power program, and the other is a different version of the app that's more for the general public. What Ryan gave you as information is generally good, but I think more relevant to the general-population person who is not in the Create Power program.
+>
+> Because what we have found in the beta test — and next week is the last of the twelve weeks of the beta test — has rousing success on what people have said in terms of the pacing and the curriculum and the blocks; that this is really working well. So I think what we wanna do with what's working well for the Create Power program is to create an app that is a supplement to the people who are in the Create Power program. And that does have an unlock, obviously, as people are going through that, and they're gonna be paying money to have an app that supports their efforts in the Create Power program. So that's one. And then two is, as I said, with what Ryan had to say, that I think is more for the sort of self-guided experience. That I think is the way in which we should, for sure, do the unlock for people based on what their needs are.
+
+Key claims to carry into the meeting (notes only, not yet adopted):
+
+- **Two apps, not one.** Karen explicitly splits TEL into (a) a Create Power program supplement and (b) a future general-public self-guided app.
+- **Beta validates the Create Power pacing/curriculum/blocks.** "Rousing success" on what people said about pacing, curriculum, blocks — the 12-week structure is working. The beta ends "next week" (Karen 2026-06-08; corroborates memory `[[beta-cohort-end-date]]` of 2026-06-21).
+- **Both apps have unlock, for different reasons.** The Create Power app unlocks as users progress through the paid program (program-pacing-gated). The general-public app uses Ryan's blocker-diagnostic + unlock (need-gated).
+- **Ryan's diagnostic + progressive unlock is for the general-public track.** It does not replace the Create Power program structure. The conflict the earlier section flagged (Ryan's blocker-gated vs the V3 time-gated tab unlock) may dissolve once these are read as two different products, not one.
+
+#### Memo 2 — Three levels of food-tracking precision for Create Power
+
+> So another thing to consider is what we wanna do with the food tracking for the Create Power program. I know that a lot of people are not going to want to do an intimate tracking of all of their foods for all of their meals for all of their days. That's just too intense. That is what happens in the Built With Science app, as you're seeing. I know that there are three sort of levels of precision for how one can track their food.
+>
+> Number one is just to begin to do a better job of eating less processed food and less added sugar, and then eating to — as we say in the Create Power program too — 80% full. So you're comfortably satiated, but you're not stuffed, and you're not eating to capacity at all on any given day. The second — so that's the ABC Power Meals format. The second level of precision is somebody who's really tracking their macros only for protein and then eyeballing the rest of it, maintaining the plan to have the right volume and amount of food to eat. And one can do that by how they feel as opposed to by having to record all of the data and all of their foods.
+>
+> And third is at the macros level, and that is what the Built With Science program is all about. So we may have some people that are satisfied with just cleaning up their diet, eating less food in general, and feeling better, and that should be good enough. And that's the ABC Power Meals format. There may be some people who are willing to get a really good idea about what the protein is that they're eating and just track that. And then the last is, as I said, the Built With Science format that I don't think we wanna really focus on for the Create Power program just because it's so many details for all of the other things that we are gonna overwhelm people if they're given the opportunity to track all their macros in addition to doing all of the other things.
+>
+> So, again, this is another example of what would be different for the two different apps — one for the people in the guided program, Create Power, and one that would be more for the general public when we're ready to have that launched. Hopefully that's helpful, but it also gives you an idea of how we can slim down on the things that people are focusing on and tracking in the Create Power program just so it doesn't feel like it's a major overwhelm.
+
+Key claims to carry into the meeting (notes only, not yet adopted):
+
+- **Three precision levels for food tracking:**
+  1. **No tracking — habits only.** "Eat less processed food, less added sugar, eat to 80% full." This is the ABC Power Meals format already in the app.
+  2. **Protein-only macro + eyeball the rest.** Track protein grams; intuit volume/satiety for everything else.
+  3. **Full macros (protein / carbs / fat / calories).** Built With Science style. Karen names this as out-of-scope for Create Power.
+- **Create Power gets levels 1 and 2 only.** Level 3 is explicitly excluded for the Create Power track to avoid overwhelm — "we are gonna overwhelm people if they're given the opportunity to track all their macros in addition to doing all of the other things."
+- **Level 3 is the general-public app's territory.** Karen doesn't commit it there either, but frames level 3 as the kind of feature that fits the general-public track, not Create Power.
+- **Confirms competitor-pattern routing rule already in this section.** The Built With Science nutrition logger (macro bars, ranges, Consumed/Remaining toggle) explicitly does NOT migrate into Create Power's Fuel surface.
+
+#### What this means for the Wednesday meeting (no decisions yet)
+
+The Wednesday 2026-06-10 conversation now has to disambiguate at least these things before any of the subsections below can be sized:
+
+- Which track is the immediate focus — the Create Power supplement, the general-public app, or both in parallel?
+- For Create Power: which of levels 1 and 2 is the default Fuel experience today, and does level 2 (protein-only tracking) need new UI?
+- For the general-public app: how far off is it (post-beta-end on 2026-06-21? later in the year?), and does any of the wireframing work for Wednesday's progress demo need to live in *that* app's design rather than touching the Create Power codebase?
+
+Hold all of these as open questions; do not pre-decide.
+
+### Karen's post-demo feedback — 2026-06-11 (program-phase unlock structure)
+
+Karen sent John her post-demo reactions on 2026-06-11. Captured verbatim below, then triaged against shipped code. **Several items directly contradict work shipped to the live Today tab between 2026-06-09 and 2026-06-10 — see "Implementation conflicts" subsection.**
+
+#### Direct asks (verbatim shorthand from Karen's notes)
+
+> - we don't ask people to log their weight
+> - we don't ask people to log their meals
+>
+> Measure out your protein etc. Where you are specifically tracking every meal. It could be helpful with the lessons to have in there.
+>
+> **CREATE POWER**
+>
+> Unlock only first 2 weeks for example
+>
+> 1. **Commit block** only
+>    - take a look at your labels
+>    - all we do here is reduce your added sugar in 50%
+>    - start with protein and vegetables (savory meals)
+>
+> 2. **Refine Block**
+>    - Keep it simple
+>    - Logging meals will be only unlocked if they are done with commit which is under Refine Block
+>
+> **FUEL TAB**
+>
+> 1. Important is the food quality
+>
+> **PRIORITY** is aspects of POWER
+>
+> **OTHER JOURNEY** with the APP or Version of the app outside the people in the CREATE POWER PROGRAM
+>
+> ASK QUESTIONS TO DETERMINE THE JOURNEY:
+>
+> - ARE YOU PART OF THE CREATE POWER PROGRAM? (Yes/No)
+> - WHAT'S YOUR FRICTION
+> - WHAT'S YOUR BIG STOPPING POINT
+>
+> PATTERNS AND OWNERSHIP SLEEP
+
+#### Triaged read
+
+**On the Create Power Today/Checklist surface:**
+- Weigh-in and meal-logging are explicitly OUT as daily prompts. Both shipped to `TodayChecklist` on 2026-06-10 and need to be removed.
+- Detailed tracking ("measure out your protein… tracking every meal") belongs in LESSONS / educational content, not as a daily action prompt.
+
+**On the Create Power program-phase unlock structure (NEW, first time named concretely):**
+- **Phase 1 — Commit Block.** First ~2 weeks. Focus: read food labels, cut added sugar by 50%, build meals around protein + vegetables (savory). **No meal logging in this phase.**
+- **Phase 2 — Refine Block.** Unlocks only after Commit is complete. Meal-logging becomes available here. "Keep it simple."
+- Karen's earlier 2026-06-08 statement that "Create Power has an unlock tied to program progression" was abstract; this is the first time she's named the actual blocks and their gating rules.
+
+**On the Fuel tab:**
+- Focus is **food quality**, not quantity tracking. ABC Power Meals philosophy reinforced; macro-tracking remains out for Create Power.
+
+**On the general-public / non-Create-Power journey:**
+- Karen now names the diagnostic structure for the *other* version of the app: three questions surface what kind of user this is and what they need.
+  1. "Are you part of the Create Power program?" (yes/no fork)
+  2. "What's your friction?"
+  3. "What's your big stopping point?"
+- This is consistent with Ryan's 2026-06-07 "what's holding you back" pitch — but explicitly framed for the general-public track, not Create Power. Karen has now endorsed the diagnostic mechanic, just for a different surface than where Ryan originally proposed it.
+
+**Sleep / Patterns / Ownership:**
+- Line reads "PATTERNS AND OWNERSHIP SLEEP" — ambiguous. Could mean (a) sleep is one of the patterns users take ownership of, (b) a future "sleep patterns" feature, or (c) a heading for a section Karen didn't expand. Needs clarification next conversation.
+
+#### Implementation conflicts (shipped code that must change)
+
+| Shipped 2026-06-10 | Karen says | Action |
+|---|---|---|
+| `TodayChecklist` row: **Weigh in** | "we don't ask people to log their weight" | Remove from `components/today/TodayChecklist.tsx` |
+| `TodayChecklist` row: **Log your meals** (→ `/(tabs)/fuel`) | "we don't ask people to log their meals" (until Refine Block) | Remove from `TodayChecklist` for Commit-phase users; gate by program phase if Refine ships |
+| `TodayChecklist` row: **Nutrition check-in** | Not explicitly addressed | Probably keep, possibly reframe — confirm with Karen |
+| Demo "Choose your nutrition style" (Level 1/2/3) on `precision-levels.tsx` | "Important is food quality" + "Measure protein in lessons" | Level 2 (protein tracking) likely shifts to *lessons content* about how-to-eyeball-protein rather than a Fuel mode; the precision-levels demo screen needs Karen's read before any real-product version is built |
+| Live Today tab refactor with `ShowMoreToggle` defaulting to `simplified` | Not addressed; reasonable to keep | Hold; revisit once Commit/Refine block content lands |
+
+#### Open follow-ups for Karen (before any real-product build)
+
+1. Confirm Nutrition check-in row stays; if so, what does "check in" mean — read a lesson? rate the day? a label-check toast?
+2. Confirm what the Commit Block Today surface should look like instead of the checklist — three lesson rows? a single "today's commit action" card? something else?
+3. Confirm whether the program-phase unlock is **calendar-gated** (after 2 weeks Refine opens) or **completion-gated** (after Commit lessons are done) or **manual** (Ryan slots the user).
+4. Confirm "PATTERNS AND OWNERSHIP SLEEP" — is sleep tracking on the roadmap, or part of a broader patterns/ownership concept?
+5. Confirm whether the "Are you in Create Power?" diagnostic is shipped as part of the Create Power app itself (sign-up gate) or only in the future general-public app.
+
+Hold all of these as open questions; do not pre-decide. **Next ship from Karen's feedback should start by reverting the Weigh in and Log meals rows; everything else needs her input before code touches it.**
+
+### Holistic-system pillars (pre-meeting, 2026-06-07)
+
+Karen's recurring critique, restated by Ryan: opening the app today feels like "the Encyclopedia Britannica with all the information as far as everything goes about everything, and people don't know where to begin." The direction Ryan named:
+
+> "Health is much more than just going to the gym consistently. You can do that, but if you don't make an identity shift, if you don't make a mindset shift, if you don't have systems set in place, then going to the gym might work for a little bit, but then things are gonna fall apart because you don't have the rest of the pieces."
+
+Pillars Ryan named alongside training/nutrition:
+- **Mindset** — the cognitive frame the user brings to change.
+- **Identity** — who the user believes they are; necessary for change to persist.
+- **Systems** — the structures (routines, environment, planning) that make the new behavior happen without willpower.
+
+The proposed framing for the app: lead with the holistic-system concept up front (education, not feature shoveling), then let the user pick **which pillar is their personal blocker** before deeper engagement.
+
+This is **not** the same as the existing four-tab navigation (Today / Train / Fuel / Grow). The relationship between these pillars and the current tabs is one of the open questions for Wed 2026-06-10:
+- Does mindset/identity/systems live inside Grow, or does it earn its own surface?
+- Does the holistic-system intro replace or precede the current Welcome / Big WHY onboarding?
+- How does this interact with the V3 progressive-disclosure tab unlock (Day 1 Today, Day 3 Train, etc.)?
+
+Do not pre-decide these before the meeting.
+
+### Diagnostic onboarding + progressive unlock (pre-meeting, 2026-06-07)
+
+**The diagnostic question.** After teaching the holistic-system concept, ask:
+
+> "What is the main reason you have fallen behind?"
+
+Categories Ryan surfaced in the memo (not exhaustive):
+- "I don't know what to do in the gym" — training-knowledge gap.
+- "My mindset is out of whack / I don't have the right systems" — mindset/identity/systems gap.
+- More categories TBD with Karen + Ryan.
+
+**The unlock mechanic.** Whichever blocker the user picks, **only that section of the app unlocks** for them initially. The other sections stay locked until the user signals readiness ("I've got mindset handled, now I need training") — then the next section unlocks.
+
+Ryan's quote on user-controlled readiness:
+
+> "I'm gonna get these things set in place. Once I'm ready, then I can go, okay. Ready for this. Now I need to know what to do as far as the gym goes. That becomes unlocked for them."
+
+**Two stated benefits — both load-bearing.**
+
+1. **Anti-overwhelm (UX).** User engages with one focused area until they have it. Reduces the "where do I start?" paralysis Karen named.
+2. **Anti-scrape-and-cancel (business).** Per Ryan: *"another thing is so that they don't scrape all of our content by unlocking all of our content to them all at once, and then they just sign up for one month and then cancel."* See memory `[[anti-piracy-content-gating-constraint]]` — the business reason is a durable constraint independent of this specific feature.
+
+**Open conflicts to raise in the Wed 2026-06-10 meeting:**
+
+- The V3 progressive-disclosure tab unlock (Day 1 Today, Day 3 Train, Day 5 Fuel, Day 7 Grow — see "Navigation Model" above) is **time-gated**, not **blocker-gated**. Ryan's proposal is the user's choice, not the calendar's. These two unlock models need to be reconciled into one mechanism, not stacked.
+- "Pick your blocker, only that section unlocks" needs to be compatible with the deterministic program-assignment key (the 4-axis picker → fixed program). What happens to a user who picks "mindset" as their blocker — does the training program still get assigned but locked, or deferred entirely?
+- The AI coach is the only universally-available surface today (floating button on every screen). Does it stay universally available during partial-unlock states, or does the coach also gate by pillar?
+
+### Competitor-app reference patterns (Ryan/Karen flagged 2026-06-07, not committed)
+
+Ryan shared 13 screenshots of a competitor app (Jeremy Ethier's "Built With Science"; cues: "Jeremy AI helpful today?" feedback sheet, photographed-coach avatar, Prep/Nutrition/Training lesson tabs). These are **inspiration patterns** Ryan/Karen will discuss in the Wed 2026-06-10 meeting — none are committed. They are recorded here so the team can point at them by name without recirculating the screenshots.
+
+- **Animated educational onboarding screens.** Phone-hero, daily-checklist visual, holistic-system diagram, education/nutrition/training pillar diagram. Bottom progress bar, mute toggle, close button. Used in the competitor to *teach the holistic-system concept up front* — directly maps to Ryan's framing above.
+- **Daily Checklist card on the dashboard.** Three items (Weigh-in with logged value, Nutrition check-in, Log meals), collapsible, "1/3 completed" header. Closest TEL equivalent today is the EngagementOrbit (Workout / Walk / Water / Sleep chips) added in the 2026-05-25 batch.
+- **"Next Lesson" card on the dashboard** with thumbnail of the coach. No TEL equivalent today.
+- **"Bonus Goal" card** — steps from Apple Health with progress bar + percentage. TEL has no Health-Kit integration today; this is a pattern, not a request.
+- **Lessons tab with 4 sub-tabs** (Prep / Nutrition / Training / Saved). Each section: header card with progress, expandable lesson groups ("Getting Started," "The Foundation"), each lesson row shows duration + category + title + save star. Pattern relevant to Grow / microlearning library, not to the current Train tab.
+- **Nutrition logger** — Consumed/Remaining segmented toggle on calories, macro bars (protein/carbs/fat with ranges like "119–202g+"), "Full Breakdown" disclosure, meal sections (Breakfast/Lunch/Dinner/Snacks) with empty-state hint, suggested-recipes carousel, persistent search bar with camera button. Visible competitor pattern; TEL Fuel currently uses the ABC Power Meal framework + 1/2/3/S slots + Calories+protein chip — *do not* assume migration toward this competitor's macro-range UI without Karen's explicit call.
+- **Progress tab** — 14/30/90 day filter; Weight + Strength % top stats; Weight/Workout/Entries sub-tabs; weekly averages table. Pattern relevant to a future "your trends" surface.
+- **Workout schedule** — week strip with rest days as empty rings, "Active Rest Day" hero card with coach photo, day-by-day list including "+ Add Workout" rows for rest days. Pattern Ryan may want for Train's week view.
+- **AI coach branded as "Jeremy AI"** with thumbs-up / somewhat / thumbs-down feedback sheet. Pattern reference for a TEL coach feedback loop — note the existing TEL coach guardrails (no recursive deferral; no sentiment-blind affirmation) would shape *what* the feedback sheet captures.
+
+**Routing rule for these patterns:** when Ryan/Karen point at one of these in the meeting and want to act on it, the item moves from this appendix into the relevant feature section (Onboarding, Today, Train, Fuel, Grow, AI Coach) with a real commit decision. Until then they stay here as named references only.
