@@ -1,62 +1,53 @@
-import { format } from 'date-fns';
-import { ReactNode } from 'react';
-import { StyleProp, Text, useWindowDimensions, View, ViewStyle } from 'react-native';
+// components/today/GreetingHeader.tsx
+import { StyleSheet, Text, View, useWindowDimensions } from 'react-native';
 
-import { useThemeColors } from '../../hooks/useTheme';
-import { FONTS } from '../../lib/brand';
-import { getGreeting } from '../../lib/greetings';
+import { FONTS, THEME_COLORS } from '../../lib/brand';
+import { getDayPeriod } from '../../lib/greetings';
+
+const light = THEME_COLORS.light;
 
 type GreetingHeaderProps = {
-  accessory?: ReactNode;
   firstName?: string | null;
-  style?: StyleProp<ViewStyle>;
   subtitle?: string;
 };
 
-export function GreetingHeader({ accessory, firstName, style, subtitle }: GreetingHeaderProps) {
+function periodCapitalized() {
+  const p = getDayPeriod();
+  return p.charAt(0).toUpperCase() + p.slice(1);
+}
+
+function quietName(firstName?: string | null) {
+  const first = firstName?.trim().split(/\s+/)[0];
+  return first || 'friend';
+}
+
+/**
+ * "Evening, Johnty." — sentence-case bold + muted subtitle ("Commit Block · Week 1").
+ */
+export function GreetingHeader({ firstName, subtitle }: GreetingHeaderProps) {
   const { width } = useWindowDimensions();
-  const titleSize = width < 390 ? 26 : 28;
-  const colors = useThemeColors();
+  const titleSize = width < 380 ? 26 : 28;
 
   return (
-    <View style={[{ gap: 8, minWidth: 0 }, style]}>
-      <View style={{ alignItems: 'center', flexDirection: 'row', justifyContent: 'space-between' }}>
-        <Text
-          style={{
-            color: colors.mutedText,
-            fontFamily: FONTS.sansMedium,
-            fontSize: 11,
-            letterSpacing: 1.32,
-            textTransform: 'uppercase',
-          }}
-        >
-          {format(new Date(), 'MMM d, yyyy')}
-        </Text>
-        {accessory}
-      </View>
-      <Text
-        style={{
-          color: colors.text,
-          fontFamily: FONTS.sansBold,
-          fontSize: titleSize,
-          letterSpacing: 0,
-          lineHeight: titleSize + 6,
-        }}
-      >
-        {getGreeting(firstName)}
+    <View style={styles.col}>
+      <Text style={[styles.greeting, { fontSize: titleSize, lineHeight: titleSize + 4 }]}>
+        {periodCapitalized()}, {quietName(firstName)}.
       </Text>
-      {subtitle ? (
-        <Text
-          style={{
-            color: colors.mutedText,
-            fontFamily: FONTS.sansMedium,
-            fontSize: 14,
-            lineHeight: 20,
-          }}
-        >
-          {subtitle}
-        </Text>
-      ) : null}
+      {subtitle ? <Text style={styles.subtitle}>{subtitle}</Text> : null}
     </View>
   );
 }
+
+const styles = StyleSheet.create({
+  col: { gap: 4 },
+  greeting: {
+    color: light.text,
+    fontFamily: FONTS.sansBold,
+    letterSpacing: -0.5,
+  },
+  subtitle: {
+    color: light.mutedText,
+    fontFamily: FONTS.sansMedium,
+    fontSize: 13.5,
+  },
+});

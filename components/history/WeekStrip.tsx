@@ -1,19 +1,21 @@
+// components/history/WeekStrip.tsx
 import { format, subDays } from 'date-fns';
 import { router } from 'expo-router';
 import { useMemo } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { useEngagementDates } from '../../hooks/useEngagementDates';
-import { useThemeColors } from '../../hooks/useTheme';
-import { FONTS } from '../../lib/brand';
+import { FONTS, THEME_COLORS } from '../../lib/brand';
+
+const light = THEME_COLORS.light;
 
 /**
- * Last-7-days strip. Each cell shows day letter + date number + an engagement
- * dot. Tap any past day to drill into the history detail screen; tap today
- * is a no-op since you're already here.
+ * Last-7-days strip. Today's ring is filled gold; other days are outline
+ * rings with the day-of-month number. NO failure-state red — skipped days
+ * read identically to engaged-but-not-today (mutedText). Past days tap into
+ * /history/{date}; today and future are non-interactive.
  */
 export function WeekStrip() {
-  const colors = useThemeColors();
   const { dates } = useEngagementDates();
 
   const days = useMemo(() => {
@@ -25,114 +27,93 @@ export function WeekStrip() {
 
   return (
     <View style={styles.wrap}>
-      <View style={styles.headerRow}>
-        <Text style={[styles.kicker, { color: colors.mutedText }]}>LAST 7 DAYS</Text>
-        <Text style={[styles.helper, { color: colors.mutedText }]}>Tap to look back</Text>
-      </View>
-      <View style={styles.row}>
-        {days.map((day) => {
-          const key = format(day, 'yyyy-MM-dd');
-          const engaged = dates.has(key);
-          const isToday = key === todayKey;
-          const isFuture = key > todayKey;
-          return (
-            <Pressable
-              key={key}
-              accessibilityRole="button"
-              accessibilityLabel={`${format(day, 'EEEE MMMM d')}, ${engaged ? 'engaged' : 'no activity'}`}
-              disabled={isToday || isFuture}
-              hitSlop={6}
-              onPress={() => router.push(`/history/${key}`)}
-              style={({ pressed }) => [
-                styles.cell,
+      {days.map((day) => {
+        const key = format(day, 'yyyy-MM-dd');
+        const engaged = dates.has(key);
+        const isToday = key === todayKey;
+        const isFuture = key > todayKey;
+
+        return (
+          <Pressable
+            key={key}
+            accessibilityLabel={`${format(day, 'EEEE MMMM d')}`}
+            disabled={isToday || isFuture}
+            hitSlop={6}
+            onPress={() => router.push(`/history/${key}` as never)}
+            style={({ pressed }) => [
+              styles.cell,
+              { opacity: pressed ? 0.7 : isFuture ? 0.4 : 1 },
+            ]}
+          >
+            <Text style={[styles.dayLetter, { color: isToday ? light.accent : light.mutedText }]}>
+              {format(day, 'EEEEE')}
+            </Text>
+            <View
+              style={[
+                styles.ring,
                 {
-                  backgroundColor: isToday ? colors.cardAlt : 'transparent',
-                  borderColor: isToday ? colors.accent : colors.border,
-                  opacity: pressed ? 0.7 : isFuture ? 0.32 : 1,
+                  backgroundColor: isToday ? light.accent : 'transparent',
+                  borderColor: isToday ? light.accent : light.border,
                 },
               ]}
             >
               <Text
                 style={[
-                  styles.dayLetter,
-                  { color: isToday ? colors.accent : colors.mutedText },
-                ]}
-              >
-                {format(day, 'EEE').toUpperCase()}
-              </Text>
-              <Text
-                style={[
                   styles.dayNumber,
-                  { color: isToday ? colors.accent : colors.text },
+                  { color: isToday ? '#FFFFFF' : engaged ? light.text : light.mutedText },
                 ]}
               >
                 {format(day, 'd')}
               </Text>
-              <View
-                style={[
-                  styles.dot,
-                  {
-                    backgroundColor: engaged ? colors.success : 'transparent',
-                    borderColor: engaged ? colors.success : colors.border,
-                  },
-                ]}
-              />
-            </Pressable>
-          );
-        })}
-      </View>
+            </View>
+            <View style={[styles.pulse, { backgroundColor: isToday ? light.accent : 'rgba(11,11,12,0.10)' }]} />
+          </Pressable>
+        );
+      })}
     </View>
   );
 }
 
+const RING = 32;
+
 const styles = StyleSheet.create({
   cell: {
     alignItems: 'center',
-    borderRadius: 10,
-    borderWidth: 1,
     flex: 1,
-    gap: 4,
-    paddingBottom: 8,
-    paddingTop: 8,
+    gap: 6,
+    paddingVertical: 4,
   },
   dayLetter: {
     fontFamily: FONTS.sansBold,
-    fontSize: 9,
-    letterSpacing: 1.2,
+    fontSize: 11,
+    letterSpacing: 0.4,
   },
   dayNumber: {
-    fontFamily: FONTS.diagnostic,
-    fontSize: 20,
-    lineHeight: 22,
-  },
-  dot: {
-    borderRadius: 999,
-    borderWidth: 1,
-    height: 6,
-    marginTop: 1,
-    width: 6,
-  },
-  headerRow: {
-    alignItems: 'baseline',
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    paddingHorizontal: 4,
-  },
-  helper: {
-    fontFamily: FONTS.sans,
-    fontSize: 11,
-  },
-  kicker: {
     fontFamily: FONTS.sansBold,
-    fontSize: 10.5,
-    letterSpacing: 2.2,
+    fontSize: 13,
   },
-  row: {
-    flexDirection: 'row',
-    gap: 5,
+  pulse: {
+    borderRadius: 999,
+    height: 5,
+    width: 5,
+  },
+  ring: {
+    alignItems: 'center',
+    borderRadius: RING / 2,
+    borderWidth: 2,
+    height: RING,
+    justifyContent: 'center',
+    width: RING,
   },
   wrap: {
-    gap: 6,
+    backgroundColor: light.card,
+    borderColor: light.border,
+    borderRadius: 20,
+    borderWidth: 1,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginTop: 14,
+    paddingHorizontal: 10,
+    paddingVertical: 14,
   },
 });
-
