@@ -1,3 +1,4 @@
+// app/(tabs)/_layout.tsx
 import { Redirect, Tabs } from 'expo-router';
 import { useCallback, useRef } from 'react';
 import { ActivityIndicator, StyleSheet, View } from 'react-native';
@@ -5,11 +6,17 @@ import { ActivityIndicator, StyleSheet, View } from 'react-native';
 import { CoachBottomSheet, type CoachSheetHandle } from '../../components/navigation/CoachBottomSheet';
 import { FloatingTabBar } from '../../components/navigation/FloatingTabBar';
 import { useAuth } from '../../hooks/useAuth';
+import { useMembership } from '../../hooks/useMembership';
 import { useOnboardingStatus } from '../../hooks/useOnboardingStatus';
 import { useThemeColors } from '../../hooks/useTheme';
 
+/**
+ * Tabs layout re-checks the same gates as app/index.tsx so deep-linking
+ * into /(tabs)/today can't bypass the fork.
+ */
 export default function TabsLayout() {
   const { loading, session } = useAuth();
+  const { loading: membershipLoading, membership } = useMembership();
   const { completed, loading: onboardingLoading } = useOnboardingStatus();
   const colors = useThemeColors();
   const coachSheetRef = useRef<CoachSheetHandle>(null);
@@ -18,7 +25,7 @@ export default function TabsLayout() {
     coachSheetRef.current?.snapToIndex(0);
   }, []);
 
-  if (loading || (session && onboardingLoading)) {
+  if (loading || (session && (membershipLoading || onboardingLoading))) {
     return (
       <View style={[styles.loading, { backgroundColor: colors.background }]}>
         <ActivityIndicator color={colors.accent} />
@@ -26,13 +33,10 @@ export default function TabsLayout() {
     );
   }
 
-  if (!session) {
-    return <Redirect href="/(auth)/sign-in" />;
-  }
-
-  if (!completed) {
-    return <Redirect href="/onboarding" />;
-  }
+  if (!session) return <Redirect href="/(auth)/sign-in" />;
+  if (!membership.forkAnswered) return <Redirect href="/membership" />;
+  if (!membership.programMember) return <Redirect href="/non-member" />;
+  if (!completed) return <Redirect href="/onboarding" />;
 
   return (
     <View style={styles.root}>
@@ -56,12 +60,6 @@ export default function TabsLayout() {
 }
 
 const styles = StyleSheet.create({
-  loading: {
-    alignItems: 'center',
-    flex: 1,
-    justifyContent: 'center',
-  },
-  root: {
-    flex: 1,
-  },
+  loading: { alignItems: 'center', flex: 1, justifyContent: 'center' },
+  root: { flex: 1 },
 });
