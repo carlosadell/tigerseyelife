@@ -124,7 +124,7 @@ export default function VerifyMembershipScreen() {
             {stage === 'email' && (
               <>
                 <Text style={styles.body}>
-                  We'll send a six-digit code to confirm. Your app login can be a different email — we just need the one you used for Create Power.
+                  We'll send a six-digit code to confirm. Your app login can be a different email. We just need the one you used for Create Power.
                 </Text>
                 <Text style={styles.label}>Join email</Text>
                 <TextInput

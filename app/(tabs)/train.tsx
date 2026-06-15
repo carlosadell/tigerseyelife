@@ -169,7 +169,7 @@ function AssignedState({ todayWorkout, workouts, intakeAnswers }: AssignedStateP
           </View>
         )}
         <Text style={[styles.tutorialFootnote, { color: colors.mutedText }]}>
-          Scoped to today's 4 exercises — never the full library.
+          Scoped to today's 4 exercises. Never the full library.
         </Text>
       </View>
     </View>
@@ -256,7 +256,7 @@ function UnassignedState({ intakeAnswers }: { intakeAnswers: Record<string, unkn
       >
         <ListChecks color={colors.accent} size={20} strokeWidth={1.8} />
         <Text style={[styles.tutorialTitle, { color: colors.text }]}>
-          No workout browsing — TEL is assignment-first.
+          No workout browsing. TEL is assignment-first.
         </Text>
       </View>
     </View>

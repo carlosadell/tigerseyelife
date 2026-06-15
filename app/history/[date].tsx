@@ -69,7 +69,7 @@ export default function HistoryDayScreen() {
                 No activity logged this day.
               </Text>
               <Text style={[styles.emptyHint, { color: colors.mutedText }]}>
-                Any engagement — a meal, a walk, a glass of water — would have shown up here.
+                Any engagement, a meal, a walk, a glass of water, would have shown up here.
               </Text>
             </View>
           ) : (
@@ -81,22 +81,22 @@ export default function HistoryDayScreen() {
                   <SignalRow
                     icon={<Dumbbell color={colors.accent} size={14} strokeWidth={2} />}
                     label="WORKOUT"
-                    value={day.workoutNames.length > 0 ? day.workoutNames.join(' · ') : '—'}
+                    value={day.workoutNames.length > 0 ? day.workoutNames.join(' · ') : '…'}
                   />
                   <SignalRow
                     icon={<Moon color={colors.accent} size={14} strokeWidth={2} />}
                     label="SLEEP"
-                    value={day.engagement.sleep ? 'Logged' : '—'}
+                    value={day.engagement.sleep ? 'Logged' : '…'}
                   />
                   <SignalRow
                     icon={<Droplet color={colors.accent} size={14} strokeWidth={2} />}
                     label="HYDRATION"
-                    value={day.engagement.water > 0 ? `${day.engagement.water} glasses` : '—'}
+                    value={day.engagement.water > 0 ? `${day.engagement.water} glasses` : '…'}
                   />
                   <SignalRow
                     icon={<Utensils color={colors.accent} size={14} strokeWidth={2} />}
                     label="MEALS"
-                    value={day.meals.length > 0 ? `${day.meals.length} logged · ${totalCal} cal` : '—'}
+                    value={day.meals.length > 0 ? `${day.meals.length} logged · ${totalCal} cal` : '…'}
                   />
                 </View>
               </View>
@@ -174,7 +174,7 @@ function SignalRow({
   value: string;
 }) {
   const colors = useThemeColors();
-  const isEmpty = value === '—';
+  const isEmpty = value === '…';
   return (
     <View style={styles.signalRow}>
       <View style={[styles.signalIcon, { backgroundColor: colors.cardAlt }]}>{icon}</View>

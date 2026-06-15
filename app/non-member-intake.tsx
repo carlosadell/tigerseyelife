@@ -106,7 +106,7 @@ export default function NonMemberIntakeScreen() {
               <>
                 <Text style={styles.headline}>What are you trying to do?</Text>
                 <Text style={styles.body}>
-                  One sentence is fine. Don't overthink it — we'll go from here.
+                  One sentence is fine. Don't overthink it. We'll go from here.
                 </Text>
                 <TextInput
                   accessibilityLabel="Your goal"

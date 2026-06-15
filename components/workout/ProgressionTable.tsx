@@ -83,8 +83,8 @@ export function ProgressionTable({
         <Text style={[styles.title, { color: colors.text }]}>Progression</Text>
         <Text style={[styles.subtitle, { color: colors.mutedText }]}>
           {isWarmup
-            ? 'Practice cue — no weight tracked'
-            : 'Your last sessions. Choose today’s weight — the app suggests, you decide.'}
+            ? 'Practice cue. No weight tracked.'
+            : 'Your last sessions. Choose today’s weight. The app suggests, you decide.'}
         </Text>
       </View>
 
@@ -184,7 +184,7 @@ function ProgressionCell({
             { color: isToday ? colors.accent : colors.mutedText },
           ]}
         >
-          {isToday ? '—' : '·'}
+          {isToday ? '…' : '·'}
         </Text>
       </View>
     );
@@ -198,7 +198,7 @@ function ProgressionCell({
           { color: isToday && filled ? '#FFFFFF' : colors.text },
         ]}
       >
-        {match.weight_kg > 0 ? `${formatWeight(match.weight_kg)}kg` : '—'}
+        {match.weight_kg > 0 ? `${formatWeight(match.weight_kg)}kg` : '…'}
       </Text>
       <Text
         style={[

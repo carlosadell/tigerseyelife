@@ -18,7 +18,7 @@ const FALLBACK_THUMB = 'https://images.unsplash.com/photo-1490645935967-10de6ba1
 export function NextLessonCard({
   meta = 'Nutrition · 4 min',
   title = 'Building a Balanced Plate',
-  body = 'Half your plate, every plate — under a minute to set up.',
+  body = 'Half your plate, every plate. Under a minute to set up.',
   thumbUri = FALLBACK_THUMB,
   onPress,
 }: NextLessonCardProps) {

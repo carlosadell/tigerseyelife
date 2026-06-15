@@ -62,7 +62,7 @@ export default function MembershipForkScreen() {
             <AnchorRow
               Icon={MapPinned}
               title="Not yet"
-              sub="Pick a path — join, message Ryan, or get a tailored plan."
+              sub="Pick a path. Join, message Ryan, or get a tailored plan."
               onPress={onNotYet}
             />
           </View>

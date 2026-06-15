@@ -103,7 +103,7 @@ export function CreatePowerHero({
       key: letter,
       indicator: <LetterBadge letter={letter} dim={!active} />,
       label: POWER_LETTERS[letter].toUpperCase(),
-      value: todayTotal > 0 ? `${todayDone}/${todayTotal}` : '—',
+      value: todayTotal > 0 ? `${todayDone}/${todayTotal}` : '…',
       active,
       onPress: () =>
         router.push({ pathname: '/grow/thread', params: { block: CURRENT_BLOCK_ID, letter } }),

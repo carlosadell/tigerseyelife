@@ -100,7 +100,7 @@ export default function FuelScreen() {
           <View style={styles.sectionHead}>
             <Text style={[styles.sectionLabel, { color: colors.mutedText }]}>TODAY'S MEALS</Text>
             <Text style={[styles.sectionSub, { color: colors.mutedText }]}>
-              First, second, third, snack — your rhythm, your choice.
+              First, second, third, snack. Your rhythm, your choice.
             </Text>
           </View>
 
@@ -127,7 +127,7 @@ export default function FuelScreen() {
           <View style={styles.sectionHead}>
             <Text style={[styles.sectionLabel, { color: colors.mutedText }]}>PRECISION LEVEL</Text>
             <Text style={[styles.sectionSub, { color: colors.mutedText }]}>
-              How much detail you want surfaced — change anytime.
+              How much detail you want surfaced. Change anytime.
             </Text>
           </View>
           <View style={styles.precisionRow}>
@@ -301,7 +301,7 @@ function HandPortionsView({ mealsLogged }: { mealsLogged: number }) {
         <View style={[styles.macroFill, { backgroundColor: colors.accent, width: `${pct}%` }]} />
       </View>
       <Text style={[styles.handHelper, { color: colors.mutedText }]}>
-        Hand portions mode — just acknowledge balanced meals. Switch to Calories + protein or Full
+        Hand portions mode. Just acknowledge balanced meals. Switch to Calories + protein or Full
         macros below if you want numbers.
       </Text>
     </View>

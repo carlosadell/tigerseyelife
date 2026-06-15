@@ -25,7 +25,7 @@ export function PersonalizationCard() {
       <View>
         <Text style={[styles.title, { color: colors.text }]}>Help us personalize further</Text>
         <Text style={[styles.copy, { color: colors.mutedText }]}>
-          Optional — the more we know, the smarter your coach gets. You can skip this entirely.
+          Optional. The more we know, the smarter your coach gets. You can skip this entirely.
         </Text>
       </View>
       <TodayCard>
@@ -43,7 +43,7 @@ export function PersonalizationCard() {
         />
         <Text style={[styles.note, { color: colors.mutedText }]}>
           Note: We're not medical providers. This information helps personalize your coaching
-          experience — for example, if you're on a GLP-1, your coach will emphasize protein to
+          experience. For example, if you're on a GLP-1, your coach will emphasize protein to
           protect muscle mass during weight loss. Always follow your doctor's guidance.
         </Text>
         <View style={styles.actions}>

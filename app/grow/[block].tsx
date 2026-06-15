@@ -209,7 +209,7 @@ function ThreadCard({ letter, name, compass, focus, progress, onPress }: ThreadC
         </View>
         <View style={styles.cardStat}>
           <Text style={[styles.cardStatValue, { color: tintText }]}>
-            {hasActions ? `${progress.todayDone}/${progress.todayTotal}` : '—'}
+            {hasActions ? `${progress.todayDone}/${progress.todayTotal}` : '…'}
           </Text>
           <Text style={[styles.cardStatLabel, { color: colors.mutedText }]}>TODAY</Text>
           <Text style={[styles.cardStatBlock, { color: colors.mutedText }]}>
@@ -256,7 +256,7 @@ function SleepCard({ logged, onToggle }: { logged: boolean; onToggle: () => void
         </View>
         <View style={styles.cardStat}>
           <Text style={[styles.cardStatValue, { color: logged ? tint : colors.mutedText }]}>
-            {logged ? '✓' : '—'}
+            {logged ? '✓' : '…'}
           </Text>
           <Text style={[styles.cardStatLabel, { color: colors.mutedText }]}>TODAY</Text>
           <Text style={[styles.cardStatBlock, { color: colors.mutedText }]}>

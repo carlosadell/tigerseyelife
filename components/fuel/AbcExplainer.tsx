@@ -7,7 +7,7 @@ import { COLORS, FONTS, ctaTextOnTangerine } from '../../lib/brand';
 
 const STEPS = [
   { letter: 'A', title: 'ANCHOR', tint: COLORS.deepGreen, body: 'Protein, picked first.' },
-  { letter: 'B', title: 'BUILD', tint: COLORS.tangerine, body: 'Fiber, carbs, fat — round it out.' },
+  { letter: 'B', title: 'BUILD', tint: COLORS.tangerine, body: 'Fiber, carbs, fat. Round it out.' },
   { letter: 'C', title: 'COMPLETE', tint: COLORS.evidenceBlue, body: 'Herbs, sauce, the joy. Never deprivation.' },
 ];
 

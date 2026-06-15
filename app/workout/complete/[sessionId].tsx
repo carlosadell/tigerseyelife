@@ -85,7 +85,7 @@ export default function WorkoutCompleteScreen() {
                 Day {projectedStreak} of your practice streak
               </Text>
               <Text style={[styles.streakHint, { color: colors.mutedText }]}>
-                Any engagement keeps it alive — workouts, walks, meals, water, sleep.
+                Any engagement keeps it alive. Workouts, walks, meals, water, sleep.
               </Text>
             </View>
           </View>

@@ -38,7 +38,7 @@ export default function CoachPreferencesScreen() {
               </Text>
               <Text style={[styles.introBody, { color: colors.mutedText }]}>
                 These settings shape Karen and Ryan's coach voice when it answers you. Change them
-                anytime — your future replies adapt immediately.
+                anytime. Your future replies adapt immediately.
               </Text>
             </View>
           </View>

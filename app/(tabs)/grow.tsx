@@ -30,7 +30,7 @@ export default function GrowScreen() {
             <Text style={[styles.headerKicker, { color: colors.accent }]}>GROW</Text>
             <Text style={[styles.title, { color: colors.text }]}>CREATE POWER blocks</Text>
             <Text style={[styles.subtitle, { color: colors.mutedText }]}>
-              Two-week cycles of small actions. Aim for 40–50% consistency — the rest is bonus.
+              Two-week cycles of small actions. Aim for 40 to 50 percent consistency. The rest is bonus.
             </Text>
           </View>
 
@@ -130,7 +130,7 @@ function BlockSummaryCard({ block }: { block: PowerBlock }) {
             {actionsCount} actions · 14 days
           </Text>
           <Text style={[styles.blockMetaValue, { color: colors.accent }]}>
-            {loading ? '—' : `${percentage}%`}
+            {loading ? '…' : `${percentage}%`}
           </Text>
         </View>
         <View style={[styles.progressTrack, { backgroundColor: colors.cardAlt }]}>

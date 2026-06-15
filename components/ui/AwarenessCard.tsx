@@ -28,7 +28,7 @@ export function AwarenessCard({ prompt }: AwarenessCardProps) {
         <Text style={styles.kicker}>{kicker}</Text>
         <Text style={styles.body}>{prompt.body}</Text>
         {prompt.kind === 'nudge' && prompt.attribution ? (
-          <Text style={styles.attribution}>— {prompt.attribution}</Text>
+          <Text style={styles.attribution}>· {prompt.attribution}</Text>
         ) : null}
       </View>
     </View>

@@ -23,7 +23,6 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { AnchorRow } from '../components/ui/AnchorRow';
 import { PhotoHeroCard } from '../components/ui/PhotoHeroCard';
 import { SectionHeader } from '../components/ui/SectionHeader';
-import { coachStillForToday } from '../lib/coachStills';
 import { useAuth } from '../hooks/useAuth';
 import {
   isIntakeComplete,
@@ -38,7 +37,11 @@ const light = THEME_COLORS.light;
 
 // TODO: replace with the real Create Power join URL when Ryan provides it.
 const JOIN_URL = 'https://tigerseyelife.com/create-power';
-const REQUEST_URL = 'mailto:ryan@tigerseyelife.com?subject=Create%20Power%20%E2%80%94%20Request%20to%20join';
+const REQUEST_URL = 'mailto:ryan@tigerseyelife.com?subject=Create%20Power%2C%20Request%20to%20join';
+
+// Thematic hero image for the non-member surface. Food/plate scene, no faces,
+// reliable Unsplash URL. Swap when Ryan ships real assets.
+const HERO_IMAGE = 'https://images.unsplash.com/photo-1490645935967-10de6ba17061?w=600&h=400&fit=crop';
 
 /**
  * Non-member landing.
@@ -121,9 +124,9 @@ function ChoiceView({ diagnostic, onJoin, onRequest, onTailor }: ChoiceViewProps
   return (
     <>
       <PhotoHeroCard
-        kicker="THANKS — WE HEARD YOU"
-        title={"You're in the right place.\nHow would you like to start?"}
-        photoUri={coachStillForToday()}
+        kicker="WELCOME"
+        title="Where would you like to start?"
+        photoUri={HERO_IMAGE}
       />
 
       {diagnostic && (diagnostic.friction || diagnostic.stoppingPoint) ? (
@@ -225,7 +228,7 @@ function bridgeFor(style: CoachingStyle | undefined): string {
     case 'direct':
       return "Here's the shortest path. Three frameworks we'd run first against the obstacle you named.";
     case 'warm':
-      return "Here's where we'd start together. Three frameworks tuned to what you just told us — gentle on-ramps, real change underneath.";
+      return "Here's where we'd start together. Three frameworks tuned to what you just told us. Gentle on-ramps, real change underneath.";
     case 'challenging':
       return 'Three frameworks. Pick the one that scares you most and start there.';
     case 'balanced':
@@ -249,14 +252,14 @@ function PersonalizedView({ diagnostic, onJoin }: PersonalizedViewProps) {
     <>
       <PhotoHeroCard
         kicker="YOUR PERSONALIZED PLAN"
-        title={"Built around what you told us."}
-        photoUri={coachStillForToday()}
+        title="Built around what you told us."
+        photoUri={HERO_IMAGE}
       />
 
       <View style={styles.echo}>
         <Text style={styles.echoKicker}>YOUR GOAL</Text>
         <View style={styles.echoBlock}>
-          <Text style={styles.echoBody}>{diagnostic.goal || '—'}</Text>
+          <Text style={styles.echoBody}>{diagnostic.goal || '…'}</Text>
         </View>
       </View>
 
@@ -279,7 +282,7 @@ function PersonalizedView({ diagnostic, onJoin }: PersonalizedViewProps) {
           </Text>
         </View>
       </Pressable>
-      <Text style={styles.ctaSub}>Get the rest of the path — with Karen and Ryan walking it with you.</Text>
+      <Text style={styles.ctaSub}>Get the rest of the path. Karen and Ryan walk it with you.</Text>
     </>
   );
 }
