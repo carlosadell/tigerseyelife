@@ -13,9 +13,14 @@ type LessonCardProps = {
   onPress?: () => void;
 };
 
+const THUMB_SIZE = 84;
+const HORIZ_PAD = 14;
+const THUMB_GAP = 14;
+
 /**
- * 80×80 scene-photo thumbnail + meta + bold title + body. Used for Today's
- * "Next Lesson" and as the row layout in the Lessons tab.
+ * 84×84 scene-photo thumbnail (absolutely positioned left) + meta + bold title +
+ * body. Same anti-flex-fail rebuild as AnchorRow — thumb is pinned, label area
+ * is a normal column.
  */
 export function LessonCard({ meta, title, body, thumbUri, onPress }: LessonCardProps) {
   return (
@@ -25,7 +30,7 @@ export function LessonCard({ meta, title, body, thumbUri, onPress }: LessonCardP
       onPress={onPress}
       style={({ pressed }) => [styles.card, { opacity: pressed && onPress ? 0.94 : 1 }]}
     >
-      <Image source={{ uri: thumbUri }} style={styles.thumb} />
+      <Image source={{ uri: thumbUri }} style={styles.thumbAbs} />
       <View style={styles.col}>
         <Text style={styles.meta}>{meta}</Text>
         <Text style={styles.title} numberOfLines={2}>{title}</Text>
@@ -39,41 +44,46 @@ const styles = StyleSheet.create({
   body: {
     color: light.mutedText,
     fontFamily: FONTS.sans,
-    fontSize: 12.5,
-    lineHeight: 17,
+    fontSize: 13,
+    lineHeight: 18,
     marginTop: 4,
   },
   card: {
-    alignItems: 'center',
     backgroundColor: light.card,
     borderColor: light.border,
     borderRadius: 18,
     borderWidth: 1,
-    flexDirection: 'row',
-    gap: 14,
-    padding: 14,
+    paddingBottom: HORIZ_PAD,
+    paddingLeft: HORIZ_PAD + THUMB_SIZE + THUMB_GAP,
+    paddingRight: HORIZ_PAD,
+    paddingTop: HORIZ_PAD,
+    position: 'relative',
   },
   col: {
-    flex: 1,
-    minWidth: 0,
+    minHeight: THUMB_SIZE,
+    justifyContent: 'center',
   },
   meta: {
     color: COLORS.tigerGold,
     fontFamily: FONTS.sansBold,
     fontSize: 11.5,
-    letterSpacing: 0.3,
+    letterSpacing: 0.4,
   },
-  thumb: {
+  thumbAbs: {
     backgroundColor: light.cardAlt,
     borderRadius: 14,
-    height: 80,
-    width: 80,
+    height: THUMB_SIZE,
+    left: HORIZ_PAD,
+    position: 'absolute',
+    top: HORIZ_PAD,
+    width: THUMB_SIZE,
   },
   title: {
     color: light.text,
     fontFamily: FONTS.sansBold,
-    fontSize: 15.5,
+    fontSize: 16,
     letterSpacing: -0.2,
-    marginTop: 2,
+    lineHeight: 21,
+    marginTop: 4,
   },
 });

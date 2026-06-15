@@ -71,10 +71,9 @@ export function CommitBlockToday({ weekIndex = 1, weekLabel = 'Week 1' }: Commit
 }
 
 const styles = StyleSheet.create({
-  awarenessWrap: { marginTop: 12 },
-  greetingWrap: { marginBottom: 4, marginTop: 18 },
+  awarenessWrap: { marginTop: 22 },
+  greetingWrap: { marginBottom: 18, marginTop: 28 },
   stack: {
-    gap: 0,
     paddingHorizontal: SPACING.screenX,
     paddingTop: 12,
   },

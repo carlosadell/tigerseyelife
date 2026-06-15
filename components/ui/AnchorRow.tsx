@@ -15,11 +15,16 @@ type AnchorRowProps = {
   accessibilityLabel?: string;
 };
 
+const ICON_SIZE = 44;
+const HORIZ_PAD = 16;
+const ICON_GAP = 14;
+const CHEV_RAIL = 36;
+
 /**
- * Tappable card row — IconSquare + label + tangerine chevron pinned to the
- * right edge. Chevron is absolutely positioned so it cannot wrap regardless
- * of label length or screen width. The row reserves paddingRight so the
- * label never overlaps the chevron.
+ * Tappable card row — IconSquare pinned left, label fills the middle, tangerine
+ * chevron pinned right. Both icon and chevron are absolutely positioned so the
+ * layout is structurally fixed and never wraps, regardless of Pressable / Yoga
+ * flex behavior or screen width.
  */
 export function AnchorRow({ Icon, title, sub, onPress, accessibilityLabel }: AnchorRowProps) {
   return (
@@ -29,22 +34,24 @@ export function AnchorRow({ Icon, title, sub, onPress, accessibilityLabel }: Anc
       onPress={onPress}
       style={({ pressed }) => [styles.row, { opacity: pressed && onPress ? 0.7 : 1 }]}
     >
-      <IconSquare Icon={Icon} />
+      <View pointerEvents="none" style={styles.iconAbs}>
+        <IconSquare Icon={Icon} />
+      </View>
+
       <View style={styles.label}>
         <Text style={styles.title} numberOfLines={2}>{title}</Text>
         {sub ? <Text style={styles.sub} numberOfLines={3}>{sub}</Text> : null}
       </View>
-      <View pointerEvents="none" style={styles.chev}>
+
+      <View pointerEvents="none" style={styles.chevAbs}>
         <ChevronRight color={COLORS.tangerine} size={20} strokeWidth={2.4} />
       </View>
     </Pressable>
   );
 }
 
-const CHEV_RAIL = 38;
-
 const styles = StyleSheet.create({
-  chev: {
+  chevAbs: {
     alignItems: 'center',
     bottom: 0,
     justifyContent: 'center',
@@ -53,36 +60,39 @@ const styles = StyleSheet.create({
     top: 0,
     width: CHEV_RAIL,
   },
+  iconAbs: {
+    left: HORIZ_PAD,
+    position: 'absolute',
+    top: HORIZ_PAD,
+  },
   label: {
-    flex: 1,
-    marginLeft: 12,
-    minWidth: 0,
+    minHeight: ICON_SIZE,
+    justifyContent: 'center',
   },
   row: {
-    alignItems: 'center',
     backgroundColor: light.card,
     borderColor: light.border,
     borderRadius: 16,
     borderWidth: 1,
-    flexDirection: 'row',
-    marginBottom: 10,
-    paddingBottom: 14,
-    paddingLeft: 14,
+    marginBottom: 12,
+    paddingBottom: HORIZ_PAD,
+    paddingLeft: HORIZ_PAD + ICON_SIZE + ICON_GAP,
     paddingRight: CHEV_RAIL,
-    paddingTop: 14,
+    paddingTop: HORIZ_PAD,
     position: 'relative',
   },
   sub: {
     color: light.mutedText,
     fontFamily: FONTS.sans,
-    fontSize: 12.5,
-    lineHeight: 17,
-    marginTop: 2,
+    fontSize: 13,
+    lineHeight: 18,
+    marginTop: 3,
   },
   title: {
     color: light.text,
-    fontFamily: FONTS.sansMedium,
-    fontSize: 15,
+    fontFamily: FONTS.sansBold,
+    fontSize: 15.5,
     letterSpacing: -0.1,
+    lineHeight: 20,
   },
 });

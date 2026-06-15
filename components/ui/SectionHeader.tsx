@@ -30,11 +30,11 @@ const styles = StyleSheet.create({
     fontSize: 12.5,
   },
   row: {
-    alignItems: 'center',
+    alignItems: 'baseline',
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginBottom: 10,
-    marginTop: 18,
+    marginBottom: 14,
+    marginTop: 32,
   },
   title: {
     color: light.text,
