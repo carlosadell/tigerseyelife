@@ -16,14 +16,10 @@ type AnchorRowProps = {
 };
 
 /**
- * Tappable row in the reference vocabulary — IconSquare + title (+ optional
- * sub) + tangerine chevron. NOT a checklist row: no checkbox state, taps
- * navigate.
- *
- * Layout is explicit (no `gap`) so it stays a single horizontal row across
- * all RN versions and on narrow screens: IconSquare is fixed-width, label
- * flex-grows + shrinks, chevron is fixed-width on the right. Title/sub are
- * line-clamped so long copy doesn't push the chevron off the row.
+ * Tappable card row — IconSquare + label + tangerine chevron pinned to the
+ * right edge. Chevron is absolutely positioned so it cannot wrap regardless
+ * of label length or screen width. The row reserves paddingRight so the
+ * label never overlaps the chevron.
  */
 export function AnchorRow({ Icon, title, sub, onPress, accessibilityLabel }: AnchorRowProps) {
   return (
@@ -33,37 +29,33 @@ export function AnchorRow({ Icon, title, sub, onPress, accessibilityLabel }: Anc
       onPress={onPress}
       style={({ pressed }) => [styles.row, { opacity: pressed && onPress ? 0.7 : 1 }]}
     >
-      <View style={styles.iconCol}>
-        <IconSquare Icon={Icon} />
-      </View>
+      <IconSquare Icon={Icon} />
       <View style={styles.label}>
         <Text style={styles.title} numberOfLines={2}>{title}</Text>
         {sub ? <Text style={styles.sub} numberOfLines={3}>{sub}</Text> : null}
       </View>
-      <View style={styles.chevCol}>
+      <View pointerEvents="none" style={styles.chev}>
         <ChevronRight color={COLORS.tangerine} size={20} strokeWidth={2.4} />
       </View>
     </Pressable>
   );
 }
 
+const CHEV_RAIL = 38;
+
 const styles = StyleSheet.create({
-  chevCol: {
+  chev: {
     alignItems: 'center',
-    flexShrink: 0,
-    height: 24,
+    bottom: 0,
     justifyContent: 'center',
-    marginLeft: 10,
-    width: 24,
-  },
-  iconCol: {
-    flexShrink: 0,
-    marginRight: 12,
+    position: 'absolute',
+    right: 0,
+    top: 0,
+    width: CHEV_RAIL,
   },
   label: {
-    flexBasis: 0,
-    flexGrow: 1,
-    flexShrink: 1,
+    flex: 1,
+    marginLeft: 12,
     minWidth: 0,
   },
   row: {
@@ -73,11 +65,12 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     borderWidth: 1,
     flexDirection: 'row',
-    flexWrap: 'nowrap',
     marginBottom: 10,
-    paddingHorizontal: 14,
-    paddingVertical: 14,
-    width: '100%',
+    paddingBottom: 14,
+    paddingLeft: 14,
+    paddingRight: CHEV_RAIL,
+    paddingTop: 14,
+    position: 'relative',
   },
   sub: {
     color: light.mutedText,
