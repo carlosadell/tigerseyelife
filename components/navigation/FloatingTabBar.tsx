@@ -2,12 +2,13 @@ import type { BottomTabBarProps } from '@react-navigation/bottom-tabs';
 import { BlurView } from 'expo-blur';
 import * as Haptics from 'expo-haptics';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Dumbbell, Soup, Sprout, Sun, User } from 'lucide-react-native';
+import { Dumbbell, Lock, Soup, Sprout, Sun, User } from 'lucide-react-native';
 import { ComponentType, useEffect, useRef } from 'react';
 import { Animated, Easing, Platform, Pressable, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { CoachFloatingButton } from './CoachFloatingButton';
+import { useMembership } from '../../hooks/useMembership';
 import { useTheme } from '../../hooks/useTheme';
 import { COLORS, FONTS } from '../../lib/brand';
 
@@ -28,6 +29,8 @@ const icons: Record<string, TabIcon> = {
 export function FloatingTabBar({ state, descriptors, navigation, onCoachPress }: FloatingTabBarProps) {
   const insets = useSafeAreaInsets();
   const { colors, mode } = useTheme();
+  const { membership } = useMembership();
+  const isCommit = (membership.currentBlock ?? 'COMMIT') === 'COMMIT';
 
   const scrimHeight = insets.bottom + 76;
   const fadeColor = colors.background;
@@ -66,6 +69,8 @@ export function FloatingTabBar({ state, descriptors, navigation, onCoachPress }:
                 }
               };
 
+              const locked = isCommit && route.name === 'fuel';
+
               return (
                 <TabBarItem
                   accessibilityLabel={options?.tabBarAccessibilityLabel}
@@ -75,6 +80,7 @@ export function FloatingTabBar({ state, descriptors, navigation, onCoachPress }:
                   inactiveColor={colors.mutedText}
                   key={route.key}
                   label={options?.title ?? route.name}
+                  locked={locked}
                   onPress={onPress}
                 />
               );
@@ -99,6 +105,7 @@ type TabBarItemProps = {
   label: string;
   activeColor: string;
   inactiveColor: string;
+  locked?: boolean;
   onPress: () => void;
 };
 
@@ -109,6 +116,7 @@ function TabBarItem({
   icon: Icon,
   label,
   inactiveColor,
+  locked = false,
   onPress,
 }: TabBarItemProps) {
   const progress = useRef(new Animated.Value(focused ? 1 : 0)).current;
@@ -146,6 +154,11 @@ function TabBarItem({
         >
           <Icon color={inactiveColor} size={22} strokeWidth={2} />
         </Animated.View>
+        {locked ? (
+          <View style={styles.lockBadge}>
+            <Lock color={inactiveColor} size={9} strokeWidth={2.5} />
+          </View>
+        ) : null}
       </View>
       <Text style={[styles.label, { color: focused ? activeColor : inactiveColor }]}>{label}</Text>
       <View style={[styles.indicator, { backgroundColor: focused ? activeColor : 'transparent' }]} />
@@ -206,6 +219,16 @@ const styles = StyleSheet.create({
     fontFamily: FONTS.sansMedium,
     fontSize: 10,
     letterSpacing: 0.2,
+  },
+  lockBadge: {
+    alignItems: 'center',
+    backgroundColor: 'transparent',
+    bottom: -2,
+    height: 12,
+    justifyContent: 'center',
+    position: 'absolute',
+    right: -2,
+    width: 12,
   },
   row: {
     alignItems: 'center',
