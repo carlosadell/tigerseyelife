@@ -46,7 +46,7 @@ export default function MembershipForkScreen() {
           <Text style={styles.lede}>Quick question so we send you to the right place.</Text>
           <Text style={styles.q}>Are you part of the Create Power program?</Text>
 
-          <View style={{ marginTop: 6 }}>
+          <View style={styles.choices}>
             <AnchorRow
               Icon={BadgeCheck}
               title="Yes, I'm a Create Power member"
@@ -67,6 +67,7 @@ export default function MembershipForkScreen() {
 }
 
 const styles = StyleSheet.create({
+  choices: { marginTop: 24 },
   content: { paddingBottom: 32, paddingHorizontal: SPACING.screenX, paddingTop: 24 },
   frame: { flex: 1, maxWidth: Platform.OS === 'web' ? 430 : undefined, width: '100%' },
   headline: {
@@ -81,8 +82,8 @@ const styles = StyleSheet.create({
     fontFamily: FONTS.sans,
     fontSize: 15,
     lineHeight: 22,
-    marginBottom: 26,
-    marginTop: 6,
+    marginBottom: 32,
+    marginTop: 8,
   },
   loading: { alignItems: 'center', backgroundColor: light.background, flex: 1, justifyContent: 'center' },
   q: {
@@ -91,7 +92,7 @@ const styles = StyleSheet.create({
     fontSize: 17,
     letterSpacing: -0.2,
     lineHeight: 23,
-    marginBottom: 12,
+    marginBottom: 4,
   },
   screen: { alignItems: 'center', flex: 1 },
   topBar: { paddingHorizontal: SPACING.screenX, paddingTop: 12 },
