@@ -18,8 +18,12 @@ type AnchorRowProps = {
 /**
  * Tappable row in the reference vocabulary — IconSquare + title (+ optional
  * sub) + tangerine chevron. NOT a checklist row: no checkbox state, taps
- * navigate. Used for Commit anchors, fork choices, Nutrition locked-state
- * lesson link, etc.
+ * navigate.
+ *
+ * Layout is explicit (no `gap`) so it stays a single horizontal row across
+ * all RN versions and on narrow screens: IconSquare is fixed-width, label
+ * flex-grows + shrinks, chevron is fixed-width on the right. Title/sub are
+ * line-clamped so long copy doesn't push the chevron off the row.
  */
 export function AnchorRow({ Icon, title, sub, onPress, accessibilityLabel }: AnchorRowProps) {
   return (
@@ -29,19 +33,37 @@ export function AnchorRow({ Icon, title, sub, onPress, accessibilityLabel }: Anc
       onPress={onPress}
       style={({ pressed }) => [styles.row, { opacity: pressed && onPress ? 0.7 : 1 }]}
     >
-      <IconSquare Icon={Icon} />
-      <View style={styles.label}>
-        <Text style={styles.title}>{title}</Text>
-        {sub ? <Text style={styles.sub}>{sub}</Text> : null}
+      <View style={styles.iconCol}>
+        <IconSquare Icon={Icon} />
       </View>
-      <ChevronRight color={COLORS.tangerine} size={20} strokeWidth={2.4} />
+      <View style={styles.label}>
+        <Text style={styles.title} numberOfLines={2}>{title}</Text>
+        {sub ? <Text style={styles.sub} numberOfLines={3}>{sub}</Text> : null}
+      </View>
+      <View style={styles.chevCol}>
+        <ChevronRight color={COLORS.tangerine} size={20} strokeWidth={2.4} />
+      </View>
     </Pressable>
   );
 }
 
 const styles = StyleSheet.create({
+  chevCol: {
+    alignItems: 'center',
+    flexShrink: 0,
+    height: 24,
+    justifyContent: 'center',
+    marginLeft: 10,
+    width: 24,
+  },
+  iconCol: {
+    flexShrink: 0,
+    marginRight: 12,
+  },
   label: {
-    flex: 1,
+    flexBasis: 0,
+    flexGrow: 1,
+    flexShrink: 1,
     minWidth: 0,
   },
   row: {
@@ -51,9 +73,11 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     borderWidth: 1,
     flexDirection: 'row',
-    gap: 12,
+    flexWrap: 'nowrap',
     marginBottom: 10,
-    padding: 14,
+    paddingHorizontal: 14,
+    paddingVertical: 14,
+    width: '100%',
   },
   sub: {
     color: light.mutedText,
