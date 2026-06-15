@@ -1,12 +1,13 @@
 // app/non-member.tsx
-import { Redirect } from 'expo-router';
+import { Redirect, router } from 'expo-router';
 import { Platform, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { PhotoHeroCard } from '../components/ui/PhotoHeroCard';
 import { coachStillForToday } from '../lib/coachStills';
 import { useAuth } from '../hooks/useAuth';
-import { FONTS, SPACING, THEME_COLORS } from '../lib/brand';
+import { useMembership } from '../hooks/useMembership';
+import { COLORS, FONTS, SPACING, THEME_COLORS } from '../lib/brand';
 
 const light = THEME_COLORS.light;
 
@@ -15,8 +16,14 @@ const light = THEME_COLORS.light;
  * the loop on the diagnostic so the flow doesn't dead-end.
  */
 export default function NonMemberLandingScreen() {
-  const { session, signOut } = useAuth();
+  const { isDevSession, session, signOut } = useAuth();
+  const { devReset } = useMembership();
   if (!session) return <Redirect href="/(auth)/sign-in" />;
+
+  const onStartOver = async () => {
+    await devReset();
+    router.replace('/membership' as never);
+  };
 
   return (
     <SafeAreaView style={[styles.screen, { backgroundColor: light.background }]}>
@@ -31,6 +38,18 @@ export default function NonMemberLandingScreen() {
             The non-member experience is in design. Karen and Ryan are deciding what you'll see here
             next. If you'd like to skip the wait, ask Ryan about joining the Create Power program.
           </Text>
+
+          {isDevSession ? (
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel="Dev: start over"
+              onPress={onStartOver}
+              style={({ pressed }) => [styles.devReset, { opacity: pressed ? 0.7 : 1 }]}
+            >
+              <Text style={styles.devKicker}>DEV ONLY</Text>
+              <Text style={styles.devBody}>↺  Start over from the fork</Text>
+            </Pressable>
+          ) : null}
         </ScrollView>
         <View style={styles.footer}>
           <Pressable onPress={signOut} style={({ pressed }) => [styles.ghost, { opacity: pressed ? 0.6 : 1 }]}>
@@ -45,6 +64,28 @@ export default function NonMemberLandingScreen() {
 const styles = StyleSheet.create({
   body: { color: light.text, fontFamily: FONTS.sans, fontSize: 15, lineHeight: 22, marginTop: 20 },
   content: { paddingBottom: 24, paddingHorizontal: SPACING.screenX, paddingTop: 20 },
+  devBody: {
+    color: light.text,
+    fontFamily: FONTS.sansMedium,
+    fontSize: 14,
+    letterSpacing: -0.1,
+    marginTop: 4,
+  },
+  devKicker: {
+    color: COLORS.tangerine,
+    fontFamily: FONTS.sansBold,
+    fontSize: 10.5,
+    letterSpacing: 1.4,
+  },
+  devReset: {
+    backgroundColor: light.card,
+    borderColor: light.border,
+    borderRadius: 14,
+    borderStyle: 'dashed',
+    borderWidth: 1,
+    marginTop: 24,
+    padding: 14,
+  },
   footer: { paddingBottom: 12, paddingHorizontal: SPACING.screenX, paddingTop: 8 },
   frame: { flex: 1, maxWidth: Platform.OS === 'web' ? 430 : undefined, width: '100%' },
   ghost: { alignItems: 'center', paddingVertical: 14 },

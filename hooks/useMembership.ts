@@ -119,5 +119,17 @@ export function useMembership() {
     [isDevSession, load, userId],
   );
 
-  return { loading, membership, refresh: load, devMarkVerified, recordNonMember };
+  /**
+   * Dev-only: wipe the AsyncStorage membership key so the fork re-opens.
+   * No effect against Supabase rows — for production resets, the server has
+   * to clear the entitlement columns.
+   */
+  const devReset = useCallback(async () => {
+    if (!userId) return;
+    await AsyncStorage.removeItem(devKey(userId));
+    await AsyncStorage.removeItem(`${devKey(userId)}:diagnostic`);
+    setMembership(EMPTY);
+  }, [userId]);
+
+  return { loading, membership, refresh: load, devMarkVerified, recordNonMember, devReset };
 }
