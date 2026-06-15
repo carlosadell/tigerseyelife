@@ -76,7 +76,7 @@ export function CommitBlockToday({ weekIndex = 1, weekLabel = 'Week 1' }: Commit
       </View>
 
       <SectionHeader title="Next Lesson" />
-      <NextLessonCard onPress={() => router.push('/(tabs)/grow' as never)} />
+      <NextLessonCard />
 
       <View style={styles.awarenessWrap}>
         <AwarenessCard prompt={prompt} />
