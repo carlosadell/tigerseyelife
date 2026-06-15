@@ -1,165 +1,98 @@
-import { format } from 'date-fns';
+// app/grow/[block].tsx
+import { Check, ChevronLeft, ChevronRight } from 'lucide-react-native';
 import { router, useLocalSearchParams } from 'expo-router';
-import { ChevronLeft, Droplet, Moon } from 'lucide-react-native';
 import { useMemo } from 'react';
 import { Platform, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { LETTER_INK, LETTER_TINT } from '../../components/grow/ActionCard';
-import { useTheme, useThemeColors } from '../../hooks/useTheme';
-import { usePowerActionProgress } from '../../hooks/usePowerActionProgress';
-import { useTodayEngagement } from '../../hooks/useTodayEngagement';
-import { COLORS, FONTS, SPACING, textTintOf } from '../../lib/brand';
+import { useSectionProgress } from '../../hooks/useSectionProgress';
 import {
-  PowerFocus,
-  PowerLetter,
-  POWER_LETTERS,
-  getPowerBlock,
-} from '../../lib/powerBlocks';
+  BLOCK_IDS,
+  sectionsForBlock,
+  THREAD_NAMES,
+  type BlockId,
+  type Section,
+} from '../../lib/curriculum';
+import { COLORS, FONTS, SPACING, THEME_COLORS } from '../../lib/brand';
 
-const FOCUS_LABEL: Record<PowerFocus, string> = {
-  PRIMARY: 'Primary',
-  SECONDARY: 'Secondary',
-  MAINTAIN: 'Maintain',
+const light = THEME_COLORS.light;
+
+const BLOCK_LABEL: Record<BlockId, string> = {
+  COMMIT: 'Commit',
+  REFINE: 'Refine',
+  EVOLVE: 'Evolve',
+  ADAPT: 'Adapt',
+  THRIVE: 'Thrive',
+  EXCEL: 'Excel',
 };
 
-export default function BlockDetailScreen() {
-  const { block: blockId } = useLocalSearchParams<{ block: string }>();
-  const colors = useThemeColors();
-  const block = getPowerBlock(blockId ?? '');
-  const { isChecked, summary } = usePowerActionProgress(blockId ?? '');
-  const { engagement, waterTarget, toggleSleep, addWater } = useTodayEngagement();
+export default function BlockSectionListScreen() {
+  const params = useLocalSearchParams<{ block?: string }>();
+  const blockId = useMemo<BlockId | null>(() => {
+    const upper = String(params.block ?? '').toUpperCase();
+    return (BLOCK_IDS as readonly string[]).includes(upper) ? (upper as BlockId) : null;
+  }, [params.block]);
+  const { isCompleted, completedInBlock } = useSectionProgress();
 
-  const todayKey = useMemo(() => format(new Date(), 'yyyy-MM-dd'), []);
-
-  const threadProgress = useMemo(() => {
-    if (!block) {
-      return {} as Record<PowerLetter, { todayDone: number; todayTotal: number; blockPct: number }>;
-    }
-    const result: Record<PowerLetter, { todayDone: number; todayTotal: number; blockPct: number }> = {
-      P: { todayDone: 0, todayTotal: 0, blockPct: 0 },
-      O: { todayDone: 0, todayTotal: 0, blockPct: 0 },
-      W: { todayDone: 0, todayTotal: 0, blockPct: 0 },
-      E: { todayDone: 0, todayTotal: 0, blockPct: 0 },
-      R: { todayDone: 0, todayTotal: 0, blockPct: 0 },
-    };
-    const totals: Record<PowerLetter, { completed: number; target: number }> = {
-      P: { completed: 0, target: 0 },
-      O: { completed: 0, target: 0 },
-      W: { completed: 0, target: 0 },
-      E: { completed: 0, target: 0 },
-      R: { completed: 0, target: 0 },
-    };
-    for (const action of block.actions) {
-      result[action.letter].todayTotal += 1;
-      if (isChecked(action.id, todayKey)) {
-        result[action.letter].todayDone += 1;
-      }
-      const stat = summary.perAction[action.id];
-      if (stat) {
-        totals[action.letter].completed += stat.completed;
-        totals[action.letter].target += stat.target;
-      }
-    }
-    for (const letter of Object.keys(result) as PowerLetter[]) {
-      const { completed, target } = totals[letter];
-      result[letter].blockPct = target > 0 ? Math.min(100, Math.round((completed / target) * 100)) : 0;
-    }
-    return result;
-  }, [block, isChecked, summary, todayKey]);
-
-  if (!block) {
+  if (!blockId) {
     return (
-      <SafeAreaView style={[styles.screen, { backgroundColor: colors.background }]}>
-        <View style={styles.notFound}>
-          <Text style={[styles.notFoundText, { color: colors.text }]}>Block not found</Text>
-          <Pressable onPress={() => router.back()}>
-            <Text style={[styles.notFoundLink, { color: colors.accent }]}>Back to Grow</Text>
-          </Pressable>
+      <SafeAreaView style={[styles.screen, { backgroundColor: light.background }]}>
+        <View style={styles.frame}>
+          <View style={styles.notFound}>
+            <Text style={styles.notFoundText}>That block doesn't exist.</Text>
+            <Pressable onPress={() => router.back()}>
+              <Text style={styles.notFoundBack}>Back</Text>
+            </Pressable>
+          </View>
         </View>
       </SafeAreaView>
     );
   }
 
-  const totalPct = summary.blockTarget > 0
-    ? Math.min(100, Math.round((summary.blockTotal / summary.blockTarget) * 100))
-    : 0;
+  const sections = sectionsForBlock(blockId);
+  const done = completedInBlock(blockId);
+  const blockComplete = done >= 6;
 
   return (
-    <SafeAreaView edges={['top']} style={[styles.screen, { backgroundColor: colors.background }]}>
-      <View style={styles.phoneFrame}>
-        <View style={styles.header}>
-          <Pressable hitSlop={10} onPress={() => router.back()} style={styles.iconButton}>
-            <ChevronLeft color={colors.accent} size={26} />
+    <SafeAreaView edges={['top']} style={[styles.screen, { backgroundColor: light.background }]}>
+      <View style={styles.frame}>
+        <View style={styles.topBar}>
+          <Pressable hitSlop={10} onPress={() => router.back()} style={styles.backBtn}>
+            <ChevronLeft color={light.text} size={24} />
           </Pressable>
-          <Text style={[styles.headerKicker, { color: colors.accent }]}>{block.name.toUpperCase()}</Text>
-          <View style={styles.iconButton} />
+          <Text style={styles.topBarTitle}>{BLOCK_LABEL[blockId]}</Text>
+          <View style={styles.backBtn} />
         </View>
 
         <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
-          <View style={styles.intro}>
-            <Text style={[styles.tagline, { color: colors.text }]}>{block.tagline}</Text>
-            <Text style={[styles.helper, { color: colors.mutedText }]}>{block.helper}</Text>
+          <View style={styles.headerStack}>
+            <Text style={styles.kicker}>BLOCK · {blockId}</Text>
+            <Text style={styles.title}>{`${BLOCK_LABEL[blockId]} Block`}</Text>
+            <Text style={styles.helper}>{`${done} of 6 sections done.`}</Text>
           </View>
 
-          <View style={styles.sectionHeader}>
-            <Text style={[styles.sectionLabel, { color: colors.mutedText }]}>THREADS</Text>
-            <Text style={[styles.sectionSub, { color: colors.mutedText }]}>
-              Today's signals
-            </Text>
-          </View>
-
-          {(Object.keys(POWER_LETTERS) as PowerLetter[]).map((letter) => (
-            <ThreadCard
-              key={letter}
-              letter={letter}
-              name={POWER_LETTERS[letter]}
-              compass={block.compass[letter]}
-              focus={block.focus[letter]}
-              progress={threadProgress[letter]}
-              onPress={() =>
-                router.push({
-                  pathname: '/grow/thread',
-                  params: { block: block.id, letter },
-                })
-              }
-            />
-          ))}
-
-          <SleepCard logged={engagement.sleep} onToggle={toggleSleep} />
-          <HydrationCard
-            count={engagement.water}
-            target={waterTarget}
-            onAdd={addWater}
-          />
-
-          <View style={[styles.totals, { backgroundColor: colors.card, borderColor: colors.border }]}>
-            <Text style={[styles.cardKicker, { color: colors.accent }]}>BLOCK SUMMARY</Text>
-            <View style={styles.totalsRow}>
-              <View style={styles.totalsItem}>
-                <Text style={[styles.totalsValue, { color: colors.text }]}>{summary.blockTotal}</Text>
-                <Text style={[styles.totalsLabel, { color: colors.mutedText }]}>Actions completed</Text>
-              </View>
-              <View style={styles.totalsItem}>
-                <Text style={[styles.totalsValue, { color: colors.text }]}>{summary.actionsIncomplete}</Text>
-                <Text style={[styles.totalsLabel, { color: colors.mutedText }]}>Incomplete</Text>
-              </View>
-              <View style={styles.totalsItem}>
-                <Text style={[styles.totalsValue, { color: colors.accent }]}>{totalPct}%</Text>
-                <Text style={[styles.totalsLabel, { color: colors.mutedText }]}>Block progress</Text>
-              </View>
+          {blockComplete ? (
+            <View style={styles.completeBanner}>
+              <Text style={styles.completeKicker}>BLOCK COMPLETE</Text>
+              <Text style={styles.completeBody}>
+                Karen and Ryan are loading the next block. Take a breath.
+              </Text>
             </View>
-            <View style={[styles.progressTrack, { backgroundColor: colors.cardAlt }]}>
-              <View
-                style={[
-                  styles.progressFill,
-                  { backgroundColor: colors.accent, width: `${totalPct}%` },
-                ]}
+          ) : null}
+
+          <View style={styles.list}>
+            {sections.map((section) => (
+              <SectionRow
+                key={section.slug}
+                section={section}
+                isDone={isCompleted(section.slug)}
+                onPress={() =>
+                  router.push(
+                    `/grow/${blockId.toLowerCase()}/${section.slug}` as never,
+                  )
+                }
               />
-            </View>
-            <Text style={[styles.totalsCaption, { color: colors.mutedText }]}>
-              Aim for 40–50% consistency. Anything above is bonus.
-            </Text>
+            ))}
           </View>
         </ScrollView>
       </View>
@@ -167,367 +100,175 @@ export default function BlockDetailScreen() {
   );
 }
 
-type ThreadCardProps = {
-  letter: PowerLetter;
-  name: string;
-  compass: string;
-  focus: PowerFocus;
-  progress: { todayDone: number; todayTotal: number; blockPct: number };
+type RowProps = {
+  section: Section;
+  isDone: boolean;
   onPress: () => void;
 };
 
-function ThreadCard({ letter, name, compass, focus, progress, onPress }: ThreadCardProps) {
-  const colors = useThemeColors();
-  const { mode } = useTheme();
-  const tint = LETTER_TINT[letter];
-  const tintText = textTintOf(tint, mode);
-  const hasActions = progress.todayTotal > 0;
+function SectionRow({ section, isDone, onPress }: RowProps) {
   return (
     <Pressable
       accessibilityRole="button"
-      accessibilityLabel={`${name} thread, ${progress.todayDone} of ${progress.todayTotal} today`}
+      accessibilityLabel={`${section.title}, ${isDone ? 'done' : 'not done'}`}
       onPress={onPress}
-      style={({ pressed }) => [
-        styles.card,
-        { backgroundColor: colors.card, borderColor: colors.border, opacity: pressed ? 0.96 : 1 },
-      ]}
+      style={({ pressed }) => ({ opacity: pressed ? 0.7 : 1 })}
     >
-      <View style={styles.cardBody}>
-        <View style={[styles.cardBadge, { backgroundColor: tint }]}>
-          <Text style={[styles.cardBadgeText, { color: LETTER_INK[letter] }]}>{letter}</Text>
+      <View style={styles.row}>
+        <View style={styles.rowNum}>
+          <Text style={styles.rowNumText}>{String(section.order).padStart(2, '0')}</Text>
         </View>
-        <View style={styles.cardText}>
-          <Text style={[styles.cardName, { color: colors.text }]}>
-            {name}
-            <Text style={[styles.cardModifier, { color: colors.mutedText }]}>
-              {'  ·  '}{FOCUS_LABEL[focus].toUpperCase()}
-            </Text>
-          </Text>
-          <Text style={[styles.cardCompass, { color: colors.mutedText }]} numberOfLines={1}>
-            {compass}
+        <View style={styles.rowBody}>
+          <Text style={styles.rowKicker}>{THREAD_NAMES[section.threadLetter]}</Text>
+          <Text style={styles.rowTitle} numberOfLines={2}>
+            {section.title}
           </Text>
         </View>
-        <View style={styles.cardStat}>
-          <Text style={[styles.cardStatValue, { color: tintText }]}>
-            {hasActions ? `${progress.todayDone}/${progress.todayTotal}` : '…'}
-          </Text>
-          <Text style={[styles.cardStatLabel, { color: colors.mutedText }]}>TODAY</Text>
-          <Text style={[styles.cardStatBlock, { color: colors.mutedText }]}>
-            {progress.blockPct}% BLOCK
-          </Text>
+        <View style={styles.rowTrail}>
+          {isDone ? (
+            <Check color={COLORS.deepGreen} size={20} strokeWidth={2.4} />
+          ) : (
+            <ChevronRight color={COLORS.tangerine} size={20} strokeWidth={2.4} />
+          )}
         </View>
-      </View>
-      <View style={[styles.cardBarTrack, { backgroundColor: colors.cardAlt }]}>
-        <View
-          style={[styles.cardBarFill, { backgroundColor: tint, width: `${progress.blockPct}%` }]}
-        />
-      </View>
-    </Pressable>
-  );
-}
-
-function SleepCard({ logged, onToggle }: { logged: boolean; onToggle: () => void }) {
-  const colors = useThemeColors();
-  const tint = COLORS.evidenceBlue;
-  return (
-    <Pressable
-      accessibilityRole="button"
-      accessibilityLabel={`Sleep ${logged ? 'logged' : 'not logged'} today`}
-      onPress={onToggle}
-      style={({ pressed }) => [
-        styles.card,
-        { backgroundColor: colors.card, borderColor: colors.border, opacity: pressed ? 0.96 : 1 },
-      ]}
-    >
-      <View style={styles.cardBody}>
-        <View style={[styles.cardBadge, { backgroundColor: logged ? tint : colors.cardAlt }]}>
-          <Moon color={logged ? '#FFFFFF' : tint} size={16} strokeWidth={2} />
-        </View>
-        <View style={styles.cardText}>
-          <Text style={[styles.cardName, { color: colors.text }]}>
-            Sleep
-            <Text style={[styles.cardModifier, { color: colors.mutedText }]}>
-              {'  ·  '}FOUNDATION
-            </Text>
-          </Text>
-          <Text style={[styles.cardCompass, { color: colors.mutedText }]}>
-            {logged ? 'Logged today · tap to undo' : 'Tap to acknowledge tonight’s rest'}
-          </Text>
-        </View>
-        <View style={styles.cardStat}>
-          <Text style={[styles.cardStatValue, { color: logged ? tint : colors.mutedText }]}>
-            {logged ? '✓' : '…'}
-          </Text>
-          <Text style={[styles.cardStatLabel, { color: colors.mutedText }]}>TODAY</Text>
-          <Text style={[styles.cardStatBlock, { color: colors.mutedText }]}>
-            {logged ? 'LOGGED' : 'TAP TO LOG'}
-          </Text>
-        </View>
-      </View>
-      <View style={[styles.cardBarTrack, { backgroundColor: colors.cardAlt }]}>
-        <View
-          style={[styles.cardBarFill, { backgroundColor: tint, width: logged ? '100%' : '0%' }]}
-        />
-      </View>
-    </Pressable>
-  );
-}
-
-function HydrationCard({
-  count,
-  target,
-  onAdd,
-}: {
-  count: number;
-  target: number;
-  onAdd: () => void;
-}) {
-  const colors = useThemeColors();
-  const tint = COLORS.evidenceBlue;
-  const pct = target > 0 ? Math.min(100, Math.round((count / target) * 100)) : 0;
-  const atTarget = count >= target;
-  return (
-    <Pressable
-      accessibilityRole="button"
-      accessibilityLabel={`Hydration ${count} of ${target} glasses, tap to add one`}
-      onPress={onAdd}
-      style={({ pressed }) => [
-        styles.card,
-        { backgroundColor: colors.card, borderColor: colors.border, opacity: pressed ? 0.96 : 1 },
-      ]}
-    >
-      <View style={styles.cardBody}>
-        <View style={[styles.cardBadge, { backgroundColor: atTarget ? tint : colors.cardAlt }]}>
-          <Droplet color={atTarget ? '#FFFFFF' : tint} size={16} strokeWidth={2} />
-        </View>
-        <View style={styles.cardText}>
-          <Text style={[styles.cardName, { color: colors.text }]}>
-            Hydration
-            <Text style={[styles.cardModifier, { color: colors.mutedText }]}>
-              {'  ·  '}FOUNDATION
-            </Text>
-          </Text>
-          <Text style={[styles.cardCompass, { color: colors.mutedText }]}>
-            Tap card to log a glass · {count * 8} oz so far
-          </Text>
-        </View>
-        <View style={styles.cardStat}>
-          <Text style={[styles.cardStatValue, { color: tint }]}>
-            {count}/{target}
-          </Text>
-          <Text style={[styles.cardStatLabel, { color: colors.mutedText }]}>TODAY</Text>
-          <Text style={[styles.cardStatBlock, { color: colors.mutedText }]}>{pct}% BLOCK</Text>
-        </View>
-      </View>
-      <View style={[styles.cardBarTrack, { backgroundColor: colors.cardAlt }]}>
-        <View style={[styles.cardBarFill, { backgroundColor: tint, width: `${pct}%` }]} />
       </View>
     </Pressable>
   );
 }
 
 const styles = StyleSheet.create({
-  cardKicker: {
+  backBtn: { height: 32, width: 32 },
+  completeBanner: {
+    backgroundColor: '#F4E9D2',
+    borderColor: '#E3CC92',
+    borderRadius: 14,
+    borderWidth: 1,
+    marginTop: 22,
+    padding: 14,
+  },
+  completeBody: {
+    color: light.text,
+    fontFamily: FONTS.sansMedium,
+    fontSize: 14.5,
+    lineHeight: 22,
+    marginTop: 4,
+  },
+  completeKicker: {
+    color: COLORS.tigerGold,
     fontFamily: FONTS.sansBold,
-    fontSize: 10.5,
-    letterSpacing: 2.2,
+    fontSize: 11,
+    letterSpacing: 1.4,
   },
   content: {
-    gap: 12,
-    paddingBottom: 120,
+    paddingBottom: 32,
     paddingHorizontal: SPACING.screenX,
-    paddingTop: 4,
+    paddingTop: 16,
   },
-  header: {
-    alignItems: 'center',
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    paddingHorizontal: SPACING.screenX,
-    paddingVertical: 8,
+  frame: {
+    flex: 1,
+    maxWidth: Platform.OS === 'web' ? 430 : undefined,
+    width: '100%',
   },
-  headerKicker: {
-    fontFamily: FONTS.sansBold,
-    fontSize: 12,
-    letterSpacing: 2.6,
-  },
+  headerStack: { gap: 6 },
   helper: {
-    fontFamily: FONTS.sans,
-    fontSize: 13,
-    lineHeight: 19,
+    color: light.mutedText,
+    fontFamily: FONTS.sansMedium,
+    fontSize: 13.5,
   },
-  iconButton: {
-    height: 32,
-    padding: 4,
-    width: 32,
+  kicker: {
+    color: COLORS.tigerGold,
+    fontFamily: FONTS.sansBold,
+    fontSize: 11,
+    letterSpacing: 1.4,
   },
-  intro: {
-    gap: 6,
-    paddingTop: 4,
+  list: {
+    marginTop: 22,
   },
   notFound: {
     alignItems: 'center',
     flex: 1,
     gap: 12,
     justifyContent: 'center',
+    padding: 24,
   },
-  notFoundLink: {
-    fontFamily: FONTS.sansBold,
+  notFoundBack: {
+    color: COLORS.tigerGold,
+    fontFamily: FONTS.sansMedium,
     fontSize: 14,
   },
   notFoundText: {
-    fontFamily: FONTS.sansBold,
-    fontSize: 18,
-  },
-  phoneFrame: {
-    alignSelf: 'center',
-    flex: 1,
-    maxWidth: Platform.OS === 'web' ? 430 : undefined,
-    width: '100%',
-  },
-  progressFill: {
-    borderRadius: 999,
-    height: '100%',
-  },
-  progressTrack: {
-    borderRadius: 999,
-    height: 8,
-    overflow: 'hidden',
-    width: '100%',
-  },
-  screen: {
-    flex: 1,
-  },
-  sectionHeader: {
-    alignItems: 'baseline',
-    flexDirection: 'row',
-    gap: 10,
-    justifyContent: 'space-between',
-    paddingHorizontal: 4,
-    paddingTop: 6,
-  },
-  sectionLabel: {
-    fontFamily: FONTS.sansBold,
-    fontSize: 10.5,
-    letterSpacing: 2.2,
-  },
-  sectionSub: {
+    color: light.text,
     fontFamily: FONTS.sans,
-    fontSize: 11.5,
+    fontSize: 15,
   },
-  tagline: {
-    fontFamily: FONTS.sansBold,
-    fontSize: 18,
-    letterSpacing: -0.2,
-    lineHeight: 24,
-  },
-  card: {
-    borderRadius: 12,
-    borderWidth: 1,
-    overflow: 'hidden',
-  },
-  cardBadge: {
+  row: {
     alignItems: 'center',
-    borderRadius: 8,
-    height: 38,
-    justifyContent: 'center',
-    width: 38,
-  },
-  cardBadgeText: {
-    fontFamily: FONTS.sansBold,
-    fontSize: 17,
-    letterSpacing: 0.6,
-  },
-  cardBarFill: {
-    height: '100%',
-  },
-  cardBarTrack: {
-    height: 3,
-    width: '100%',
-  },
-  cardBody: {
-    alignItems: 'flex-start',
+    backgroundColor: light.card,
+    borderColor: light.border,
+    borderRadius: 14,
+    borderWidth: 1,
     flexDirection: 'row',
-    gap: 14,
-    paddingBottom: 18,
-    paddingHorizontal: 16,
-    paddingTop: 16,
+    marginBottom: 10,
+    padding: 14,
   },
-  cardCompass: {
-    fontFamily: FONTS.sans,
-    fontSize: 12.5,
-    lineHeight: 17,
+  rowBody: {
+    flex: 1,
+    marginLeft: 14,
+    marginRight: 10,
   },
-  cardModifier: {
+  rowKicker: {
+    color: COLORS.tigerGold,
     fontFamily: FONTS.sansBold,
-    fontSize: 10,
-    letterSpacing: 1.4,
+    fontSize: 11,
+    letterSpacing: 1,
   },
-  cardName: {
+  rowNum: {
+    alignItems: 'center',
+    backgroundColor: '#F0E2C2',
+    borderRadius: 10,
+    height: 36,
+    justifyContent: 'center',
+    width: 36,
+  },
+  rowNumText: {
+    color: light.accent,
+    fontFamily: FONTS.sansBold,
+    fontSize: 13,
+  },
+  rowTitle: {
+    color: light.text,
     fontFamily: FONTS.sansBold,
     fontSize: 15,
     letterSpacing: -0.1,
-    lineHeight: 19,
+    marginTop: 2,
   },
-  cardStat: {
-    alignItems: 'flex-end',
-    gap: 1,
-    minWidth: 64,
-    paddingTop: 2,
+  rowTrail: {
+    alignItems: 'center',
+    height: 24,
+    justifyContent: 'center',
+    width: 24,
   },
-  cardStatBlock: {
+  screen: { alignItems: 'center', flex: 1 },
+  title: {
+    color: light.text,
     fontFamily: FONTS.sansBold,
-    fontSize: 9,
-    letterSpacing: 1.4,
-    marginTop: 1,
+    fontSize: 28,
+    letterSpacing: -0.5,
   },
-  cardStatLabel: {
-    fontFamily: FONTS.sansBold,
-    fontSize: 9,
-    letterSpacing: 1.6,
-    marginTop: -1,
-  },
-  cardStatValue: {
-    fontFamily: FONTS.diagnostic,
-    fontSize: 32,
-    letterSpacing: 0.5,
-    lineHeight: 32,
-  },
-  cardText: {
-    flex: 1,
-    gap: 4,
-    minWidth: 0,
-    paddingTop: 3,
-  },
-  totals: {
-    borderRadius: 12,
-    borderWidth: 1,
-    gap: 12,
-    marginTop: 6,
-    padding: 16,
-  },
-  totalsCaption: {
-    fontFamily: FONTS.sans,
-    fontSize: 12,
-    fontStyle: 'italic',
-  },
-  totalsItem: {
-    alignItems: 'flex-start',
-    flex: 1,
-    gap: 2,
-  },
-  totalsLabel: {
-    fontFamily: FONTS.sansMedium,
-    fontSize: 11,
-    letterSpacing: 0.4,
-  },
-  totalsRow: {
+  topBar: {
+    alignItems: 'center',
     flexDirection: 'row',
-    gap: 12,
+    height: 48,
+    justifyContent: 'space-between',
+    paddingHorizontal: SPACING.screenX,
   },
-  totalsValue: {
+  topBarTitle: {
+    color: light.text,
+    flex: 1,
     fontFamily: FONTS.sansBold,
-    fontSize: 22,
-    letterSpacing: -0.3,
-    lineHeight: 26,
+    fontSize: 15,
+    letterSpacing: 0.2,
+    paddingHorizontal: 12,
+    textAlign: 'center',
   },
 });
