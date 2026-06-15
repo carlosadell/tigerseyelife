@@ -85,6 +85,7 @@ function RootStack() {
         <Stack.Screen name="(tabs)" />
         <Stack.Screen name="workout/[id]" />
         <Stack.Screen name="grow/[block]" />
+        <Stack.Screen name="grow/[block]/[slug]" />
         <Stack.Screen
           name="workout/active/[sessionId]"
           options={{
