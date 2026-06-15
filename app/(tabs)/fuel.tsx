@@ -1,4 +1,5 @@
-import { Droplet } from 'lucide-react-native';
+import { router } from 'expo-router';
+import { BookOpen, Droplet } from 'lucide-react-native';
 import { useMemo, useState } from 'react';
 import { Platform, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -9,11 +10,15 @@ import { MacroPie } from '../../components/fuel/MacroPie';
 import { MealDetailSheet } from '../../components/fuel/MealDetailSheet';
 import { FuelPrecision, MealSlotCard } from '../../components/fuel/MealSlotCard';
 import { WeekStrip } from '../../components/history/WeekStrip';
+import { AnchorRow } from '../../components/ui/AnchorRow';
+import { PhotoHeroCard } from '../../components/ui/PhotoHeroCard';
 import { useDailyMeals } from '../../hooks/useDailyMeals';
+import { useMembership } from '../../hooks/useMembership';
 import { useProfile } from '../../hooks/useProfile';
 import { useTheme, useThemeColors } from '../../hooks/useTheme';
 import { useTodayEngagement } from '../../hooks/useTodayEngagement';
-import { COLORS, FONTS, SPACING, textTintOf } from '../../lib/brand';
+import { COLORS, FONTS, SPACING, THEME_COLORS, textTintOf } from '../../lib/brand';
+import { coachStillForToday } from '../../lib/coachStills';
 import { DEFAULT_TARGETS, LoggedMeal, MEAL_SLOTS, MealSlot } from '../../lib/meals';
 
 type PrecisionOption = { id: FuelPrecision; label: string; description: string };
@@ -25,6 +30,13 @@ const PRECISION_LEVELS: PrecisionOption[] = [
 ];
 
 export default function FuelScreen() {
+  const { membership } = useMembership();
+  const currentBlock = membership.currentBlock ?? 'COMMIT';
+
+  if (currentBlock === 'COMMIT') {
+    return <NutritionLocked />;
+  }
+
   const colors = useThemeColors();
   const { profile } = useProfile();
   const { bySlot, totals, totalCalories, logMeal, removeMeal } = useDailyMeals();
@@ -165,6 +177,61 @@ export default function FuelScreen() {
     </SafeAreaView>
   );
 }
+
+const lightTheme = THEME_COLORS.light;
+
+function NutritionLocked() {
+  return (
+    <SafeAreaView edges={['top']} style={[styles.screen, { backgroundColor: lightTheme.background }]}>
+      <View style={styles.phoneFrame}>
+        <ScrollView contentContainerStyle={lockedStyles.content} showsVerticalScrollIndicator={false}>
+          <Text style={lockedStyles.title}>Nutrition</Text>
+
+          <PhotoHeroCard
+            kicker="COMMIT BLOCK"
+            title={'Awareness first,\nlogging later.'}
+            photoUri={coachStillForToday()}
+          />
+
+          <Text style={lockedStyles.body}>
+            You'll unlock meal logging in Refine. Right now you're focused on knowing what's in your food, not measuring it.
+          </Text>
+
+          <AnchorRow
+            Icon={BookOpen}
+            title="Building a Balanced Plate"
+            sub="4 min · Nutrition lesson"
+            onPress={() => router.push('/(tabs)/grow' as never)}
+          />
+        </ScrollView>
+      </View>
+    </SafeAreaView>
+  );
+}
+
+const lockedStyles = StyleSheet.create({
+  body: {
+    color: lightTheme.text,
+    fontFamily: FONTS.sans,
+    fontSize: 15,
+    lineHeight: 22,
+    marginBottom: 18,
+    marginTop: 16,
+  },
+  content: {
+    paddingBottom: 128,
+    paddingHorizontal: SPACING.screenX,
+    paddingTop: 8,
+  },
+  title: {
+    color: lightTheme.text,
+    fontFamily: FONTS.sansBold,
+    fontSize: 28,
+    letterSpacing: -0.5,
+    marginBottom: 16,
+    marginTop: 4,
+  },
+});
 
 type SnapshotProps = {
   precision: FuelPrecision;
