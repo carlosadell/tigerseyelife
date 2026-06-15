@@ -1,9 +1,8 @@
 // components/ui/AnchorRow.tsx
-import { ChevronRight, type LucideIcon } from 'lucide-react-native';
+import { type LucideIcon } from 'lucide-react-native';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
-import { COLORS, FONTS, THEME_COLORS } from '../../lib/brand';
-import { IconSquare } from './IconSquare';
+import { FONTS, THEME_COLORS } from '../../lib/brand';
 
 const light = THEME_COLORS.light;
 
@@ -15,16 +14,11 @@ type AnchorRowProps = {
   accessibilityLabel?: string;
 };
 
-const ICON_SIZE = 44;
-const HORIZ_PAD = 16;
-const ICON_GAP = 14;
-const CHEV_RAIL = 36;
-
 /**
- * Tappable card row — IconSquare pinned left, label fills the middle, tangerine
- * chevron pinned right. Both icon and chevron are absolutely positioned so the
- * layout is structurally fixed and never wraps, regardless of Pressable / Yoga
- * flex behavior or screen width.
+ * Tappable card row — icon left, label right. Pressable does ONLY tap
+ * handling; an inner View holds the flex row layout so style application
+ * issues with Pressable can't break it. No chevron — the whole card is the
+ * button.
  */
 export function AnchorRow({ Icon, title, sub, onPress, accessibilityLabel }: AnchorRowProps) {
   return (
@@ -32,54 +26,44 @@ export function AnchorRow({ Icon, title, sub, onPress, accessibilityLabel }: Anc
       accessibilityRole={onPress ? 'button' : undefined}
       accessibilityLabel={accessibilityLabel ?? title}
       onPress={onPress}
-      style={({ pressed }) => [styles.row, { opacity: pressed && onPress ? 0.7 : 1 }]}
+      style={({ pressed }) => ({ opacity: pressed && onPress ? 0.7 : 1 })}
     >
-      <View pointerEvents="none" style={styles.iconAbs}>
-        <IconSquare Icon={Icon} />
-      </View>
-
-      <View style={styles.label}>
-        <Text style={styles.title} numberOfLines={2}>{title}</Text>
-        {sub ? <Text style={styles.sub} numberOfLines={3}>{sub}</Text> : null}
-      </View>
-
-      <View pointerEvents="none" style={styles.chevAbs}>
-        <ChevronRight color={COLORS.tangerine} size={20} strokeWidth={2.4} />
+      <View style={styles.row}>
+        <View style={styles.iconSquare}>
+          <Icon color={light.accent} size={22} strokeWidth={2.2} />
+        </View>
+        <View style={styles.label}>
+          <Text style={styles.title} numberOfLines={2}>{title}</Text>
+          {sub ? <Text style={styles.sub} numberOfLines={3}>{sub}</Text> : null}
+        </View>
       </View>
     </Pressable>
   );
 }
 
 const styles = StyleSheet.create({
-  chevAbs: {
+  iconSquare: {
     alignItems: 'center',
-    bottom: 0,
+    backgroundColor: '#F0E2C2',
+    borderRadius: 12,
+    height: 44,
     justifyContent: 'center',
-    position: 'absolute',
-    right: 0,
-    top: 0,
-    width: CHEV_RAIL,
-  },
-  iconAbs: {
-    left: HORIZ_PAD,
-    position: 'absolute',
-    top: HORIZ_PAD,
+    marginRight: 14,
+    width: 44,
   },
   label: {
-    minHeight: ICON_SIZE,
-    justifyContent: 'center',
+    flex: 1,
   },
   row: {
+    alignItems: 'center',
     backgroundColor: light.card,
     borderColor: light.border,
     borderRadius: 16,
     borderWidth: 1,
+    flexDirection: 'row',
     marginBottom: 12,
-    paddingBottom: HORIZ_PAD,
-    paddingLeft: HORIZ_PAD + ICON_SIZE + ICON_GAP,
-    paddingRight: CHEV_RAIL,
-    paddingTop: HORIZ_PAD,
-    position: 'relative',
+    paddingHorizontal: 16,
+    paddingVertical: 16,
   },
   sub: {
     color: light.mutedText,

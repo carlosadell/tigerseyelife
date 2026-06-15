@@ -13,14 +13,10 @@ type LessonCardProps = {
   onPress?: () => void;
 };
 
-const THUMB_SIZE = 84;
-const HORIZ_PAD = 14;
-const THUMB_GAP = 14;
-
 /**
- * 84×84 scene-photo thumbnail (absolutely positioned left) + meta + bold title +
- * body. Same anti-flex-fail rebuild as AnchorRow — thumb is pinned, label area
- * is a normal column.
+ * 84×84 scene-photo thumb + meta + bold title + body. Pressable handles tap
+ * only; inner View holds the flex row layout — Pressable + flex in this RN
+ * config has a style-application bug, the View wrapper sidesteps it.
  */
 export function LessonCard({ meta, title, body, thumbUri, onPress }: LessonCardProps) {
   return (
@@ -28,13 +24,15 @@ export function LessonCard({ meta, title, body, thumbUri, onPress }: LessonCardP
       accessibilityRole={onPress ? 'button' : undefined}
       accessibilityLabel={`Lesson: ${title}`}
       onPress={onPress}
-      style={({ pressed }) => [styles.card, { opacity: pressed && onPress ? 0.94 : 1 }]}
+      style={({ pressed }) => ({ opacity: pressed && onPress ? 0.94 : 1 })}
     >
-      <Image source={{ uri: thumbUri }} style={styles.thumbAbs} />
-      <View style={styles.col}>
-        <Text style={styles.meta}>{meta}</Text>
-        <Text style={styles.title} numberOfLines={2}>{title}</Text>
-        {body ? <Text style={styles.body} numberOfLines={2}>{body}</Text> : null}
+      <View style={styles.card}>
+        <Image source={{ uri: thumbUri }} style={styles.thumb} />
+        <View style={styles.col}>
+          <Text style={styles.meta}>{meta}</Text>
+          <Text style={styles.title} numberOfLines={2}>{title}</Text>
+          {body ? <Text style={styles.body} numberOfLines={2}>{body}</Text> : null}
+        </View>
       </View>
     </Pressable>
   );
@@ -49,19 +47,16 @@ const styles = StyleSheet.create({
     marginTop: 4,
   },
   card: {
+    alignItems: 'center',
     backgroundColor: light.card,
     borderColor: light.border,
     borderRadius: 18,
     borderWidth: 1,
-    paddingBottom: HORIZ_PAD,
-    paddingLeft: HORIZ_PAD + THUMB_SIZE + THUMB_GAP,
-    paddingRight: HORIZ_PAD,
-    paddingTop: HORIZ_PAD,
-    position: 'relative',
+    flexDirection: 'row',
+    padding: 14,
   },
   col: {
-    minHeight: THUMB_SIZE,
-    justifyContent: 'center',
+    flex: 1,
   },
   meta: {
     color: COLORS.tigerGold,
@@ -69,14 +64,12 @@ const styles = StyleSheet.create({
     fontSize: 11.5,
     letterSpacing: 0.4,
   },
-  thumbAbs: {
+  thumb: {
     backgroundColor: light.cardAlt,
     borderRadius: 14,
-    height: THUMB_SIZE,
-    left: HORIZ_PAD,
-    position: 'absolute',
-    top: HORIZ_PAD,
-    width: THUMB_SIZE,
+    height: 84,
+    marginRight: 14,
+    width: 84,
   },
   title: {
     color: light.text,
