@@ -7,9 +7,27 @@ import { supabase } from '../lib/supabase';
 
 export type Block = 'COMMIT' | 'REFINE' | 'EVOLVE' | 'ADAPT' | 'THRIVE' | 'EXCEL';
 
+export type CoachingStyle = 'direct' | 'warm' | 'balanced' | 'challenging';
+export type TopObstacle = 'time' | 'motivation' | 'knowledge' | 'injury' | 'cost' | 'other';
+
+/**
+ * Non-member intake state — captured in two passes per session decision
+ * 2026-06-16:
+ *   1. /non-member-diagnostic    → friction, stoppingPoint
+ *   2. /non-member-intake        → goal, topObstacle, coachingStyle
+ *      (only if they choose "Tailor a plan" over Join/Request)
+ *
+ * Both passes write to the same `non_member_diagnostic` jsonb column. The
+ * presence of all three intake fields signals "tailored plan ready" so the
+ * /non-member landing can swap from the choice surface to the personalized
+ * view.
+ */
 export type NonMemberDiagnostic = {
   friction: string;
   stoppingPoint: string;
+  goal?: string;
+  topObstacle?: TopObstacle;
+  coachingStyle?: CoachingStyle;
 };
 
 export type Membership = {
@@ -31,6 +49,10 @@ const EMPTY: Membership = {
 };
 
 const devKey = (userId: string) => `tel:membership:${userId}`;
+
+export function isIntakeComplete(d: NonMemberDiagnostic | null): boolean {
+  return Boolean(d && d.goal && d.topObstacle && d.coachingStyle);
+}
 
 export function useMembership() {
   const { isDevSession, session } = useAuth();
@@ -103,9 +125,18 @@ export function useMembership() {
     [userId],
   );
 
+  /**
+   * Records or merges non-member intake data. Accepts the initial diagnostic
+   * (friction + stoppingPoint) or follow-up intake fields (goal, topObstacle,
+   * coachingStyle) — anything passed gets merged on top of existing data.
+   */
   const recordNonMember = useCallback(
-    async (diagnostic: { friction: string; stoppingPoint: string }) => {
+    async (updates: Partial<NonMemberDiagnostic>) => {
       if (!userId) return;
+
+      const existing =
+        membership.nonMemberDiagnostic ?? { friction: '', stoppingPoint: '' };
+      const merged: NonMemberDiagnostic = { ...existing, ...updates };
 
       if (isDevSession || !supabase) {
         const next: Membership = {
@@ -114,22 +145,22 @@ export function useMembership() {
           joinEmail: null,
           verifiedAt: null,
           currentBlock: null,
-          nonMemberDiagnostic: diagnostic,
+          nonMemberDiagnostic: merged,
         };
         await AsyncStorage.setItem(devKey(userId), JSON.stringify(next));
-        await AsyncStorage.setItem(`${devKey(userId)}:diagnostic`, JSON.stringify(diagnostic));
+        await AsyncStorage.setItem(`${devKey(userId)}:diagnostic`, JSON.stringify(merged));
         setMembership(next);
         return;
       }
 
       await supabase
         .from('profiles')
-        .update({ non_member_diagnostic: diagnostic })
+        .update({ non_member_diagnostic: merged })
         .eq('id', userId);
 
       await load();
     },
-    [isDevSession, load, userId],
+    [isDevSession, load, membership.nonMemberDiagnostic, userId],
   );
 
   /**

@@ -80,6 +80,7 @@ function RootStack() {
         <Stack.Screen name="membership" />
         <Stack.Screen name="verify-membership" />
         <Stack.Screen name="non-member-diagnostic" />
+        <Stack.Screen name="non-member-intake" />
         <Stack.Screen name="non-member" />
         <Stack.Screen name="onboarding" />
         <Stack.Screen name="(tabs)" />
