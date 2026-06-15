@@ -11,20 +11,19 @@ export type CoachingStyle = 'direct' | 'warm' | 'balanced' | 'challenging';
 export type TopObstacle = 'time' | 'motivation' | 'knowledge' | 'injury' | 'cost' | 'other';
 
 /**
- * Non-member intake state — captured in two passes per session decision
- * 2026-06-16:
- *   1. /non-member-diagnostic    → friction, stoppingPoint
- *   2. /non-member-intake        → goal, topObstacle, coachingStyle
- *      (only if they choose "Tailor a plan" over Join/Request)
+ * Non-member intake state — captured optionally via /non-member-intake
+ * when the user chooses "Tailor a plan" over Join/Request. An empty
+ * `{}` diagnostic still marks the fork as answered so the gate stops
+ * sending them back to /membership.
  *
- * Both passes write to the same `non_member_diagnostic` jsonb column. The
- * presence of all three intake fields signals "tailored plan ready" so the
- * /non-member landing can swap from the choice surface to the personalized
- * view.
+ * (Earlier flow had a 2-question diagnostic for friction + stoppingPoint
+ * before the choice surface — retired 2026-06-16 once the Tailor intake
+ * landed. The fields remain optional in case we want to bring those
+ * questions back via the choice surface.)
  */
 export type NonMemberDiagnostic = {
-  friction: string;
-  stoppingPoint: string;
+  friction?: string;
+  stoppingPoint?: string;
   goal?: string;
   topObstacle?: TopObstacle;
   coachingStyle?: CoachingStyle;
@@ -134,8 +133,7 @@ export function useMembership() {
     async (updates: Partial<NonMemberDiagnostic>) => {
       if (!userId) return;
 
-      const existing =
-        membership.nonMemberDiagnostic ?? { friction: '', stoppingPoint: '' };
+      const existing: NonMemberDiagnostic = membership.nonMemberDiagnostic ?? {};
       const merged: NonMemberDiagnostic = { ...existing, ...updates };
 
       if (isDevSession || !supabase) {

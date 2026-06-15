@@ -18,11 +18,12 @@ const light = THEME_COLORS.light;
  *   "Are you part of the Create Power program?" → Yes / No
  *
  * Yes → /verify-membership (server proves the claim).
- * No  → /non-member-diagnostic.
+ * No  → record empty non-member state (forkAnswered = true) → /non-member,
+ *       which is the choice surface (Join / Request / Tailor a plan).
  */
 export default function MembershipForkScreen() {
   const { loading: authLoading, session } = useAuth();
-  const { loading: membershipLoading, membership } = useMembership();
+  const { loading: membershipLoading, membership, recordNonMember } = useMembership();
 
   if (authLoading || membershipLoading) {
     return (
@@ -34,6 +35,11 @@ export default function MembershipForkScreen() {
 
   if (!session) return <Redirect href="/(auth)/sign-in" />;
   if (membership.programMember) return <Redirect href="/onboarding" />;
+
+  const onNotYet = async () => {
+    await recordNonMember({});
+    router.replace('/non-member' as never);
+  };
 
   return (
     <SafeAreaView style={[styles.screen, { backgroundColor: light.background }]}>
@@ -56,8 +62,8 @@ export default function MembershipForkScreen() {
             <AnchorRow
               Icon={MapPinned}
               title="Not yet"
-              sub="Two quick questions to point you in the right direction."
-              onPress={() => router.push('/non-member-diagnostic' as never)}
+              sub="Pick a path — join, message Ryan, or get a tailored plan."
+              onPress={onNotYet}
             />
           </View>
         </ScrollView>

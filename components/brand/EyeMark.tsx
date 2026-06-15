@@ -1,28 +1,38 @@
-import Svg, { Circle, Line, Path, Polygon } from 'react-native-svg';
+import Svg, { Polygon } from 'react-native-svg';
 
+/**
+ * The Tigers Eye Life brand mark — a horizontal diamond rhombus with a
+ * 4-point sparkle/compass star centered inside. Matches the wordmark
+ * asset Karen + Ryan provided.
+ *
+ * The `size` prop sets the WIDTH; height is derived from the 80:56 viewBox
+ * aspect (~1.43:1), so the mark renders as a horizontal rhombus rather
+ * than a square. Use small inline (24–34) for nav/footers, larger
+ * (60–90) for hero/onboarding surfaces.
+ */
 type EyeMarkProps = {
   color: string;
   size?: number;
   strokeWidth?: number;
 };
 
+const VIEW_W = 80;
+const VIEW_H = 56;
+
 export function EyeMark({ color, size = 28, strokeWidth = 1.8 }: EyeMarkProps) {
+  const height = (size * VIEW_H) / VIEW_W;
   return (
-    <Svg height={size} viewBox="0 0 64 64" width={size}>
+    <Svg height={height} viewBox={`0 0 ${VIEW_W} ${VIEW_H}`} width={size}>
       <Polygon
         fill="none"
-        points="32 6 58 32 32 58 6 32"
+        points="40 5 75 28 40 51 5 28"
         stroke={color}
         strokeWidth={strokeWidth}
       />
-      <Path
-        d="M15 32c5.3-8 10.9-12 17-12s11.7 4 17 12c-5.3 8-10.9 12-17 12S20.3 40 15 32Z"
-        fill="none"
-        stroke={color}
-        strokeWidth={strokeWidth}
+      <Polygon
+        fill={color}
+        points="40 14 42.6 25.4 54 28 42.6 30.6 40 42 37.4 30.6 26 28 37.4 25.4"
       />
-      <Circle cx="32" cy="32" fill="none" r="8" stroke={color} strokeWidth={strokeWidth} />
-      <Line x1="32" x2="32" y1="14" y2="50" stroke={color} strokeWidth={strokeWidth * 0.72} />
     </Svg>
   );
 }

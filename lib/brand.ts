@@ -93,6 +93,22 @@ export function textTintOf(color: string, mode: ThemeMode): string {
   return color;
 }
 
+/**
+ * Returns the right text/icon color to draw ON TOP of a tangerine CTA fill.
+ *
+ * Tangerine (#FF914D) is the brand action color in both modes. White text
+ * on tangerine reads well in dark mode (the surrounding dark background
+ * makes the white label visually pop) but only achieves ~2.3:1 against
+ * tangerine itself — fine when the button anchors against onyx, but fragile
+ * against cream cardAlt in light mode where the whole composition reads as
+ * "warm-on-warm." Light mode gets the onyx text variant for a 6.5:1
+ * contrast ratio, comfortably passing WCAG AA, while preserving the brand
+ * fill color across modes.
+ */
+export function ctaTextOnTangerine(mode: ThemeMode): string {
+  return mode === 'light' ? COLORS.onyx : '#FFFFFF';
+}
+
 export const fontFamily = {
   sans: 'Inter_400Regular',
   'sans-medium': 'Inter_500Medium',

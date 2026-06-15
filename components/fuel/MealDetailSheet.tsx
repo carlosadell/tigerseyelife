@@ -16,7 +16,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { MacroPie } from './MacroPie';
 import { useSavedMeals } from '../../hooks/useSavedMeals';
 import { useTheme, useThemeColors } from '../../hooks/useTheme';
-import { COLORS, FONTS, textTintOf } from '../../lib/brand';
+import { COLORS, FONTS, ctaTextOnTangerine, textTintOf } from '../../lib/brand';
 import { LoggedMeal, MEAL_SLOTS, estimateCalories, getLibraryMealById } from '../../lib/meals';
 import { mealLibrarySeed } from '../../lib/mealLibrarySeed';
 
@@ -34,6 +34,8 @@ type MealDetailSheetProps = {
 
 export function MealDetailSheet({ visible, meal, onClose, onRemove }: MealDetailSheetProps) {
   const colors = useThemeColors();
+  const { mode } = useTheme();
+  const ctaText = ctaTextOnTangerine(mode);
   const insets = useSafeAreaInsets();
   const { saveFromLogged, isSaved } = useSavedMeals();
   const translateY = useRef(new Animated.Value(SHEET_HEIGHT)).current;
@@ -185,7 +187,7 @@ export function MealDetailSheet({ visible, meal, onClose, onRemove }: MealDetail
                   styles.actionBtn,
                   styles.saveBtn,
                   {
-                    backgroundColor: isSaved(meal) ? colors.cardAlt : colors.accent,
+                    backgroundColor: isSaved(meal) ? colors.cardAlt : COLORS.tangerine,
                     opacity: pressed ? 0.85 : 1,
                   },
                 ]}
@@ -193,12 +195,12 @@ export function MealDetailSheet({ visible, meal, onClose, onRemove }: MealDetail
                 {isSaved(meal) ? (
                   <Check color={colors.mutedText} size={15} strokeWidth={2.2} />
                 ) : (
-                  <Bookmark color={colors.inverseText} size={15} strokeWidth={2.2} />
+                  <Bookmark color={ctaText} size={15} strokeWidth={2.2} />
                 )}
                 <Text
                   style={[
                     styles.actionText,
-                    { color: isSaved(meal) ? colors.mutedText : colors.inverseText },
+                    { color: isSaved(meal) ? colors.mutedText : ctaText },
                   ]}
                 >
                   {isSaved(meal) ? 'Saved' : 'Save as favorite'}

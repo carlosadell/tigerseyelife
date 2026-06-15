@@ -1,7 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { useQueryClient } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { format } from 'date-fns';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useMemo } from 'react';
 
 import { useAuth } from './useAuth';
 import {
@@ -12,43 +12,37 @@ import {
   sumMacros,
 } from '../lib/meals';
 
+const EMPTY_MEALS: LoggedMeal[] = [];
+
 export function useDailyMeals() {
   const { session } = useAuth();
   const queryClient = useQueryClient();
   const userId = session?.user.id ?? 'anonymous';
   const today = useMemo(() => format(new Date(), 'yyyy-MM-dd'), []);
   const storageKey = `tel:meals-logged:${userId}:${today}`;
+  const queryKey = useMemo(() => ['daily-meals', userId, today], [userId, today]);
 
-  const [meals, setMeals] = useState<LoggedMeal[]>([]);
-  const [loaded, setLoaded] = useState(false);
-
-  useEffect(() => {
-    let mounted = true;
-    AsyncStorage.getItem(storageKey).then((raw) => {
-      if (!mounted) return;
-      if (raw) {
-        try {
-          setMeals(JSON.parse(raw) as LoggedMeal[]);
-        } catch {
-          setMeals([]);
-        }
-      } else {
-        setMeals([]);
+  const { data: meals = EMPTY_MEALS, isLoading } = useQuery<LoggedMeal[]>({
+    queryKey,
+    queryFn: async () => {
+      const raw = await AsyncStorage.getItem(storageKey);
+      if (!raw) return EMPTY_MEALS;
+      try {
+        return JSON.parse(raw) as LoggedMeal[];
+      } catch {
+        return EMPTY_MEALS;
       }
-      setLoaded(true);
-    });
-    return () => {
-      mounted = false;
-    };
-  }, [storageKey]);
+    },
+    initialData: EMPTY_MEALS,
+  });
 
   const persist = useCallback(
     async (next: LoggedMeal[]) => {
-      setMeals(next);
+      queryClient.setQueryData(queryKey, next);
       await AsyncStorage.setItem(storageKey, JSON.stringify(next));
       queryClient.invalidateQueries({ queryKey: ['engagement-dates', userId] });
     },
-    [queryClient, storageKey, userId],
+    [queryClient, queryKey, storageKey, userId],
   );
 
   const logMeal = useCallback(
@@ -86,7 +80,7 @@ export function useDailyMeals() {
     bySlot,
     totals,
     totalCalories,
-    loaded,
+    loaded: !isLoading,
     logMeal,
     removeMeal,
   };

@@ -27,7 +27,7 @@ type ConfirmResponse = { verified: boolean; reason?: string };
 
 export default function VerifyMembershipScreen() {
   const { isDevSession, session } = useAuth();
-  const { devMarkVerified, refresh } = useMembership();
+  const { devMarkVerified, recordNonMember, refresh } = useMembership();
 
   const [stage, setStage] = useState<Stage>('email');
   const [email, setEmail] = useState('');
@@ -218,7 +218,10 @@ export default function VerifyMembershipScreen() {
                   <Text style={styles.ghostText}>Try again</Text>
                 </Pressable>
                 <Pressable
-                  onPress={() => router.replace('/non-member-diagnostic' as never)}
+                  onPress={async () => {
+                    await recordNonMember({});
+                    router.replace('/non-member' as never);
+                  }}
                   style={({ pressed }) => [styles.cta, { backgroundColor: COLORS.tangerine, opacity: pressed ? 0.85 : 1 }]}
                 >
                   <Text style={[styles.ctaText, { color: ctaTextOnTangerine('light') }]}>Continue as non-member</Text>

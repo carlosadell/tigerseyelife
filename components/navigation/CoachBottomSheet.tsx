@@ -21,8 +21,12 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { EyeMark } from '../brand/EyeMark';
 import { useCoachContext } from '../../hooks/useCoachContext';
+import { useDailyEntry } from '../../hooks/useDailyEntry';
+import { useDailyMeals } from '../../hooks/useDailyMeals';
 import { useTheme } from '../../hooks/useTheme';
+import { useTodayEngagement } from '../../hooks/useTodayEngagement';
 import { COLORS, FONTS } from '../../lib/brand';
+import { askCoach, CoachContext, CoachMessage as CoachAIMessage } from '../../lib/coachAI';
 import {
   CoachReply,
   QuickPrompt,
@@ -69,12 +73,40 @@ export const CoachBottomSheet = forwardRef<CoachSheetHandle>(function CoachBotto
   const { colors } = useTheme();
   const insets = useSafeAreaInsets();
   const knowledge = useCoachContext();
+  const { entry } = useDailyEntry();
+  const { meals: loggedMeals } = useDailyMeals();
+  const { engagement } = useTodayEngagement();
   const [visible, setVisible] = useState(false);
   const [draft, setDraft] = useState('');
   const [messages, setMessages] = useState<CoachMessage[]>([]);
   const [thinking, setThinking] = useState(false);
   const [listening, setListening] = useState(false);
   const quickPrompts = useMemo(() => getQuickPrompts(knowledge), [knowledge]);
+
+  const aiContext = useMemo<CoachContext>(
+    () => ({
+      firstName: knowledge.firstName,
+      streakDays: knowledge.streakDays,
+      todayWorkout: knowledge.todayWorkout
+        ? { name: knowledge.todayWorkout.name, done: false }
+        : null,
+      loggedMealsToday: loggedMeals.map((m) => ({ slot: m.slot, name: m.name })),
+      mood: entry.mood ?? null,
+      movementTags: entry.movementTags ?? [],
+      waterCups: engagement.water ?? 0,
+      intention: knowledge.intention,
+    }),
+    [
+      knowledge.firstName,
+      knowledge.streakDays,
+      knowledge.todayWorkout,
+      knowledge.intention,
+      loggedMeals,
+      entry.mood,
+      entry.movementTags,
+      engagement.water,
+    ],
+  );
   const translateY = useRef(new Animated.Value(SHEET_HEIGHT)).current;
   const backdropOpacity = useRef(new Animated.Value(0)).current;
 
@@ -131,17 +163,51 @@ export const CoachBottomSheet = forwardRef<CoachSheetHandle>(function CoachBotto
     }
   }, [backdropOpacity, translateY, visible]);
 
-  const respond = useCallback((reply: CoachReply) => {
-    setThinking(true);
-    const id = `${Date.now()}-coach`;
-    setTimeout(() => {
-      setThinking(false);
-      setMessages((current) => [
-        ...current,
-        { id, role: 'coach', content: reply.text, followups: reply.followups },
-      ]);
-    }, 650);
+  const respondFallback = useCallback((reply: CoachReply) => {
+    setThinking(false);
+    setMessages((current) => [
+      ...current,
+      {
+        id: `${Date.now()}-coach`,
+        role: 'coach',
+        content: reply.text,
+        followups: reply.followups,
+      },
+    ]);
   }, []);
+
+  // Sends the rolling conversation to Claude. The `userTurn` is the message
+  // the user just sent (already appended to `messages` via setState — we pass
+  // it explicitly so we don't race the state update). Falls back to the
+  // regex-routed reply on any error so the coach never goes silent.
+  const respondAI = useCallback(
+    async (userTurn: string, fallback: CoachReply) => {
+      setThinking(true);
+      try {
+        const history: CoachAIMessage[] = [
+          ...messages.map<CoachAIMessage>((m) => ({
+            role: m.role === 'coach' ? 'assistant' : 'user',
+            content: m.content,
+          })),
+          { role: 'user', content: userTurn },
+        ];
+        const result = await askCoach({ history, context: aiContext });
+        setThinking(false);
+        setMessages((current) => [
+          ...current,
+          {
+            id: `${Date.now()}-coach`,
+            role: 'coach',
+            content: result.reply,
+            followups: result.followups,
+          },
+        ]);
+      } catch {
+        respondFallback(fallback);
+      }
+    },
+    [aiContext, messages, respondFallback],
+  );
 
   const sendFreeform = useCallback(() => {
     const content = draft.trim();
@@ -152,8 +218,8 @@ export const CoachBottomSheet = forwardRef<CoachSheetHandle>(function CoachBotto
       { id: `${Date.now()}-user`, role: 'user', content },
     ]);
     setDraft('');
-    respond(routeFreeform(content, knowledge));
-  }, [draft, knowledge, respond]);
+    respondAI(content, routeFreeform(content, knowledge));
+  }, [draft, knowledge, respondAI]);
 
   const askPrompt = useCallback(
     (prompt: QuickPrompt) => {
@@ -162,9 +228,9 @@ export const CoachBottomSheet = forwardRef<CoachSheetHandle>(function CoachBotto
         ...current,
         { id: `${Date.now()}-user`, role: 'user', content: prompt.label },
       ]);
-      respond(routePrompt(prompt.id, knowledge));
+      respondAI(prompt.label, routePrompt(prompt.id, knowledge));
     },
-    [knowledge, respond],
+    [knowledge, respondAI],
   );
 
   const askFollowup = useCallback(
@@ -179,9 +245,9 @@ export const CoachBottomSheet = forwardRef<CoachSheetHandle>(function CoachBotto
         ...current,
         { id: `${Date.now()}-user`, role: 'user', content: label },
       ]);
-      respond(routeFreeform(label, knowledge));
+      respondAI(label, routeFreeform(label, knowledge));
     },
-    [close, knowledge, respond],
+    [close, knowledge, respondAI],
   );
 
   return (

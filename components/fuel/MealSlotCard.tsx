@@ -73,37 +73,35 @@ export function MealSlotCard({
               const cals = estimateCalories(meal.macros);
               const macroLine = buildMacroLine(meal, cals, precision);
               return (
-                <Pressable
-                  accessibilityRole="button"
-                  accessibilityLabel={`Open ${meal.name} details`}
-                  key={meal.id}
-                  onPress={() => onMealPress?.(meal)}
-                  style={({ pressed }) => [
-                    styles.mealRow,
-                    { borderTopColor: colors.border, opacity: pressed ? 0.7 : 1 },
-                  ]}
-                >
-                  <View style={{ flex: 1, minWidth: 0 }}>
+                <View key={meal.id} style={[styles.mealRow, { borderTopColor: colors.border }]}>
+                  <Pressable
+                    accessibilityRole="button"
+                    accessibilityLabel={`Open ${meal.name} details`}
+                    onPress={() => onMealPress?.(meal)}
+                    style={({ pressed }) => [styles.mealRowText, { opacity: pressed ? 0.7 : 1 }]}
+                  >
                     <Text style={[styles.mealName, { color: colors.text }]} numberOfLines={1}>
                       {meal.name}
                     </Text>
                     {macroLine ? (
-                      <Text style={[styles.mealMeta, { color: colors.mutedText }]}>{macroLine}</Text>
+                      <Text style={[styles.mealMeta, { color: colors.mutedText }]} numberOfLines={1}>
+                        {macroLine}
+                      </Text>
                     ) : null}
-                  </View>
+                  </Pressable>
                   <Pressable
                     accessibilityRole="button"
                     accessibilityLabel={`Remove ${meal.name}`}
-                    hitSlop={8}
-                    onPress={(e) => {
-                      e.stopPropagation();
-                      onRemove(meal.id);
-                    }}
-                    style={({ pressed }) => [styles.removeBtn, { opacity: pressed ? 0.5 : 1 }]}
+                    hitSlop={10}
+                    onPress={() => onRemove(meal.id)}
+                    style={({ pressed }) => [
+                      styles.removeBtn,
+                      { opacity: pressed ? 0.5 : 1 },
+                    ]}
                   >
-                    <X color={colors.mutedText} size={14} strokeWidth={2} />
+                    <X color={colors.mutedText} size={16} strokeWidth={2.2} />
                   </Pressable>
-                </Pressable>
+                </View>
               );
             })}
           </View>
@@ -197,11 +195,19 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     borderTopWidth: StyleSheet.hairlineWidth,
     flexDirection: 'row',
-    gap: 10,
     paddingTop: 10,
   },
+  mealRowText: {
+    flex: 1,
+    flexShrink: 1,
+    minWidth: 0,
+  },
   removeBtn: {
-    padding: 4,
+    alignItems: 'center',
+    height: 36,
+    justifyContent: 'center',
+    marginLeft: 8,
+    width: 36,
   },
   slotBadge: {
     alignItems: 'center',

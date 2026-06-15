@@ -1,8 +1,9 @@
 import { ArrowRight } from 'lucide-react-native';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
-import { useThemeColors } from '../../hooks/useTheme';
-import { COLORS, FONTS } from '../../lib/brand';
+import { useTheme, useThemeColors } from '../../hooks/useTheme';
+import { COLORS, FONTS, ctaTextOnTangerine } from '../../lib/brand';
+
 
 const STEPS = [
   { letter: 'A', title: 'ANCHOR', tint: COLORS.deepGreen, body: 'Protein, picked first.' },
@@ -22,6 +23,8 @@ export function AbcExplainer({
   onBuildPress,
 }: AbcExplainerProps) {
   const colors = useThemeColors();
+  const { mode } = useTheme();
+  const ctaText = ctaTextOnTangerine(mode);
   const statusLine = formatStatusLine(libraryMealsLogged, totalMealsLogged);
   const allFramework = totalMealsLogged > 0 && libraryMealsLogged === totalMealsLogged;
 
@@ -60,10 +63,22 @@ export function AbcExplainer({
             accessibilityRole="button"
             accessibilityLabel="Build a meal"
             onPress={onBuildPress}
-            style={({ pressed }) => [styles.cta, { opacity: pressed ? 0.7 : 1 }]}
+            style={({ pressed }) => ({ opacity: pressed ? 0.92 : 1 })}
           >
-            <ArrowRight color={colors.accent} size={14} strokeWidth={2.4} />
-            <Text style={[styles.ctaText, { color: colors.accent }]}>BUILD A MEAL</Text>
+            <View
+              style={[
+                styles.cta,
+                {
+                  backgroundColor: COLORS.tangerine,
+                  shadowColor: COLORS.tangerine,
+                },
+              ]}
+            >
+              <Text style={[styles.ctaText, { color: ctaText }]}>BUILD A MEAL</Text>
+              <View style={styles.ctaArrow} pointerEvents="none">
+                <ArrowRight color={ctaText} size={18} strokeWidth={2.6} />
+              </View>
+            </View>
           </Pressable>
         ) : null}
       </View>
@@ -107,15 +122,29 @@ const styles = StyleSheet.create({
   },
   cta: {
     alignItems: 'center',
-    alignSelf: 'flex-end',
-    flexDirection: 'row',
-    gap: 6,
-    paddingVertical: 2,
+    borderRadius: 10,
+    elevation: 4,
+    justifyContent: 'center',
+    marginTop: 4,
+    minHeight: 50,
+    paddingHorizontal: 18,
+    position: 'relative',
+    shadowOffset: { height: 4, width: 0 },
+    shadowOpacity: 0.32,
+    shadowRadius: 12,
+  },
+  ctaArrow: {
+    bottom: 0,
+    justifyContent: 'center',
+    position: 'absolute',
+    right: 16,
+    top: 0,
   },
   ctaText: {
     fontFamily: FONTS.sansBold,
-    fontSize: 10.5,
-    letterSpacing: 1.6,
+    fontSize: 12,
+    letterSpacing: 1.8,
+    textAlign: 'center',
   },
   footer: {
     borderTopWidth: StyleSheet.hairlineWidth,

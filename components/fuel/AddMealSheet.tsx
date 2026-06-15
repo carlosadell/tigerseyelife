@@ -1,4 +1,4 @@
-import { Camera, ImageIcon, Sparkles, Trash2, X } from 'lucide-react-native';
+import { ArrowRight, Camera, ImageIcon, Sparkles, Trash2, X } from 'lucide-react-native';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import {
   ActivityIndicator,
@@ -20,8 +20,8 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { useFoodVision } from '../../hooks/useFoodVision';
 import { useSavedMeals } from '../../hooks/useSavedMeals';
-import { useThemeColors } from '../../hooks/useTheme';
-import { FONTS } from '../../lib/brand';
+import { useTheme, useThemeColors } from '../../hooks/useTheme';
+import { COLORS, FONTS, ctaTextOnTangerine } from '../../lib/brand';
 import {
   LibraryMeal,
   LoggedMeal,
@@ -47,6 +47,8 @@ type Tab = 'library' | 'favorites' | 'custom';
 
 export function AddMealSheet({ visible, slot, onClose, onLog }: AddMealSheetProps) {
   const colors = useThemeColors();
+  const { mode } = useTheme();
+  const ctaText = ctaTextOnTangerine(mode);
   const insets = useSafeAreaInsets();
   const { saved: favorites, removeSaved } = useSavedMeals();
   const vision = useFoodVision();
@@ -334,13 +336,18 @@ export function AddMealSheet({ visible, slot, onClose, onLog }: AddMealSheetProp
                           style={({ pressed }) => [
                             styles.scanBtn,
                             {
-                              backgroundColor: colors.accent,
-                              opacity: pressed ? 0.85 : 1,
+                              backgroundColor: COLORS.tangerine,
+                              shadowColor: COLORS.tangerine,
+                              elevation: 3,
+                              shadowOffset: { height: 3, width: 0 },
+                              shadowOpacity: 0.35,
+                              shadowRadius: 8,
+                              opacity: pressed ? 0.9 : 1,
                             },
                           ]}
                         >
-                          <Camera color={colors.inverseText} size={15} strokeWidth={2.2} />
-                          <Text style={[styles.scanBtnText, { color: colors.inverseText }]}>
+                          <Camera color={ctaText} size={16} strokeWidth={2.4} />
+                          <Text style={[styles.scanBtnText, { color: ctaText }]}>
                             Camera
                           </Text>
                         </Pressable>
@@ -349,11 +356,15 @@ export function AddMealSheet({ visible, slot, onClose, onLog }: AddMealSheetProp
                           onPress={vision.pickFromLibrary}
                           style={({ pressed }) => [
                             styles.scanBtn,
-                            styles.scanBtnGhost,
-                            { borderColor: colors.border, opacity: pressed ? 0.7 : 1 },
+                            {
+                              backgroundColor: colors.card,
+                              borderColor: colors.border,
+                              borderWidth: 1,
+                              opacity: pressed ? 0.7 : 1,
+                            },
                           ]}
                         >
-                          <ImageIcon color={colors.text} size={15} strokeWidth={2.2} />
+                          <ImageIcon color={colors.text} size={16} strokeWidth={2.2} />
                           <Text style={[styles.scanBtnText, { color: colors.text }]}>
                             Library
                           </Text>
@@ -468,22 +479,34 @@ export function AddMealSheet({ visible, slot, onClose, onLog }: AddMealSheetProp
                   accessibilityRole="button"
                   disabled={!canSaveCustom}
                   onPress={saveCustom}
-                  style={({ pressed }) => [
-                    styles.saveBtn,
-                    {
-                      backgroundColor: canSaveCustom ? colors.accent : colors.cardAlt,
-                      opacity: pressed ? 0.85 : 1,
-                    },
-                  ]}
+                  style={({ pressed }) => ({ opacity: pressed ? 0.92 : 1 })}
                 >
-                  <Text
+                  <View
                     style={[
-                      styles.saveText,
-                      { color: canSaveCustom ? colors.inverseText : colors.mutedText },
+                      styles.saveBtn,
+                      {
+                        backgroundColor: canSaveCustom ? COLORS.tangerine : colors.cardAlt,
+                        borderColor: canSaveCustom ? COLORS.tangerine : colors.border,
+                        borderWidth: 1,
+                        opacity: canSaveCustom ? 1 : 0.6,
+                        shadowColor: canSaveCustom ? COLORS.tangerine : 'transparent',
+                      },
                     ]}
                   >
-                    Log meal
-                  </Text>
+                    <Text
+                      style={[
+                        styles.saveText,
+                        { color: canSaveCustom ? ctaText : colors.text },
+                      ]}
+                    >
+                      Log meal
+                    </Text>
+                    {canSaveCustom ? (
+                      <View style={styles.saveArrow} pointerEvents="none">
+                        <ArrowRight color={ctaText} size={20} strokeWidth={2.6} />
+                      </View>
+                    ) : null}
+                  </View>
                 </Pressable>
               </ScrollView>
             )}
@@ -687,17 +710,31 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'flex-end',
   },
+  saveArrow: {
+    bottom: 0,
+    justifyContent: 'center',
+    position: 'absolute',
+    right: 18,
+    top: 0,
+  },
   saveBtn: {
     alignItems: 'center',
     borderRadius: 12,
+    elevation: 4,
     justifyContent: 'center',
     marginTop: 20,
-    minHeight: 50,
+    minHeight: 54,
+    paddingHorizontal: 18,
+    position: 'relative',
+    shadowOffset: { height: 4, width: 0 },
+    shadowOpacity: 0.32,
+    shadowRadius: 12,
   },
   saveText: {
     fontFamily: FONTS.sansBold,
-    fontSize: 15,
+    fontSize: 15.5,
     letterSpacing: 0.2,
+    textAlign: 'center',
   },
   scanBody: {
     fontFamily: FONTS.sans,
@@ -709,18 +746,26 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     flex: 1,
     flexDirection: 'row',
-    gap: 6,
+    gap: 7,
     justifyContent: 'center',
-    minHeight: 40,
+    minHeight: 44,
+    paddingHorizontal: 10,
   },
-  scanBtnGhost: {
-    backgroundColor: 'transparent',
-    borderWidth: 1,
+  scanBtnPrimary: {
+    backgroundColor: COLORS.tangerine,
+    elevation: 3,
+    shadowColor: COLORS.tangerine,
+    shadowOffset: { height: 3, width: 0 },
+    shadowOpacity: 0.35,
+    shadowRadius: 8,
   },
   scanBtnText: {
     fontFamily: FONTS.sansBold,
-    fontSize: 13,
+    fontSize: 13.5,
     letterSpacing: 0.2,
+  },
+  scanBtnTextPrimary: {
+    color: '#FFFFFF',
   },
   scanButtonRow: {
     flexDirection: 'row',

@@ -1,7 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { useQueryClient } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { format } from 'date-fns';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useMemo } from 'react';
 
 import { useAuth } from './useAuth';
 import { useWorkoutSessions } from './useWorkoutSessions';
@@ -23,31 +23,23 @@ export function useTodayEngagement() {
   const userId = session?.user.id ?? 'anonymous';
   const today = useMemo(() => format(new Date(), 'yyyy-MM-dd'), []);
   const storageKey = `tel:engagement:${userId}:${today}`;
+  const queryKey = useMemo(() => ['today-engagement', userId, today], [userId, today]);
   const { sessions: workoutSessions } = useWorkoutSessions();
 
-  const [state, setState] = useState<EngagementState>(empty);
-  const [loaded, setLoaded] = useState(false);
-
-  useEffect(() => {
-    let mounted = true;
-    AsyncStorage.getItem(storageKey).then((raw) => {
-      if (!mounted) return;
-      if (raw) {
-        try {
-          const parsed = JSON.parse(raw) as Partial<EngagementState>;
-          setState({ ...empty, ...parsed });
-        } catch {
-          setState(empty);
-        }
-      } else {
-        setState(empty);
+  const { data: state, isLoading } = useQuery<EngagementState>({
+    queryKey,
+    queryFn: async () => {
+      const raw = await AsyncStorage.getItem(storageKey);
+      if (!raw) return empty;
+      try {
+        const parsed = JSON.parse(raw) as Partial<EngagementState>;
+        return { ...empty, ...parsed };
+      } catch {
+        return empty;
       }
-      setLoaded(true);
-    });
-    return () => {
-      mounted = false;
-    };
-  }, [storageKey]);
+    },
+    initialData: empty,
+  });
 
   const workoutDone = useMemo(() => {
     return workoutSessions.some((s) => {
@@ -58,14 +50,17 @@ export function useTodayEngagement() {
 
   const persist = useCallback(
     async (next: EngagementState) => {
-      setState(next);
+      queryClient.setQueryData(queryKey, next);
       await AsyncStorage.setItem(storageKey, JSON.stringify(next));
       queryClient.invalidateQueries({ queryKey: ['engagement-dates', userId] });
     },
-    [queryClient, storageKey, userId],
+    [queryClient, queryKey, storageKey, userId],
   );
 
-  const toggleWalk = useCallback(() => persist({ ...state, walk: !state.walk }), [persist, state]);
+  const toggleWalk = useCallback(
+    () => persist({ ...state, walk: !state.walk }),
+    [persist, state],
+  );
   const addWater = useCallback(
     () => persist({ ...state, water: Math.min(WATER_CAP, state.water + 1) }),
     [persist, state],
@@ -77,7 +72,7 @@ export function useTodayEngagement() {
 
   return {
     engagement: state,
-    loaded,
+    loaded: !isLoading,
     workoutDone,
     waterTarget: WATER_TARGET,
     toggleWalk,
