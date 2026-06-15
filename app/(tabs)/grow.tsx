@@ -1,20 +1,28 @@
+// app/(tabs)/grow.tsx
 import * as WebBrowser from 'expo-web-browser';
 import { router } from 'expo-router';
-import { ArrowUpRight, BookOpenCheck, ChevronRight } from 'lucide-react-native';
+import { ArrowUpRight, BookOpenCheck } from 'lucide-react-native';
 import { useMemo, useState } from 'react';
 import { Platform, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { BlockCard } from '../../components/grow/BlockCard';
+import { useMembership } from '../../hooks/useMembership';
 import { useMicrolearningModules } from '../../hooks/useMicrolearningModules';
-import { usePowerActionProgress } from '../../hooks/usePowerActionProgress';
+import { useSectionProgress } from '../../hooks/useSectionProgress';
 import { useThemeColors } from '../../hooks/useTheme';
 import { COLORS, FONTS, SPACING } from '../../lib/brand';
-import { MicrolearningModule } from '../../lib/programs';
-import { PowerBlock, powerBlocks } from '../../lib/powerBlocks';
+import { BLOCK_IDS, type BlockId } from '../../lib/curriculum';
+import type { MicrolearningModule } from '../../lib/programs';
 
 export default function GrowScreen() {
   const colors = useThemeColors();
+  const { membership } = useMembership();
+  const { completedInBlock } = useSectionProgress();
   const { data = [] } = useMicrolearningModules();
+
+  const currentBlock = (membership.currentBlock ?? 'COMMIT') as BlockId;
+
   const [activeBlock, setActiveBlock] = useState('ALL');
   const blocks = useMemo(
     () => ['ALL', ...Array.from(new Set(data.map((module) => module.block)))],
@@ -35,15 +43,21 @@ export default function GrowScreen() {
           </View>
 
           <View style={styles.blockStack}>
-            {powerBlocks.map((block) => (
-              <BlockSummaryCard key={block.id} block={block} />
+            {BLOCK_IDS.map((blockId) => (
+              <BlockCard
+                key={blockId}
+                blockId={blockId}
+                currentBlock={currentBlock}
+                doneCount={completedInBlock(blockId)}
+                onPress={() => router.push(`/grow/${blockId.toLowerCase()}` as never)}
+              />
             ))}
           </View>
 
           <View style={styles.section}>
             <Text style={[styles.sectionLabel, { color: colors.mutedText }]}>MICROLEARNING</Text>
             <Text style={[styles.sectionHelper, { color: colors.mutedText }]}>
-              Karen and Ryan’s modules stay full-length by design. Cards open the current Tiiny version in-app.
+              Karen and Ryan's modules stay full-length by design. Cards open the current Tiiny version in-app.
             </Text>
           </View>
 
@@ -79,8 +93,8 @@ export default function GrowScreen() {
             <Text style={[styles.sectionLabel, { color: colors.accent }]}>
               {activeBlock === 'ALL' ? 'ALL MODULES' : `${activeBlock} MODULES`}
             </Text>
-            <Text style={[styles.count, { color: colors.mutedText }]}>
-              {visibleModules.length} lessons
+            <Text style={[styles.sectionHelper, { color: colors.mutedText }]}>
+              {visibleModules.length} modules
             </Text>
           </View>
 
@@ -93,162 +107,62 @@ export default function GrowScreen() {
   );
 }
 
-function BlockSummaryCard({ block }: { block: PowerBlock }) {
-  const colors = useThemeColors();
-  const { summary, loading } = usePowerActionProgress(block.id);
-  const percentage = summary.blockTarget > 0
-    ? Math.min(100, Math.round((summary.blockTotal / summary.blockTarget) * 100))
-    : 0;
-  const actionsCount = block.actions.length;
-
-  return (
-    <Pressable
-      onPress={() => router.push(`/grow/${block.id}`)}
-      style={({ pressed }) => [
-        styles.blockCard,
-        {
-          backgroundColor: colors.card,
-          borderColor: colors.border,
-          opacity: pressed ? 0.92 : 1,
-        },
-      ]}
-    >
-      <View style={[styles.blockRail, { backgroundColor: colors.accent }]} />
-      <View style={styles.blockBody}>
-        <View style={styles.blockHeader}>
-          <View>
-            <Text style={[styles.blockKicker, { color: colors.accent }]}>BLOCK</Text>
-            <Text style={[styles.blockName, { color: colors.text }]}>{block.name}</Text>
-          </View>
-          <ChevronRight color={colors.mutedText} size={20} />
-        </View>
-        <Text style={[styles.blockTagline, { color: colors.mutedText }]} numberOfLines={2}>
-          {block.tagline}
-        </Text>
-        <View style={styles.blockMeta}>
-          <Text style={[styles.blockMetaText, { color: colors.mutedText }]}>
-            {actionsCount} actions · 14 days
-          </Text>
-          <Text style={[styles.blockMetaValue, { color: colors.accent }]}>
-            {loading ? '…' : `${percentage}%`}
-          </Text>
-        </View>
-        <View style={[styles.progressTrack, { backgroundColor: colors.cardAlt }]}>
-          <View
-            style={[
-              styles.progressFill,
-              { backgroundColor: colors.accent, width: loading ? '0%' : `${percentage}%` },
-            ]}
-          />
-        </View>
-      </View>
-    </Pressable>
-  );
-}
-
 function ModuleCard({ module }: { module: MicrolearningModule }) {
   const colors = useThemeColors();
-
-  const openModule = () => {
-    WebBrowser.openBrowserAsync(module.tiiny_url, {
-      presentationStyle: WebBrowser.WebBrowserPresentationStyle.PAGE_SHEET,
-    });
-  };
-
   return (
     <Pressable
-      onPress={openModule}
-      style={[styles.moduleCard, { backgroundColor: colors.card, borderColor: colors.border }]}
+      accessibilityRole="button"
+      accessibilityLabel={`Open module ${module.title}`}
+      onPress={() => {
+        if (!module.tiiny_url) return;
+        WebBrowser.openBrowserAsync(module.tiiny_url).catch(() => {});
+      }}
+      style={({ pressed }) => [
+        styles.moduleCard,
+        { backgroundColor: colors.card, borderColor: colors.border, opacity: pressed ? 0.94 : 1 },
+      ]}
     >
-      <View style={[styles.iconWell, { backgroundColor: colors.cardAlt }]}>
-        <BookOpenCheck color={colors.accent} size={20} />
+      <View style={styles.moduleHead}>
+        <View style={[styles.moduleIcon, { backgroundColor: colors.cardAlt }]}>
+          <BookOpenCheck color={colors.accent} size={18} strokeWidth={2} />
+        </View>
+        <Text style={[styles.moduleBlock, { color: colors.mutedText }]}>{module.block}</Text>
       </View>
-      <View style={{ flex: 1, minWidth: 0 }}>
-        <Text style={[styles.moduleBlock, { color: colors.accent }]}>{module.block}</Text>
-        <Text style={[styles.moduleTitle, { color: colors.text }]}>{module.title}</Text>
-        <Text style={[styles.moduleCopy, { color: colors.mutedText }]}>{module.description}</Text>
+      <Text style={[styles.moduleTitle, { color: colors.text }]} numberOfLines={2}>
+        {module.title}
+      </Text>
+      <View style={styles.moduleFooter}>
+        <Text style={[styles.moduleDuration, { color: colors.mutedText }]} numberOfLines={2}>
+          {module.description ?? ''}
+        </Text>
+        <ArrowUpRight color={COLORS.tangerine} size={18} strokeWidth={2.2} />
       </View>
-      <ArrowUpRight color={colors.accent} size={18} />
     </Pressable>
   );
 }
 
 const styles = StyleSheet.create({
-  blockBody: {
-    flex: 1,
-    gap: 8,
-  },
-  blockCard: {
-    borderRadius: 12,
-    borderWidth: 1,
-    flexDirection: 'row',
-    gap: 14,
-    padding: 16,
-  },
-  blockHeader: {
-    alignItems: 'flex-start',
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-  },
-  blockKicker: {
-    fontFamily: FONTS.sansBold,
-    fontSize: 9.5,
-    letterSpacing: 2,
-  },
-  blockMeta: {
-    alignItems: 'baseline',
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-  },
-  blockMetaText: {
-    fontFamily: FONTS.sansMedium,
-    fontSize: 11.5,
-  },
-  blockMetaValue: {
-    fontFamily: FONTS.sansBold,
-    fontSize: 16,
-  },
-  blockName: {
-    fontFamily: FONTS.sansBold,
-    fontSize: 18,
-    letterSpacing: -0.2,
-    lineHeight: 22,
-    marginTop: 2,
-  },
-  blockRail: {
-    borderRadius: 999,
-    width: 2,
-  },
   blockStack: {
-    gap: 12,
-  },
-  blockTagline: {
-    fontFamily: FONTS.sans,
-    fontSize: 12.5,
-    lineHeight: 17,
+    marginBottom: 24,
+    marginTop: 8,
   },
   content: {
-    gap: 14,
-    paddingBottom: 126,
+    paddingBottom: 128,
     paddingHorizontal: SPACING.screenX,
     paddingTop: 4,
-  },
-  count: {
-    fontFamily: FONTS.sansMedium,
-    fontSize: 11.5,
   },
   filterChip: {
     borderRadius: 999,
     borderWidth: 1,
+    marginRight: 8,
     paddingHorizontal: 12,
-    paddingVertical: 7,
+    paddingVertical: 6,
   },
   filterContent: {
-    gap: 8,
-    paddingRight: SPACING.screenX,
+    paddingRight: 14,
   },
   filterScroll: {
-    marginRight: -SPACING.screenX,
+    marginTop: 8,
   },
   filterText: {
     fontFamily: FONTS.sansBold,
@@ -260,57 +174,54 @@ const styles = StyleSheet.create({
     fontSize: 11,
     letterSpacing: 2.4,
   },
-  iconWell: {
-    alignItems: 'center',
-    borderRadius: 12,
-    height: 38,
-    justifyContent: 'center',
-    width: 38,
-  },
   intro: {
     gap: 6,
     paddingTop: 4,
   },
   moduleBlock: {
     fontFamily: FONTS.sansBold,
-    fontSize: 10,
+    fontSize: 10.5,
     letterSpacing: 1.4,
-    textTransform: 'uppercase',
   },
   moduleCard: {
-    alignItems: 'flex-start',
-    borderRadius: 12,
+    borderRadius: 14,
     borderWidth: 1,
-    flexDirection: 'row',
-    gap: 12,
+    marginBottom: 10,
     padding: 14,
   },
-  moduleCopy: {
-    fontFamily: FONTS.sans,
-    fontSize: 13,
-    lineHeight: 18,
+  moduleDuration: {
+    fontFamily: FONTS.sansMedium,
+    fontSize: 12.5,
+  },
+  moduleFooter: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginTop: 12,
+  },
+  moduleHead: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    gap: 8,
+    marginBottom: 8,
+  },
+  moduleIcon: {
+    alignItems: 'center',
+    borderRadius: 8,
+    height: 28,
+    justifyContent: 'center',
+    width: 28,
   },
   moduleTitle: {
     fontFamily: FONTS.sansBold,
-    fontSize: 15,
+    fontSize: 15.5,
+    letterSpacing: -0.1,
     lineHeight: 20,
-    marginBottom: 4,
-    marginTop: 2,
   },
   phoneFrame: {
     alignSelf: 'center',
     flex: 1,
     maxWidth: Platform.OS === 'web' ? 430 : undefined,
-    width: '100%',
-  },
-  progressFill: {
-    borderRadius: 999,
-    height: '100%',
-  },
-  progressTrack: {
-    borderRadius: 999,
-    height: 5,
-    overflow: 'hidden',
     width: '100%',
   },
   screen: {
@@ -319,22 +230,24 @@ const styles = StyleSheet.create({
   },
   section: {
     gap: 4,
-    paddingTop: 8,
+    marginTop: 8,
   },
   sectionHelper: {
     fontFamily: FONTS.sans,
     fontSize: 12.5,
-    lineHeight: 17,
+    lineHeight: 18,
   },
   sectionInline: {
     alignItems: 'baseline',
     flexDirection: 'row',
-    justifyContent: 'space-between',
+    gap: 12,
+    marginBottom: 8,
+    marginTop: 14,
   },
   sectionLabel: {
     fontFamily: FONTS.sansBold,
-    fontSize: 10.5,
-    letterSpacing: 2.2,
+    fontSize: 11,
+    letterSpacing: 1.8,
   },
   subtitle: {
     fontFamily: FONTS.sans,
@@ -342,9 +255,10 @@ const styles = StyleSheet.create({
     lineHeight: 19,
   },
   title: {
+    color: '#141416',
     fontFamily: FONTS.sansBold,
-    fontSize: 22,
-    letterSpacing: -0.3,
-    lineHeight: 28,
+    fontSize: 26,
+    letterSpacing: -0.4,
+    lineHeight: 32,
   },
 });
