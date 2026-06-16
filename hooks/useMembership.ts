@@ -35,6 +35,7 @@ export type Membership = {
   joinEmail: string | null;
   verifiedAt: string | null;
   currentBlock: Block | null;
+  currentWeek: number;
   nonMemberDiagnostic: NonMemberDiagnostic | null;
 };
 
@@ -44,6 +45,7 @@ const EMPTY: Membership = {
   joinEmail: null,
   verifiedAt: null,
   currentBlock: null,
+  currentWeek: 1,
   nonMemberDiagnostic: null,
 };
 
@@ -73,14 +75,14 @@ export function useMembership() {
       const diagnosticRaw = await AsyncStorage.getItem(`${devKey(userId)}:diagnostic`);
       const base = raw ? (JSON.parse(raw) as Membership) : EMPTY;
       const diagnostic = diagnosticRaw ? (JSON.parse(diagnosticRaw) as NonMemberDiagnostic) : null;
-      setMembership({ ...base, nonMemberDiagnostic: diagnostic });
+      setMembership({ ...base, currentWeek: base.currentWeek ?? 1, nonMemberDiagnostic: diagnostic });
       setLoading(false);
       return;
     }
 
     const { data } = await supabase
       .from('profiles')
-      .select('program_member,join_email,verified_at,current_block,non_member_diagnostic')
+      .select('program_member,join_email,verified_at,current_block,current_week,non_member_diagnostic')
       .eq('id', userId)
       .maybeSingle();
 
@@ -92,6 +94,7 @@ export function useMembership() {
       joinEmail: data?.join_email ?? null,
       verifiedAt: data?.verified_at ?? null,
       currentBlock: (data?.current_block as Block | null) ?? null,
+      currentWeek: (data?.current_week as number | null) ?? 1,
       nonMemberDiagnostic: (data?.non_member_diagnostic as NonMemberDiagnostic | null) ?? null,
     });
     setLoading(false);
@@ -116,6 +119,7 @@ export function useMembership() {
         joinEmail,
         verifiedAt: new Date().toISOString(),
         currentBlock: 'COMMIT',
+        currentWeek: 1,
         nonMemberDiagnostic: null,
       };
       await AsyncStorage.setItem(devKey(userId), JSON.stringify(next));
@@ -143,6 +147,7 @@ export function useMembership() {
           joinEmail: null,
           verifiedAt: null,
           currentBlock: null,
+          currentWeek: 1,
           nonMemberDiagnostic: merged,
         };
         await AsyncStorage.setItem(devKey(userId), JSON.stringify(next));

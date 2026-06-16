@@ -3,7 +3,6 @@ import { router } from 'expo-router';
 import { StyleSheet, Text, View } from 'react-native';
 
 import { useMembership } from '../../hooks/useMembership';
-import { useSectionProgress } from '../../hooks/useSectionProgress';
 import {
   nextIncompleteSection,
   sectionsForBlock,
@@ -25,7 +24,8 @@ const FALLBACK_THUMB = 'https://images.unsplash.com/photo-1490645935967-10de6ba1
  */
 export function NextLessonCard() {
   const { membership } = useMembership();
-  const { isCompleted, loading } = useSectionProgress();
+  const isCompleted = (_slug: string) => false;
+  const loading = false;
 
   const blockId = (membership.currentBlock ?? 'COMMIT') as BlockId;
 

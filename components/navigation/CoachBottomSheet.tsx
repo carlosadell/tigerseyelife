@@ -85,22 +85,17 @@ export const CoachBottomSheet = forwardRef<CoachSheetHandle>(function CoachBotto
 
   const aiContext = useMemo<CoachContext>(
     () => ({
-      firstName: knowledge.firstName,
-      streakDays: knowledge.streakDays,
-      todayWorkout: knowledge.todayWorkout
-        ? { name: knowledge.todayWorkout.name, done: false }
-        : null,
+      firstName: knowledge.userName,
+      streakDays: 0,
+      todayWorkout: null,
       loggedMealsToday: loggedMeals.map((m) => ({ slot: m.slot, name: m.name })),
       mood: entry.mood ?? null,
       movementTags: entry.movementTags ?? [],
       waterCups: engagement.water ?? 0,
-      intention: knowledge.intention,
+      intention: null,
     }),
     [
-      knowledge.firstName,
-      knowledge.streakDays,
-      knowledge.todayWorkout,
-      knowledge.intention,
+      knowledge.userName,
       loggedMeals,
       entry.mood,
       entry.movementTags,
@@ -395,13 +390,14 @@ function CoachIntro({
 }) {
   const { colors } = useTheme();
   const knownItems: { label: string; value: string }[] = [];
-  if (knowledge.program) knownItems.push({ label: 'Program', value: knowledge.program.name });
-  if (knowledge.todayWorkout) knownItems.push({ label: 'Today', value: knowledge.todayWorkout.name });
-  knownItems.push({ label: 'Streak', value: `${knowledge.streakDays} days` });
-  if (knowledge.intention) {
+  knownItems.push({ label: 'Program', value: 'CREATE POWER' });
+  knownItems.push({ label: 'Week', value: `Week ${knowledge.weekNumber}` });
+  knownItems.push({ label: 'Block', value: knowledge.blockId });
+  knownItems.push({ label: 'Focus', value: knowledge.primaryFocus });
+  if (knowledge.goal) {
     knownItems.push({
-      label: 'Intent',
-      value: knowledge.intention.length > 84 ? `${knowledge.intention.slice(0, 80)}…` : knowledge.intention,
+      label: 'Goal',
+      value: knowledge.goal.length > 84 ? `${knowledge.goal.slice(0, 80)}…` : knowledge.goal,
     });
   }
 

@@ -5,7 +5,6 @@ import { useMemo } from 'react';
 import { Platform, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { useSectionProgress } from '../../hooks/useSectionProgress';
 import {
   BLOCK_IDS,
   sectionsForBlock,
@@ -32,7 +31,8 @@ export default function BlockSectionListScreen() {
     const upper = String(params.block ?? '').toUpperCase();
     return (BLOCK_IDS as readonly string[]).includes(upper) ? (upper as BlockId) : null;
   }, [params.block]);
-  const { isCompleted, completedInBlock } = useSectionProgress();
+  const isCompleted = (_slug: string) => false;
+  const completedInBlock = (_bId: string) => 0;
 
   if (!blockId) {
     return (

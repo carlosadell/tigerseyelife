@@ -1,33 +1,35 @@
-import { useMemo } from 'react';
+// hooks/useCoachContext.ts
+//
+// Context the AI coach receives. In this slice no LLM is wired; this
+// hook provides the structure the LLM slice will consume.
 
-import { useAssignedProgram } from './useAssignedProgram';
-import { useDailyEntry } from './useDailyEntry';
+import { useCurrentWeek } from './useCurrentWeek';
 import { useProfile } from './useProfile';
-import { useStreak } from './useStreak';
-import { CoachKnowledge } from '../lib/coachKnowledge';
+import { weekFor, blockFor } from '../lib/program';
+import { unlockedFeaturesAt } from '../lib/unlocks';
 
-export function useCoachContext(): CoachKnowledge {
+export type CoachContext = {
+  weekNumber: number;
+  blockId: string;
+  primaryFocus: string;
+  consistencyTarget: string;
+  unlockedFeatures: string[];
+  userName: string | null;
+  goal: string | null;
+};
+
+export function useCoachContext(): CoachContext {
+  const { weekNumber, blockId } = useCurrentWeek();
   const { profile } = useProfile();
-  const { assignedProgram, todayWorkout } = useAssignedProgram();
-  const { entry } = useDailyEntry();
-  const { days: streakDays } = useStreak();
-
-  return useMemo(
-    () => ({
-      firstName: profile.firstName,
-      program: assignedProgram,
-      todayWorkout,
-      intention: entry.intention ?? null,
-      intakeAnswers: profile.intakeAnswers,
-      streakDays,
-    }),
-    [
-      profile.firstName,
-      profile.intakeAnswers,
-      assignedProgram,
-      todayWorkout,
-      entry.intention,
-      streakDays,
-    ],
-  );
+  const week = weekFor(weekNumber);
+  const block = blockFor(blockId);
+  return {
+    weekNumber,
+    blockId,
+    primaryFocus: week.primaryFocus,
+    consistencyTarget: block.consistencyTarget,
+    unlockedFeatures: unlockedFeaturesAt(weekNumber),
+    userName: profile.firstName ?? null,
+    goal: (profile.intakeAnswers?.primary_goal as string | undefined) ?? null,
+  };
 }

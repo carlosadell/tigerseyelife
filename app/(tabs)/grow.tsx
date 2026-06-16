@@ -9,7 +9,6 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { BlockCard } from '../../components/grow/BlockCard';
 import { useMembership } from '../../hooks/useMembership';
 import { useMicrolearningModules } from '../../hooks/useMicrolearningModules';
-import { useSectionProgress } from '../../hooks/useSectionProgress';
 import { useThemeColors } from '../../hooks/useTheme';
 import { COLORS, FONTS, SPACING } from '../../lib/brand';
 import { BLOCK_IDS, type BlockId } from '../../lib/curriculum';
@@ -18,7 +17,7 @@ import type { MicrolearningModule } from '../../lib/programs';
 export default function GrowScreen() {
   const colors = useThemeColors();
   const { membership } = useMembership();
-  const { completedInBlock } = useSectionProgress();
+  const completedInBlock = (_blockId: string) => 0;
   const { data = [] } = useMicrolearningModules();
 
   const currentBlock = (membership.currentBlock ?? 'COMMIT') as BlockId;

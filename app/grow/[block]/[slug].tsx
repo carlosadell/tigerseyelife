@@ -15,7 +15,6 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { EducationalLessonView } from '../../../components/grow/EducationalLessonView';
 import { StubLessonView } from '../../../components/grow/StubLessonView';
 import { WorkoutLessonView } from '../../../components/grow/WorkoutLessonView';
-import { useSectionProgress } from '../../../hooks/useSectionProgress';
 import {
   BLOCK_IDS,
   isStub,
@@ -42,7 +41,8 @@ export default function SectionDetailScreen() {
   }, [params.block]);
   const slug = String(params.slug ?? '');
   const section = sectionBySlug(slug);
-  const { isCompleted, completeSection } = useSectionProgress();
+  const isCompleted = (_slug: string) => false;
+  const completeSection = async (_bId: string, _slug: string) => {};
 
   if (!blockId || !section || section.blockId !== blockId) {
     return (
