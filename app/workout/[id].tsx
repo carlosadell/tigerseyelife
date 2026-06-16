@@ -1,28 +1,18 @@
 // app/workout/[id].tsx
-import * as Haptics from 'expo-haptics';
 import { router, useLocalSearchParams } from 'expo-router';
-import { ChevronLeft } from 'lucide-react-native';
+import { ChevronLeft, PlayCircle } from 'lucide-react-native';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
-import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { SectionLabel } from '../../components/brand/SectionLabel';
-import { useAuth } from '../../hooks/useAuth';
 import { useThemeColors } from '../../hooks/useTheme';
-import { useWorkoutSessions } from '../../hooks/useWorkoutSessions';
 import { COLORS, FONTS, SPACING } from '../../lib/brand';
 import { exerciseById } from '../../lib/exerciseLibrary';
-import { adaptWorkout } from '../../lib/workoutSessionAdapter';
 import { isStubWorkout, workoutBySlug } from '../../lib/workoutSchedule';
-import type { WorkoutSession } from '../../lib/workouts';
-import { useActiveWorkoutStore } from '../../stores/activeWorkout';
 
 export default function WorkoutDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const colors = useThemeColors();
-  const insets = useSafeAreaInsets();
-  const { session } = useAuth();
-  const startSession = useActiveWorkoutStore((state) => state.startSession);
-  const { saveSession } = useWorkoutSessions();
 
   const workout = id ? workoutBySlug(id) : undefined;
 
@@ -60,26 +50,6 @@ export default function WorkoutDetailScreen() {
     );
   }
 
-  const startWorkout = async () => {
-    if (!session?.user.id) return;
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-    const adapted = adaptWorkout(workout);
-    const workoutSession: WorkoutSession = {
-      id: `local-${Date.now()}`,
-      name: adapted.name,
-      set_logs: [],
-      source_id: adapted.id,
-      source_type: 'library',
-      started_at: new Date().toISOString(),
-      total_duration_seconds: 0,
-      total_volume_kg: 0,
-      user_id: session.user.id,
-    };
-    await saveSession(workoutSession);
-    startSession(adapted, workoutSession);
-    router.push(`/workout/active/${workoutSession.id}`);
-  };
-
   return (
     <SafeAreaView style={[styles.screen, { backgroundColor: colors.background }]}>
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
@@ -91,6 +61,12 @@ export default function WorkoutDetailScreen() {
         {workout.helper ? (
           <Text style={[styles.body, { color: colors.mutedText }]}>{workout.helper}</Text>
         ) : null}
+        <View style={[styles.tipCard, { backgroundColor: colors.cardAlt, borderColor: colors.border }]}>
+          <PlayCircle color={colors.accent} size={18} strokeWidth={1.8} />
+          <Text style={[styles.tipText, { color: colors.mutedText }]}>
+            Tap any exercise to watch the tutorial and start the workout.
+          </Text>
+        </View>
         <SectionLabel label="EXERCISES" />
         {workout.exercises.map((entry, index) => {
           const lib = exerciseById(entry.exerciseId);
@@ -99,7 +75,7 @@ export default function WorkoutDetailScreen() {
             <Pressable
               key={`${entry.exerciseId}-${index}`}
               accessibilityRole="button"
-              onPress={() => router.push(`/exercise/${entry.exerciseId}`)}
+              onPress={() => router.push(`/exercise/${entry.exerciseId}?workoutSlug=${workout.slug}`)}
               style={({ pressed }) => ({ opacity: pressed ? 0.92 : 1 })}
             >
               <View
@@ -127,35 +103,11 @@ export default function WorkoutDetailScreen() {
                     </Text>
                   ))}
                 </View>
-                {lib.youtubeVideoId === null ? (
-                  <Text style={[styles.placeholder, { color: colors.mutedText }]}>
-                    Tutorial video coming soon.
-                  </Text>
-                ) : null}
               </View>
             </Pressable>
           );
         })}
       </ScrollView>
-      <View style={[styles.footer, { bottom: insets.bottom + 16 }]}>
-        <Pressable
-          accessibilityRole="button"
-          onPress={startWorkout}
-          style={({ pressed }) => ({ opacity: pressed ? 0.92 : 1 })}
-        >
-          <View
-            style={[
-              styles.startButton,
-              {
-                backgroundColor: COLORS.tangerine,
-                shadowColor: COLORS.tangerine,
-              },
-            ]}
-          >
-            <Text style={[styles.startText, { color: '#FFFFFF' }]}>Start workout</Text>
-          </View>
-        </Pressable>
-      </View>
     </SafeAreaView>
   );
 }
@@ -174,7 +126,7 @@ const styles = StyleSheet.create({
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
   content: {
     gap: 14,
-    paddingBottom: 120,
+    paddingBottom: 40,
     paddingHorizontal: SPACING.screenX,
     paddingTop: 4,
   },
@@ -188,7 +140,6 @@ const styles = StyleSheet.create({
   exercise: { borderRadius: 12, borderWidth: 1, gap: 8, padding: 14 },
   exerciseName: { flex: 1, fontFamily: FONTS.sansBold, fontSize: 15 },
   exerciseTop: { alignItems: 'center', flexDirection: 'row', gap: 10 },
-  footer: { left: SPACING.screenX, position: 'absolute', right: SPACING.screenX },
   headerRow: { paddingHorizontal: SPACING.screenX, paddingTop: 4 },
   kicker: {
     fontFamily: FONTS.sansBold,
@@ -197,21 +148,22 @@ const styles = StyleSheet.create({
   },
   number: { alignItems: 'center', borderRadius: 12, height: 24, justifyContent: 'center', width: 24 },
   numberText: { fontFamily: FONTS.sansBold, fontSize: 12 },
-  placeholder: { fontFamily: FONTS.sans, fontSize: 12.5, fontStyle: 'italic' },
   screen: { flex: 1 },
-  startButton: {
+  target: { fontFamily: FONTS.sansMedium, fontSize: 11, letterSpacing: 1.1 },
+  tipCard: {
     alignItems: 'center',
     borderRadius: 12,
-    elevation: 4,
-    height: 56,
-    justifyContent: 'center',
-    paddingHorizontal: 18,
-    shadowOffset: { height: 4, width: 0 },
-    shadowOpacity: 0.32,
-    shadowRadius: 12,
+    borderWidth: 1,
+    flexDirection: 'row',
+    gap: 10,
+    padding: 12,
   },
-  startText: { fontFamily: FONTS.sansBold, fontSize: 16, letterSpacing: 0.2 },
-  target: { fontFamily: FONTS.sansMedium, fontSize: 11, letterSpacing: 1.1 },
+  tipText: {
+    flex: 1,
+    fontFamily: FONTS.sansMedium,
+    fontSize: 13,
+    lineHeight: 18,
+  },
   title: {
     fontFamily: FONTS.sansBold,
     fontSize: 24,
