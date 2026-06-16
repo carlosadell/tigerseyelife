@@ -96,38 +96,44 @@ export default function WorkoutDetailScreen() {
           const lib = exerciseById(entry.exerciseId);
           const primaries = lib.muscleGroups.filter((m) => m.primary);
           return (
-            <View
+            <Pressable
               key={`${entry.exerciseId}-${index}`}
-              style={[styles.exercise, { backgroundColor: colors.card, borderColor: colors.border }]}
+              accessibilityRole="button"
+              onPress={() => router.push(`/exercise/${entry.exerciseId}`)}
+              style={({ pressed }) => ({ opacity: pressed ? 0.92 : 1 })}
             >
-              <View style={styles.exerciseTop}>
-                <View style={[styles.number, { backgroundColor: colors.cardAlt }]}>
-                  <Text style={[styles.numberText, { color: colors.text }]}>{index + 1}</Text>
+              <View
+                style={[styles.exercise, { backgroundColor: colors.card, borderColor: colors.border }]}
+              >
+                <View style={styles.exerciseTop}>
+                  <View style={[styles.number, { backgroundColor: colors.cardAlt }]}>
+                    <Text style={[styles.numberText, { color: colors.text }]}>{index + 1}</Text>
+                  </View>
+                  <Text style={[styles.exerciseName, { color: colors.text }]}>{lib.name}</Text>
                 </View>
-                <Text style={[styles.exerciseName, { color: colors.text }]}>{lib.name}</Text>
-              </View>
-              <Text style={[styles.target, { color: colors.mutedText }]}>
-                {entry.sets} SETS · {entry.reps} REPS · {entry.restSeconds ?? 60}S REST
-              </Text>
-              <View style={styles.chips}>
-                {primaries.map((m) => (
-                  <Text
-                    key={m.name}
-                    style={[
-                      styles.chip,
-                      { backgroundColor: colors.cardAlt, color: colors.text },
-                    ]}
-                  >
-                    {m.name}
-                  </Text>
-                ))}
-              </View>
-              {lib.youtubeVideoId === null ? (
-                <Text style={[styles.placeholder, { color: colors.mutedText }]}>
-                  Tutorial video coming soon.
+                <Text style={[styles.target, { color: colors.mutedText }]}>
+                  {entry.sets} SETS · {entry.reps} REPS · {entry.restSeconds ?? 60}S REST
                 </Text>
-              ) : null}
-            </View>
+                <View style={styles.chips}>
+                  {primaries.map((m) => (
+                    <Text
+                      key={m.name}
+                      style={[
+                        styles.chip,
+                        { backgroundColor: colors.cardAlt, color: colors.text },
+                      ]}
+                    >
+                      {m.name}
+                    </Text>
+                  ))}
+                </View>
+                {lib.youtubeVideoId === null ? (
+                  <Text style={[styles.placeholder, { color: colors.mutedText }]}>
+                    Tutorial video coming soon.
+                  </Text>
+                ) : null}
+              </View>
+            </Pressable>
           );
         })}
       </ScrollView>

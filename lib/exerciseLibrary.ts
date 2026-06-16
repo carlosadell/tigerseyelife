@@ -44,6 +44,7 @@ export type Exercise = {
   youtubeVideoId: string | null;
   muscleGroups: { name: MuscleGroupName; primary: boolean }[];
   instructions: string[];
+  purpose?: string;
   defaultSets?: number;
   defaultReps?: string;
 };
@@ -239,7 +240,7 @@ export const EXERCISE_LIBRARY: Record<ExerciseId, Exercise> = {
   'seated-db-press': {
     id: 'seated-db-press',
     name: 'Seated DB Press',
-    youtubeVideoId: null,
+    youtubeVideoId: 'qJdhEahEvmc',
     muscleGroups: [
       { name: 'Shoulders', primary: true },
       { name: 'Triceps', primary: false },
@@ -255,7 +256,7 @@ export const EXERCISE_LIBRARY: Record<ExerciseId, Exercise> = {
   '3-phase-sissy-squat': {
     id: '3-phase-sissy-squat',
     name: '3 Phase Sissy Squat',
-    youtubeVideoId: null,
+    youtubeVideoId: '9wTJUu7BIlc',
     muscleGroups: [
       { name: 'Quads', primary: true },
       { name: 'Core', primary: false },
@@ -271,7 +272,7 @@ export const EXERCISE_LIBRARY: Record<ExerciseId, Exercise> = {
   'push-up-from-deficit': {
     id: 'push-up-from-deficit',
     name: 'Push Up From Deficit',
-    youtubeVideoId: null,
+    youtubeVideoId: 'UAzlByvEwwI',
     muscleGroups: [
       { name: 'Chest', primary: true },
       { name: 'Shoulders', primary: false },
@@ -288,7 +289,7 @@ export const EXERCISE_LIBRARY: Record<ExerciseId, Exercise> = {
   'sumo-db-rdl': {
     id: 'sumo-db-rdl',
     name: 'Sumo DB Romanian Deadlift',
-    youtubeVideoId: null,
+    youtubeVideoId: 'T9dAj3E3UHA',
     muscleGroups: [
       { name: 'Hamstrings', primary: true },
       { name: 'Glutes', primary: true },
@@ -305,7 +306,7 @@ export const EXERCISE_LIBRARY: Record<ExerciseId, Exercise> = {
   'db-bent-over-row': {
     id: 'db-bent-over-row',
     name: 'Dumbbell Bent Over Row',
-    youtubeVideoId: null,
+    youtubeVideoId: 'nmtbGXoPbSI',
     muscleGroups: [
       { name: 'Back', primary: true },
       { name: 'Biceps', primary: false },
