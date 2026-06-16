@@ -8,7 +8,7 @@ import { SectionLabel } from '../../components/brand/SectionLabel';
 import { useThemeColors } from '../../hooks/useTheme';
 import { COLORS, FONTS, SPACING } from '../../lib/brand';
 import { exerciseById } from '../../lib/exerciseLibrary';
-import { isStubWorkout, workoutBySlug } from '../../lib/workoutSchedule';
+import { workoutBySlug } from '../../lib/workoutSchedule';
 
 export default function WorkoutDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -26,25 +26,6 @@ export default function WorkoutDetailScreen() {
         </View>
         <View style={styles.empty}>
           <Text style={[styles.title, { color: colors.text }]}>Workout not found.</Text>
-        </View>
-      </SafeAreaView>
-    );
-  }
-
-  if (isStubWorkout(workout)) {
-    return (
-      <SafeAreaView style={[styles.screen, { backgroundColor: colors.background }]}>
-        <View style={styles.headerRow}>
-          <Pressable onPress={() => router.back()} hitSlop={8}>
-            <ChevronLeft color={colors.accent} size={26} />
-          </Pressable>
-        </View>
-        <View style={styles.empty}>
-          <Text style={[styles.kicker, { color: colors.mutedText }]}>BLOCK · {workout.blockId}</Text>
-          <Text style={[styles.title, { color: colors.text }]}>{workout.title}</Text>
-          <Text style={[styles.body, { color: colors.mutedText }]}>
-            Karen and Ryan are loading this one. The session shape is being finalized.
-          </Text>
         </View>
       </SafeAreaView>
     );

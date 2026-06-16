@@ -3,50 +3,44 @@ import { router } from 'expo-router';
 import { Platform, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { StubWorkoutCard } from '../../components/workout/StubWorkoutCard';
 import { WorkoutCard } from '../../components/workout/WorkoutCard';
-import { useMembership } from '../../hooks/useMembership';
+import { useCurrentWeek } from '../../hooks/useCurrentWeek';
 import { useThemeColors } from '../../hooks/useTheme';
 import { FONTS, SPACING } from '../../lib/brand';
-import type { BlockId } from '../../lib/curriculum';
-import { isStubWorkout, workoutsForBlock } from '../../lib/workoutSchedule';
+import { blockFor } from '../../lib/program';
+import { workoutsForBlock } from '../../lib/workoutSchedule';
 
 export default function TrainScreen() {
   const colors = useThemeColors();
-  const { membership } = useMembership();
-  const currentBlock: BlockId = (membership.currentBlock ?? 'COMMIT') as BlockId;
-  const workouts = workoutsForBlock(currentBlock);
+  const { weekNumber, blockId } = useCurrentWeek();
+  const workouts = workoutsForBlock(blockId);
+  const block = blockFor(blockId);
 
   return (
     <SafeAreaView edges={['top']} style={[styles.screen, { backgroundColor: colors.background }]}>
       <View style={styles.phoneFrame}>
         <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
           <View style={styles.header}>
-            <Text style={[styles.kicker, { color: colors.accent }]}>BLOCK · {currentBlock}</Text>
+            <Text style={[styles.kicker, { color: colors.accent }]}>
+              WEEK {weekNumber} · {blockId}
+            </Text>
             <Text style={[styles.title, { color: colors.text }]}>Workouts</Text>
-            <Text style={[styles.helper, { color: colors.mutedText }]}>
-              Your block has 4 workouts. Find your rhythm.
+            <Text style={[styles.helper, { color: colors.mutedText }]} numberOfLines={3}>
+              {block.mindset}
             </Text>
           </View>
 
           <View style={styles.grid}>
-            {workouts.map((workout) => {
-              const stub = isStubWorkout(workout);
-              return (
-                <View key={workout.slug} style={styles.cell}>
-                  {stub ? (
-                    <StubWorkoutCard title={workout.title} />
-                  ) : (
-                    <WorkoutCard
-                      title={workout.title}
-                      helper={workout.helper}
-                      exerciseCount={workout.exercises.length}
-                      onPress={() => router.push(`/workout/${workout.slug}`)}
-                    />
-                  )}
-                </View>
-              );
-            })}
+            {workouts.map((workout) => (
+              <View key={workout.slug} style={styles.cell}>
+                <WorkoutCard
+                  title={workout.title}
+                  helper={workout.helper}
+                  exerciseCount={workout.exercises.length}
+                  onPress={() => router.push(`/workout/${workout.slug}`)}
+                />
+              </View>
+            ))}
           </View>
         </ScrollView>
       </View>
