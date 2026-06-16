@@ -1,6 +1,7 @@
 // components/grow/WorkoutLessonView.tsx
-import { Play } from 'lucide-react-native';
+import { useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
+import YoutubePlayer from 'react-native-youtube-iframe';
 
 import { COLORS, FONTS, THEME_COLORS } from '../../lib/brand';
 import type { WorkoutContent } from '../../lib/curriculum';
@@ -13,19 +14,22 @@ type Props = {
 
 /**
  * Renders a `kind: 'workout'` section body. Composes:
- *   - Video placeholder card (real streaming swap is a future slice)
+ *   - YouTube embedded player (unlisted videos, see memory video-hosting-youtube)
  *   - Muscle groups (chip list with PRIMARY tag for primary movers)
  *   - Numbered instructions
  *   - Set/rep target chip
  */
 export function WorkoutLessonView({ content }: Props) {
+  const [playerHeight] = useState(220);
+
   return (
     <View style={styles.stack}>
-      <View style={styles.videoPlaceholder}>
-        <View style={styles.playWell}>
-          <Play color={light.text} fill={light.text} size={24} />
-        </View>
-        <Text style={styles.videoLabel}>Video coming soon</Text>
+      <View style={styles.videoWrap}>
+        <YoutubePlayer
+          height={playerHeight}
+          videoId={content.youtubeVideoId}
+          playList={content.youtubePlaylistId}
+        />
       </View>
 
       <View>
@@ -136,14 +140,6 @@ const styles = StyleSheet.create({
     gap: 8,
     marginTop: 8,
   },
-  playWell: {
-    alignItems: 'center',
-    backgroundColor: '#FFFFFF',
-    borderRadius: 999,
-    height: 56,
-    justifyContent: 'center',
-    width: 56,
-  },
   sectionKicker: {
     color: COLORS.tigerGold,
     fontFamily: FONTS.sansBold,
@@ -168,21 +164,9 @@ const styles = StyleSheet.create({
     fontSize: 13,
     letterSpacing: 0.2,
   },
-  videoLabel: {
-    color: light.mutedText,
-    fontFamily: FONTS.sansMedium,
-    fontSize: 13,
-    letterSpacing: 0.4,
-  },
-  videoPlaceholder: {
-    alignItems: 'center',
-    backgroundColor: light.cardAlt,
-    borderColor: light.border,
-    borderRadius: 16,
-    borderWidth: 1,
-    gap: 12,
-    justifyContent: 'center',
-    minHeight: 200,
-    padding: 24,
+  videoWrap: {
+    backgroundColor: '#000000',
+    borderRadius: 14,
+    overflow: 'hidden',
   },
 });

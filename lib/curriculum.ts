@@ -43,7 +43,11 @@ export type EducationalContent = {
 
 export type WorkoutContent = {
   kind: 'workout';
-  videoUri: string;
+  // YouTube video ID (unlisted). Extract from the URL's `?v=` param.
+  // Hosting decision 2026-06-16: see memory video-hosting-youtube.
+  youtubeVideoId: string;
+  // Optional YouTube playlist ID for grouped exercise series.
+  youtubePlaylistId?: string;
   muscleGroups: { name: string; primary: boolean }[];
   instructions: string[];
   setRepTarget?: string;
@@ -98,7 +102,8 @@ const AUTHORED: Section[] = [
     emoji: '🏋',
     content: {
       kind: 'workout',
-      videoUri: 'placeholder://ryan-hinge-pattern',
+      youtubeVideoId: 'YdcHrtaXMP4',
+      youtubePlaylistId: 'PL4ElELFYWrHe4BizVUi1G-6la_WcXdtB4',
       muscleGroups: [
         { name: 'Posterior chain', primary: true },
         { name: 'Glutes', primary: true },
