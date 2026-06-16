@@ -1,0 +1,29 @@
+import type { Tool } from '../tools';
+
+export const nonFoodStressReliefMenu: Tool = {
+  slug: 'non-food-stress-relief-menu',
+  title: 'Non Food Stress Relief Menu',
+  introducedInWeek: 7,
+  isStar: false,
+  body: {
+    kind: 'menu-list',
+    intro: 'Fifteen options. When the stress lands and the snack call comes, pick one of these first.',
+    items: [
+      { title: 'Two minute walk outside', body: 'Light hits your eyes. Body moves. Stress drops.' },
+      { title: 'Cold water on the wrists', body: 'Vagal reset. Thirty seconds.' },
+      { title: 'Box breathing, four rounds', body: 'Sixty four seconds total.' },
+      { title: 'Text a friend a question', body: 'Connection beats consumption.' },
+      { title: 'Stretch for two minutes', body: "Hips and shoulders carry the day's tension." },
+      { title: 'Make tea', body: 'The act of making it is the intervention. Drinking it is the bonus.' },
+      { title: 'Play one song you love', body: 'Loud. Move while it plays.' },
+      { title: 'Step outside for sunlight', body: 'Even cloudy daylight is ten times brighter than indoors.' },
+      { title: 'Ten push ups', body: 'Reset the system through effort.' },
+      { title: 'Splash water on your face', body: 'Old trick. Works.' },
+      { title: 'Voice memo to yourself', body: 'Say what you are feeling out loud. Then move on.' },
+      { title: 'Write three lines about it', body: 'Paper, not screen.' },
+      { title: 'Three minutes of silence', body: 'No phone. No screen. Just sit.' },
+      { title: 'Hug someone', body: 'Twenty seconds. Real one.' },
+      { title: 'Pet the dog or cat', body: 'Co regulation works in both directions.' },
+    ],
+  },
+};

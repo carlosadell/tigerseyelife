@@ -1,0 +1,34 @@
+import type { Tool } from '../tools';
+
+export const tebLoopGuide: Tool = {
+  slug: 'teb-loop-guide',
+  title: 'TEB Loop Guide',
+  introducedInWeek: 5,
+  isStar: true,
+  body: {
+    kind: 'static-page',
+    intro: 'Thinking, Emotion, Behavior. When you let thinking drive, you choose. When you let emotion drive, the pattern wins.',
+    sections: [
+      {
+        heading: 'How the loop runs',
+        body: 'A trigger lands. You have a thought about it. That thought creates an emotion. The emotion drives the behavior. Most people skip the thought step and let the emotion drive directly.',
+      },
+      {
+        heading: 'Where the loop breaks',
+        body: 'You break the loop at the thinking step. Catch the thought. Ask: is this true? Is this useful? What is the bigger picture here?',
+      },
+      {
+        heading: 'Example: the late night snack',
+        body: 'Trigger: tired at nine pm. Thought: I deserve this. Emotion: relief on the way. Behavior: the snack. Reframe at the thought: I deserve real rest, not sugar that wakes me at three am.',
+      },
+      {
+        heading: 'Example: the skipped workout',
+        body: 'Trigger: hard day at work. Thought: I cannot today. Emotion: defeat. Behavior: skip. Reframe at the thought: a twenty minute walk is still a workout, and it is what I do.',
+      },
+      {
+        heading: 'The practice',
+        body: 'Use TEB once a day this week. Pick one moment. Notice the trigger, the thought, the emotion, the behavior. Then ask: what would change if I changed the thought?',
+      },
+    ],
+  },
+};

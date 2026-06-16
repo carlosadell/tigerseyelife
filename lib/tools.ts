@@ -53,6 +53,14 @@ import { movementBreaksMenu } from './toolContent/movementBreaksMenu';
 import { sleepEnvironmentChecklist } from './toolContent/sleepEnvironmentChecklist';
 import { kitchenResetGuide } from './toolContent/kitchenResetGuide';
 import { abcPowerMealsGuide } from './toolContent/abcPowerMealsGuide';
+import { pausePracticeGuide } from './toolContent/pausePracticeGuide';
+import { windDownRoutineBuilder } from './toolContent/windDownRoutineBuilder';
+import { tebLoopGuide } from './toolContent/tebLoopGuide';
+import { mealPrepSystemGuide } from './toolContent/mealPrepSystemGuide';
+import { socialSituationsPlaybook } from './toolContent/socialSituationsPlaybook';
+import { movementSnacksMenu } from './toolContent/movementSnacksMenu';
+import { boxBreathingGuide } from './toolContent/boxBreathingGuide';
+import { nonFoodStressReliefMenu } from './toolContent/nonFoodStressReliefMenu';
 
 export const TOOLS: Partial<Record<ToolSlug, Tool>> = {
   'initial-questionnaire': initialQuestionnaire,
@@ -63,6 +71,14 @@ export const TOOLS: Partial<Record<ToolSlug, Tool>> = {
   'sleep-environment-checklist': sleepEnvironmentChecklist,
   'kitchen-reset-guide': kitchenResetGuide,
   'abc-power-meals-guide': abcPowerMealsGuide,
+  'pause-practice-guide': pausePracticeGuide,
+  'wind-down-routine-builder': windDownRoutineBuilder,
+  'teb-loop-guide': tebLoopGuide,
+  'meal-prep-system-guide': mealPrepSystemGuide,
+  'social-situations-playbook': socialSituationsPlaybook,
+  'movement-snacks-menu': movementSnacksMenu,
+  'box-breathing-guide': boxBreathingGuide,
+  'non-food-stress-relief-menu': nonFoodStressReliefMenu,
 };
 
 export function toolBySlug(slug: string): Tool | undefined {
