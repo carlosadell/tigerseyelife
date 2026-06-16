@@ -323,7 +323,7 @@ export const EXERCISE_LIBRARY: Record<ExerciseId, Exercise> = {
   'feet-close-together-dl': {
     id: 'feet-close-together-dl',
     name: 'Feet Close Together Deadlift',
-    youtubeVideoId: null,
+    youtubeVideoId: 'G7XBbtixlH4',
     muscleGroups: [
       { name: 'Posterior chain', primary: true },
       { name: 'Glutes', primary: true },
@@ -340,7 +340,7 @@ export const EXERCISE_LIBRARY: Record<ExerciseId, Exercise> = {
   'wall-15-bicep-curls': {
     id: 'wall-15-bicep-curls',
     name: 'Wall 1.5 Bicep Curls',
-    youtubeVideoId: null,
+    youtubeVideoId: 'kCzdGfVcceE',
     muscleGroups: [
       { name: 'Biceps', primary: true },
       { name: 'Forearms', primary: false },
