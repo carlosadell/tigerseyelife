@@ -82,7 +82,7 @@ export default function VerifyMembershipScreen() {
           return;
         }
         await devMarkVerified(trimmed);
-        router.replace('/onboarding');
+        router.replace('/onboarding/intake/welcome');
         return;
       }
       const result = await callEdge<ConfirmResponse>({ mode: 'confirm', email: trimmed, code: code.trim() });
@@ -92,7 +92,7 @@ export default function VerifyMembershipScreen() {
         return;
       }
       await refresh();
-      router.replace('/onboarding');
+      router.replace('/onboarding/intake/welcome');
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Something went wrong.');
     } finally {
