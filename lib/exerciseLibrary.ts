@@ -52,7 +52,7 @@ export const EXERCISE_LIBRARY: Record<ExerciseId, Exercise> = {
   'db-squat': {
     id: 'db-squat',
     name: 'DB Squat',
-    youtubeVideoId: null,
+    youtubeVideoId: 'YdcHrtaXMP4',
     muscleGroups: [
       { name: 'Quads', primary: true },
       { name: 'Glutes', primary: true },
@@ -69,7 +69,7 @@ export const EXERCISE_LIBRARY: Record<ExerciseId, Exercise> = {
   'push-ups': {
     id: 'push-ups',
     name: 'Push Ups',
-    youtubeVideoId: null,
+    youtubeVideoId: 'fSCo_IRlsLk',
     muscleGroups: [
       { name: 'Chest', primary: true },
       { name: 'Shoulders', primary: false },
@@ -87,7 +87,7 @@ export const EXERCISE_LIBRARY: Record<ExerciseId, Exercise> = {
   'db-overhead-press': {
     id: 'db-overhead-press',
     name: 'DB Overhead Press',
-    youtubeVideoId: null,
+    youtubeVideoId: 'LuFqvlUiX5g',
     muscleGroups: [
       { name: 'Shoulders', primary: true },
       { name: 'Triceps', primary: false },
@@ -104,7 +104,7 @@ export const EXERCISE_LIBRARY: Record<ExerciseId, Exercise> = {
   'db-split-squat': {
     id: 'db-split-squat',
     name: 'DB Split Squat',
-    youtubeVideoId: null,
+    youtubeVideoId: 'R1Wk_-s4oTI',
     muscleGroups: [
       { name: 'Quads', primary: true },
       { name: 'Glutes', primary: true },
@@ -121,7 +121,7 @@ export const EXERCISE_LIBRARY: Record<ExerciseId, Exercise> = {
   'chair-squat': {
     id: 'chair-squat',
     name: 'Chair Squat',
-    youtubeVideoId: null,
+    youtubeVideoId: 'NpxSf4lT8EI',
     muscleGroups: [
       { name: 'Quads', primary: true },
       { name: 'Glutes', primary: true },
@@ -137,7 +137,7 @@ export const EXERCISE_LIBRARY: Record<ExerciseId, Exercise> = {
   'db-deadlift': {
     id: 'db-deadlift',
     name: 'DB Deadlift',
-    youtubeVideoId: null,
+    youtubeVideoId: 'TyA7K9gc6U8',
     muscleGroups: [
       { name: 'Posterior chain', primary: true },
       { name: 'Glutes', primary: true },
@@ -155,7 +155,7 @@ export const EXERCISE_LIBRARY: Record<ExerciseId, Exercise> = {
   'db-bor-reverse-grip': {
     id: 'db-bor-reverse-grip',
     name: 'DB Bent Over Row, Reverse Grip',
-    youtubeVideoId: null,
+    youtubeVideoId: 'Q2h_L3joYuE',
     muscleGroups: [
       { name: 'Back', primary: true },
       { name: 'Biceps', primary: true },
@@ -172,7 +172,7 @@ export const EXERCISE_LIBRARY: Record<ExerciseId, Exercise> = {
   'db-stagger-stance-dl': {
     id: 'db-stagger-stance-dl',
     name: 'DB Stagger Stance Deadlift',
-    youtubeVideoId: null,
+    youtubeVideoId: '_dg4dbC5U8Q',
     muscleGroups: [
       { name: 'Posterior chain', primary: true },
       { name: 'Hamstrings', primary: true },
@@ -189,7 +189,7 @@ export const EXERCISE_LIBRARY: Record<ExerciseId, Exercise> = {
   '1-arm-bor': {
     id: '1-arm-bor',
     name: '1 Arm Bent Over Row',
-    youtubeVideoId: null,
+    youtubeVideoId: 'V6H7gsd5pVc',
     muscleGroups: [
       { name: 'Back', primary: true },
       { name: 'Biceps', primary: false },
@@ -206,7 +206,7 @@ export const EXERCISE_LIBRARY: Record<ExerciseId, Exercise> = {
   'biceps-curls': {
     id: 'biceps-curls',
     name: 'Biceps Curls',
-    youtubeVideoId: null,
+    youtubeVideoId: 'ZlJME5Xn9zs',
     muscleGroups: [
       { name: 'Biceps', primary: true },
       { name: 'Forearms', primary: false },
@@ -222,7 +222,7 @@ export const EXERCISE_LIBRARY: Record<ExerciseId, Exercise> = {
   'db-sumo-squat': {
     id: 'db-sumo-squat',
     name: 'DB Sumo Squat',
-    youtubeVideoId: null,
+    youtubeVideoId: 'wIvuMgx1hfQ',
     muscleGroups: [
       { name: 'Glutes', primary: true },
       { name: 'Quads', primary: true },
