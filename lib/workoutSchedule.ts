@@ -4,8 +4,8 @@
 // template (LOWER_BODY for slot 1, UPPER_PUSH/UPPER_PULL/FULL_BODY for
 // slots 2/3/4). No stubs anywhere.
 
-import type { BlockId } from './curriculum';
-import { BLOCK_IDS } from './curriculum';
+import type { BlockId } from './program';
+import { BLOCK_IDS } from './program';
 import type { ExerciseId } from './exerciseLibrary';
 import {
   BLOCK_HELPER_BY_SLOT,
