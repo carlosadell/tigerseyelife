@@ -61,8 +61,16 @@ import { socialSituationsPlaybook } from './toolContent/socialSituationsPlaybook
 import { movementSnacksMenu } from './toolContent/movementSnacksMenu';
 import { boxBreathingGuide } from './toolContent/boxBreathingGuide';
 import { nonFoodStressReliefMenu } from './toolContent/nonFoodStressReliefMenu';
+import { bareMinimumProtocolBuilder } from './toolContent/bareMinimumProtocolBuilder';
+import { automaticityAudit } from './toolContent/automaticityAudit';
+import { stressSignalIdentifier } from './toolContent/stressSignalIdentifier';
+import { energyOrchestraPlanner } from './toolContent/energyOrchestraPlanner';
+import { mySystemDocumentation } from './toolContent/mySystemDocumentation';
+import { patternMaintenanceSystem } from './toolContent/patternMaintenanceSystem';
+import { transformationSummary } from './toolContent/transformationSummary';
+import { whatsNextGuide } from './toolContent/whatsNextGuide';
 
-export const TOOLS: Partial<Record<ToolSlug, Tool>> = {
+export const TOOLS: Record<ToolSlug, Tool> = {
   'initial-questionnaire': initialQuestionnaire,
   'habits-over-checklists': habitsOverChecklists,
   'five-universal-patterns': fiveUniversalPatterns,
@@ -79,6 +87,14 @@ export const TOOLS: Partial<Record<ToolSlug, Tool>> = {
   'movement-snacks-menu': movementSnacksMenu,
   'box-breathing-guide': boxBreathingGuide,
   'non-food-stress-relief-menu': nonFoodStressReliefMenu,
+  'bare-minimum-protocol-builder': bareMinimumProtocolBuilder,
+  'automaticity-audit': automaticityAudit,
+  'stress-signal-identifier': stressSignalIdentifier,
+  'energy-orchestra-planner': energyOrchestraPlanner,
+  'my-system-documentation': mySystemDocumentation,
+  'pattern-maintenance-system': patternMaintenanceSystem,
+  'transformation-summary': transformationSummary,
+  'whats-next-guide': whatsNextGuide,
 };
 
 export function toolBySlug(slug: string): Tool | undefined {
@@ -86,5 +102,5 @@ export function toolBySlug(slug: string): Tool | undefined {
 }
 
 export function toolsForWeek(week: WeekNumber): Tool[] {
-  return Object.values(TOOLS).filter((t): t is Tool => Boolean(t) && t.introducedInWeek === week);
+  return Object.values(TOOLS).filter((t) => t.introducedInWeek === week);
 }
