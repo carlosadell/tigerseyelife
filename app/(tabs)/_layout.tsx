@@ -36,7 +36,7 @@ export default function TabsLayout() {
   if (!session) return <Redirect href="/(auth)/sign-in" />;
   if (!membership.forkAnswered) return <Redirect href="/membership" />;
   if (!membership.programMember) return <Redirect href="/non-member" />;
-  if (!completed) return <Redirect href="/onboarding" />;
+  if (!completed) return <Redirect href="/onboarding/intake/welcome" />;
 
   return (
     <View style={styles.root}>

@@ -39,7 +39,7 @@ export default function Index() {
   if (!session) return <Redirect href="/(auth)/sign-in" />;
   if (!membership.forkAnswered) return <Redirect href="/membership" />;
   if (!membership.programMember) return <Redirect href="/non-member" />;
-  if (!intakeCompleted) return <Redirect href="/onboarding" />;
+  if (!intakeCompleted) return <Redirect href="/onboarding/intake/welcome" />;
   return <Redirect href="/(tabs)/today" />;
 }
 

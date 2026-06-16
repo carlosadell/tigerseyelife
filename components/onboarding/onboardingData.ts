@@ -1,5 +1,3 @@
-import { OnboardingPayload } from '../../hooks/useOnboardingStatus';
-
 export type Baseline = Record<string, string>;
 export type TrainingConfig = {
   days: string;
@@ -103,4 +101,4 @@ export const initialSelectedTags: SelectedTags = {
 
 export type TagKey = keyof typeof onboardingTags;
 export type SelectedTags = Record<TagKey, string[]>;
-export type ExperienceLevel = OnboardingPayload['experienceLevel'];
+export type ExperienceLevel = 'new' | 'returning' | 'advanced';
