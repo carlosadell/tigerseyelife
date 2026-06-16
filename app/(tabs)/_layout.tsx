@@ -6,9 +6,11 @@ import { ActivityIndicator, StyleSheet, View } from 'react-native';
 import { CoachBottomSheet, type CoachSheetHandle } from '../../components/navigation/CoachBottomSheet';
 import { FloatingTabBar } from '../../components/navigation/FloatingTabBar';
 import { useAuth } from '../../hooks/useAuth';
+import { useCurrentWeek } from '../../hooks/useCurrentWeek';
 import { useMembership } from '../../hooks/useMembership';
 import { useOnboardingStatus } from '../../hooks/useOnboardingStatus';
 import { useThemeColors } from '../../hooks/useTheme';
+import { isFeatureUnlocked } from '../../lib/unlocks';
 
 /**
  * Tabs layout re-checks the same gates as app/index.tsx so deep-linking
@@ -18,8 +20,10 @@ export default function TabsLayout() {
   const { loading, session } = useAuth();
   const { loading: membershipLoading, membership } = useMembership();
   const { completed, loading: onboardingLoading } = useOnboardingStatus();
+  const { weekNumber } = useCurrentWeek();
   const colors = useThemeColors();
   const coachSheetRef = useRef<CoachSheetHandle>(null);
+  const fuelUnlocked = isFeatureUnlocked('meal-logging', weekNumber);
 
   const openCoach = useCallback(() => {
     coachSheetRef.current?.snapToIndex(0);
@@ -50,7 +54,13 @@ export default function TabsLayout() {
       >
         <Tabs.Screen name="today" options={{ title: 'Today' }} />
         <Tabs.Screen name="train" options={{ title: 'Train' }} />
-        <Tabs.Screen name="fuel" options={{ title: 'Fuel' }} />
+        <Tabs.Screen
+          name="fuel"
+          options={{
+            title: 'Fuel',
+            href: fuelUnlocked ? '/fuel' : null,
+          }}
+        />
         <Tabs.Screen name="grow" options={{ title: 'Grow' }} />
         <Tabs.Screen name="you" options={{ title: 'You' }} />
       </Tabs>

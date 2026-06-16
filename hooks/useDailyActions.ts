@@ -10,6 +10,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useAuth } from './useAuth';
 import { supabase } from '../lib/supabase';
 import type { WeekNumber } from '../lib/program';
+import { weekFor } from '../lib/program';
 
 export type DailyActionRecord = {
   actionId: string;
@@ -151,9 +152,14 @@ export function useDailyActions(currentWeek: WeekNumber): {
   );
 
   const weekProgress = useMemo(() => {
-    const completed = todayCompletions.size;
-    return { completed, total: 0, percentage: 0 };
-  }, [todayCompletions]);
+    const week = weekFor(currentWeek);
+    const total = week.weekAtAGlance.length;
+    const completed = week.weekAtAGlance.filter(
+      (a) => (weekCompletions.get(a.id) ?? 0) >= 1,
+    ).length;
+    const percentage = total === 0 ? 0 : Math.round((completed / total) * 100);
+    return { completed, total, percentage };
+  }, [currentWeek, weekCompletions]);
 
   return { todayCompletions, weekCompletions, weekProgress, toggleAction, loading };
 }
