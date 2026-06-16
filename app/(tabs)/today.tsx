@@ -1,71 +1,129 @@
 // app/(tabs)/today.tsx
-import { Platform, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { router } from 'expo-router';
+import { ArrowRight, Dumbbell } from 'lucide-react-native';
+import { Platform, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { CommitBlockToday } from '../../components/today/CommitBlockToday';
-import { useMembership } from '../../hooks/useMembership';
-import { COLORS, FONTS, SPACING, THEME_COLORS } from '../../lib/brand';
+import { DailyActionRow } from '../../components/today/DailyActionRow';
+import { DiscussionCard } from '../../components/today/DiscussionCard';
+import { PrimaryFocusCard } from '../../components/today/PrimaryFocusCard';
+import { useCurrentWeek } from '../../hooks/useCurrentWeek';
+import { useDailyActions } from '../../hooks/useDailyActions';
+import { useThemeColors } from '../../hooks/useTheme';
+import { COLORS, FONTS, SPACING } from '../../lib/brand';
+import { weekFor } from '../../lib/program';
+import { workoutsForBlock } from '../../lib/workoutSchedule';
 
-const light = THEME_COLORS.light;
-
-/**
- * Block-driven Today. Reads current_block from useMembership and dispatches
- * to the right module set. New blocks layer in as their own components
- * without re-architecting this file.
- *
- * Theme-locked light per spec §5.
- */
 export default function TodayScreen() {
-  const { membership } = useMembership();
-  const block = membership.currentBlock ?? 'COMMIT';
+  const colors = useThemeColors();
+  const { weekNumber, blockId } = useCurrentWeek();
+  const week = weekFor(weekNumber);
+  const { todayCompletions, toggleAction } = useDailyActions(weekNumber);
+
+  const totalToday = week.weekAtAGlance.length;
+  const doneToday = week.weekAtAGlance.filter((a) => todayCompletions.has(a.id)).length;
+
+  const blockWorkouts = workoutsForBlock(blockId);
+  const todayWorkout = blockWorkouts[0];
 
   return (
-    <SafeAreaView edges={['top']} style={[styles.screen, { backgroundColor: light.background }]}>
-      <View style={styles.frame}>
-        <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false} style={styles.scroll}>
-          {renderBlock(block)}
+    <SafeAreaView edges={['top']} style={[styles.screen, { backgroundColor: colors.background }]}>
+      <View style={styles.phoneFrame}>
+        <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+          <View style={styles.header}>
+            <Text style={[styles.kicker, { color: colors.accent }]}>TODAY</Text>
+            <Text style={[styles.title, { color: colors.text }]}>
+              Week {weekNumber} of 12 · {blockId}
+            </Text>
+          </View>
+
+          <View style={[styles.actionsCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
+            <View style={styles.actionsHeader}>
+              <Text style={[styles.actionsTitle, { color: colors.text }]}>Today's Actions</Text>
+              <Text style={[styles.actionsCount, { color: colors.mutedText }]}>
+                {doneToday} of {totalToday}
+              </Text>
+            </View>
+            <View style={styles.actionsList}>
+              {week.weekAtAGlance.map((action) => (
+                <DailyActionRow
+                  key={action.id}
+                  label={action.label}
+                  thread={action.thread}
+                  completed={todayCompletions.has(action.id)}
+                  onToggle={() => toggleAction(action.id, action.weeklyTarget)}
+                />
+              ))}
+            </View>
+          </View>
+
+          <PrimaryFocusCard
+            primaryFocus={week.primaryFocus}
+            toolSlugs={week.toolSlugs}
+            weekNumber={weekNumber}
+          />
+
+          {todayWorkout ? (
+            <Pressable
+              onPress={() => router.push(`/workout/${todayWorkout.slug}`)}
+              style={({ pressed }) => ({ opacity: pressed ? 0.92 : 1 })}
+            >
+              <View
+                style={[
+                  styles.workoutCard,
+                  { backgroundColor: colors.card, borderColor: colors.border },
+                ]}
+              >
+                <View style={styles.workoutTop}>
+                  <Dumbbell color={colors.accent} size={18} strokeWidth={1.8} />
+                  <Text style={[styles.workoutKicker, { color: colors.mutedText }]}>
+                    {todayWorkout.exercises.length} EXERCISES
+                  </Text>
+                </View>
+                <Text style={[styles.workoutTitle, { color: colors.text }]}>
+                  {todayWorkout.title}
+                </Text>
+                {todayWorkout.helper ? (
+                  <Text style={[styles.workoutHelper, { color: colors.mutedText }]} numberOfLines={2}>
+                    {todayWorkout.helper}
+                  </Text>
+                ) : null}
+                <View style={styles.workoutCta}>
+                  <Text style={[styles.workoutCtaText, { color: COLORS.tangerine }]}>Open</Text>
+                  <ArrowRight color={COLORS.tangerine} size={16} strokeWidth={2.4} />
+                </View>
+              </View>
+            </Pressable>
+          ) : null}
+
+          <DiscussionCard prompt={week.discussionPrompt} weekNumber={weekNumber} />
         </ScrollView>
       </View>
     </SafeAreaView>
   );
 }
 
-type Block = NonNullable<ReturnType<typeof useMembership>['membership']['currentBlock']>;
-
-function renderBlock(block: Block) {
-  if (block === 'COMMIT') return <CommitBlockToday weekIndex={1} weekLabel="Week 1" />;
-  return <BlockPlaceholder block={block} />;
-}
-
-function BlockPlaceholder({ block }: { block: string }) {
-  return (
-    <View style={[styles.placeholderWrap, { paddingHorizontal: SPACING.screenX }]}>
-      <View style={styles.placeholder}>
-        <Text style={styles.placeholderKicker}>BLOCK · {block}</Text>
-        <Text style={styles.placeholderTitle}>This block's Today is still being designed.</Text>
-        <Text style={styles.placeholderBody}>
-          Karen and Ryan haven't named the modules for {block} yet. Today is block-driven, so this slot will swap to a different set of cards. Nothing else changes.
-        </Text>
-      </View>
-    </View>
-  );
-}
-
 const styles = StyleSheet.create({
-  content: { paddingBottom: 128, paddingTop: 0 },
-  frame: { flex: 1, maxWidth: Platform.OS === 'web' ? 430 : undefined, width: '100%' },
-  placeholder: {
-    backgroundColor: light.card,
-    borderColor: light.border,
-    borderRadius: 16,
-    borderWidth: 1,
-    gap: 8,
-    padding: 18,
+  actionsCard: { borderRadius: 14, borderWidth: 1, gap: 12, padding: 14 },
+  actionsCount: { fontFamily: FONTS.sansBold, fontSize: 12, letterSpacing: 0.4 },
+  actionsHeader: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
   },
-  placeholderBody: { color: light.mutedText, fontFamily: FONTS.sans, fontSize: 14, lineHeight: 20 },
-  placeholderKicker: { color: COLORS.tigerGold, fontFamily: FONTS.sansBold, fontSize: 11, letterSpacing: 1.4 },
-  placeholderTitle: { color: light.text, fontFamily: FONTS.sansBold, fontSize: 18, letterSpacing: -0.2, lineHeight: 24 },
-  placeholderWrap: { marginTop: 24 },
+  actionsList: { gap: 8 },
+  actionsTitle: { fontFamily: FONTS.sansBold, fontSize: 18 },
+  content: { gap: 14, paddingBottom: 128, paddingHorizontal: SPACING.screenX, paddingTop: 12 },
+  header: { gap: 6 },
+  kicker: { fontFamily: FONTS.sansBold, fontSize: 11, letterSpacing: 2.4 },
+  phoneFrame: { flex: 1, maxWidth: Platform.OS === 'web' ? 430 : undefined, width: '100%' },
   screen: { alignItems: 'center', flex: 1 },
-  scroll: { flex: 1, width: '100%' },
+  title: { fontFamily: FONTS.sansBold, fontSize: 22, letterSpacing: -0.3, lineHeight: 28 },
+  workoutCard: { borderRadius: 14, borderWidth: 1, gap: 8, padding: 14 },
+  workoutCta: { alignItems: 'center', flexDirection: 'row', gap: 6, marginTop: 4 },
+  workoutCtaText: { fontFamily: FONTS.sansBold, fontSize: 13.5 },
+  workoutHelper: { fontFamily: FONTS.sans, fontSize: 13, lineHeight: 18 },
+  workoutKicker: { fontFamily: FONTS.sansBold, fontSize: 10.5, letterSpacing: 1.4 },
+  workoutTitle: { fontFamily: FONTS.sansBold, fontSize: 18, letterSpacing: -0.2, lineHeight: 22 },
+  workoutTop: { alignItems: 'center', flexDirection: 'row', gap: 8 },
 });
