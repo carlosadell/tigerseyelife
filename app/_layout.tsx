@@ -85,6 +85,7 @@ function RootStack() {
         <Stack.Screen name="onboarding/intake/review" />
         <Stack.Screen name="(tabs)" />
         <Stack.Screen name="workout/[id]" />
+        <Stack.Screen name="tool/[slug]" />
         <Stack.Screen name="exercise/[id]" />
         <Stack.Screen name="grow/[block]" />
         <Stack.Screen name="grow/[block]/[slug]" />
