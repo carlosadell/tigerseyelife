@@ -47,14 +47,27 @@ export function useUserPathway() {
 
   const setPathway = useCallback(
     async (next: PathwayId) => {
+      const prev = pathway;
       setPathwayState(next);
       if (isDevSession || !supabase) {
-        await AsyncStorage.setItem(storageKey(userId), next);
+        try {
+          await AsyncStorage.setItem(storageKey(userId), next);
+        } catch (err) {
+          setPathwayState(prev);
+          console.warn('useUserPathway: AsyncStorage write failed, reverting', err);
+        }
         return;
       }
-      await supabase.from('profiles').update({ pathway: next }).eq('id', userId);
+      const { error } = await supabase
+        .from('profiles')
+        .update({ pathway: next })
+        .eq('id', userId);
+      if (error) {
+        setPathwayState(prev);
+        console.warn('useUserPathway: Supabase update failed, reverting', error);
+      }
     },
-    [isDevSession, userId],
+    [isDevSession, userId, pathway],
   );
 
   return { pathway, isLoaded, setPathway };

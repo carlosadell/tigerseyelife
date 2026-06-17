@@ -1,5 +1,5 @@
 // hooks/useConceptTelemetry.ts
-import { useCallback } from 'react';
+import { useMemo } from 'react';
 
 import type { ConceptScope } from '../lib/conceptMetadata';
 import type { ConceptEventKind } from '../lib/conceptTelemetry';
@@ -17,8 +17,8 @@ export function useConceptTelemetry() {
   const { pathway } = useUserPathway();
   const userId = session?.user?.id ?? 'anon';
 
-  const fire = useCallback(
-    (kind: ConceptEventKind) =>
+  return useMemo(() => {
+    const fire = (kind: ConceptEventKind) =>
       (conceptSlug: string, block: ConceptScope, opts?: Opts) =>
         recordConceptEvent(userId, isDevSession, {
           conceptSlug,
@@ -27,20 +27,19 @@ export function useConceptTelemetry() {
           kind,
           durationMs: opts?.durationMs,
           meta: opts?.meta,
-        }),
-    [userId, isDevSession, pathway],
-  );
+        });
 
-  return {
-    recordLayer1Viewed: fire('layer1_viewed'),
-    recordLayer2ReadStart: fire('layer2_read_started'),
-    recordLayer2ReadComplete: fire('layer2_read_completed'),
-    recordLayer2ListenStart: fire('layer2_listen_started'),
-    recordLayer2ListenComplete: fire('layer2_listen_completed'),
-    recordLayer3Start: fire('layer3_started'),
-    recordLayer3Complete: fire('layer3_completed'),
-    recordBlockEntered: fire('block_entered'),
-    recordBlockExited: fire('block_exited'),
-    recordTimeEligibilityOptout: fire('time_eligibility_optout'),
-  };
+    return {
+      recordLayer1Viewed: fire('layer1_viewed'),
+      recordLayer2ReadStart: fire('layer2_read_started'),
+      recordLayer2ReadComplete: fire('layer2_read_completed'),
+      recordLayer2ListenStart: fire('layer2_listen_started'),
+      recordLayer2ListenComplete: fire('layer2_listen_completed'),
+      recordLayer3Start: fire('layer3_started'),
+      recordLayer3Complete: fire('layer3_completed'),
+      recordBlockEntered: fire('block_entered'),
+      recordBlockExited: fire('block_exited'),
+      recordTimeEligibilityOptout: fire('time_eligibility_optout'),
+    };
+  }, [userId, isDevSession, pathway]);
 }
