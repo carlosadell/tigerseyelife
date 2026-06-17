@@ -1,4 +1,5 @@
 // app/(tabs)/today.tsx
+import { useEffect, useRef } from 'react';
 import { router } from 'expo-router';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -11,11 +12,13 @@ import { AnchorRow } from '../../components/ui/AnchorRow';
 import { AwarenessCard, type DailyPrompt } from '../../components/ui/AwarenessCard';
 import { SectionHeader } from '../../components/ui/SectionHeader';
 import { useAuth } from '../../hooks/useAuth';
+import { useConceptTelemetry } from '../../hooks/useConceptTelemetry';
 import { useCurrentWeek } from '../../hooks/useCurrentWeek';
 import { useDailyEngagement } from '../../hooks/useDailyEngagement';
 import { useMembership } from '../../hooks/useMembership';
 import { useProfile } from '../../hooks/useProfile';
 import { COLORS, FONTS, THEME_COLORS } from '../../lib/brand';
+import type { ConceptScope } from '../../lib/conceptMetadata';
 import { anchorsForWeek, heroHeadlineFor, resolveAnchorIcon } from '../../lib/heroAnchors';
 import { weekFor } from '../../lib/program';
 import { workoutsForBlock } from '../../lib/workoutSchedule';
@@ -28,6 +31,18 @@ export default function TodayScreen() {
   const { devReset } = useMembership();
   const { weekNumber, blockId } = useCurrentWeek();
   const { recordEngagement } = useDailyEngagement();
+  const t = useConceptTelemetry();
+  const lastBlockRef = useRef<ConceptScope | null>(null);
+
+  useEffect(() => {
+    if (!blockId) return;
+    if (lastBlockRef.current === blockId) return;
+    if (lastBlockRef.current) {
+      t.recordBlockExited('today', lastBlockRef.current);
+    }
+    t.recordBlockEntered('today', blockId);
+    lastBlockRef.current = blockId;
+  }, [blockId, t]);
 
   const week = weekFor(weekNumber);
   const headline = heroHeadlineFor(weekNumber);
