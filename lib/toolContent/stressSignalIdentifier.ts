@@ -15,7 +15,7 @@ export const stressSignalIdentifier: Tool = {
   layerSet: { layer1: true, layer2: true, layer3: false },
   layered: {
     layer1: {
-      wordCount: 40,
+      wordCount: 39,
       body: 'Your body signals stress before your mind catches it. Jaw tension, sleep changes, appetite shifts. Document your personal signals now so you can catch them earlier next time and move to your first response before the pattern takes over.',
     },
     layer2: {

@@ -15,7 +15,7 @@ export const mealPrepSystemGuide: Tool = {
   layerSet: { layer1: true, layer2: true, layer3: false },
   layered: {
     layer1: {
-      wordCount: 35,
+      wordCount: 36,
       body: 'Ninety minutes once a week and you have five days of anchor meals ready. Two proteins, a tray of roasted vegetables, a pot of starch. Assembly takes three minutes. This is a system, not a hobby.',
     },
     layer2: {

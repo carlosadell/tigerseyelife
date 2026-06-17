@@ -15,7 +15,7 @@ export const abcPowerMealsGuide: Tool = {
   layerSet: { layer1: true, layer2: true, layer3: false },
   layered: {
     layer1: {
-      wordCount: 38,
+      wordCount: 34,
       body: 'Anchor with protein. Balance with carbs, fats, and fiber. Complete with herbs, spices, or sauce that you like. Twenty five to thirty five grams of protein per meal. Build one plate this way today.',
     },
     layer2: {

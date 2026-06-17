@@ -15,7 +15,7 @@ export const windDownRoutineBuilder: Tool = {
   layerSet: { layer1: true, layer2: true, layer3: false },
   layered: {
     layer1: {
-      wordCount: 36,
+      wordCount: 39,
       body: 'Pick three of the eight options below. Run them in the same order every night, ending thirty minutes before bed. Phone in a drawer, warm shower, read fiction, dim lights. The routine tells your nervous system sleep is coming.',
     },
     layer2: {

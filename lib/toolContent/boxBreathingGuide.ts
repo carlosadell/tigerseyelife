@@ -15,7 +15,7 @@ export const boxBreathingGuide: Tool = {
   layerSet: { layer1: true, layer2: true, layer3: false },
   layered: {
     layer1: {
-      wordCount: 30,
+      wordCount: 27,
       body: 'Inhale four counts. Hold four. Exhale four. Hold four. Sixteen seconds total. The held exhale resets your nervous system. Do two rounds now and notice what shifts.',
     },
     layer2: {

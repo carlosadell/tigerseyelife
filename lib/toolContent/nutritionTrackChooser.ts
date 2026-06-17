@@ -15,7 +15,7 @@ export const nutritionTrackChooser: Tool = {
   layerSet: { layer1: true, layer2: true, layer3: false },
   layered: {
     layer1: {
-      wordCount: 36,
+      wordCount: 44,
       body: 'Two tracks, pick one. Track A addresses blood sugar spikes and crashes: pair carbs with protein at every meal. Track B addresses processed food: swap one packaged item per day for a whole food version. One track this week. Stack them in Week 2.',
     },
     layer2: {

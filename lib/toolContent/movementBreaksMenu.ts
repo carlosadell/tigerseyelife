@@ -15,7 +15,7 @@ export const movementBreaksMenu: Tool = {
   layerSet: { layer1: true, layer2: true, layer3: false },
   layered: {
     layer1: {
-      wordCount: 32,
+      wordCount: 38,
       body: 'Ten breaks, five minutes or less each. Pick one and do it now. Chair squats, a two minute walk, wall push ups while the kettle heats. The break is not a reward. It is part of the work.',
     },
     layer2: {

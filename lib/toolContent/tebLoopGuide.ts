@@ -15,7 +15,7 @@ export const tebLoopGuide: Tool = {
   layerSet: { layer1: true, layer2: true, layer3: false },
   layered: {
     layer1: {
-      wordCount: 38,
+      wordCount: 41,
       body: 'Thinking, Emotion, Behavior. A trigger fires a thought. The thought creates an emotion. The emotion drives the action. Most people skip the thought and let the emotion drive. Break the loop at the thinking step and the pattern stops running you.',
     },
     layer2: {

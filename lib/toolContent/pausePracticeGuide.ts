@@ -15,7 +15,7 @@ export const pausePracticeGuide: Tool = {
   layerSet: { layer1: true, layer2: true, layer3: false },
   layered: {
     layer1: {
-      wordCount: 37,
+      wordCount: 38,
       body: 'Three words: Notice. Pause. Observe. A trigger lands. You name it. You wait ten seconds. You watch what wants to happen before you decide anything. You cannot change a pattern you cannot see. The pause creates the seeing.',
     },
     layer2: {

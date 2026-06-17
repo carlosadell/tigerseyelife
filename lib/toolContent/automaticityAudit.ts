@@ -15,7 +15,7 @@ export const automaticityAudit: Tool = {
   layerSet: { layer1: true, layer2: true, layer3: false },
   layered: {
     layer1: {
-      wordCount: 39,
+      wordCount: 38,
       body: 'Walk through your last forty eight hours and check which behaviors felt automatic. The ones that needed willpower are still habits in progress. The ones that ran on autopilot are yours now. That is the difference worth tracking.',
     },
     layer2: {

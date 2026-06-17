@@ -15,7 +15,7 @@ export const initialQuestionnaire: Tool = {
   layerSet: { layer1: true, layer2: true, layer3: false },
   layered: {
     layer1: {
-      wordCount: 33,
+      wordCount: 32,
       body: 'Five questions. Honest answers only. This is your baseline: sleep, food, movement, patterns, and the bigger reason behind these twelve weeks. Write it down so you can look back at it later.',
     },
     layer2: {

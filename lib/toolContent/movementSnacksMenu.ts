@@ -15,7 +15,7 @@ export const movementSnacksMenu: Tool = {
   layerSet: { layer1: true, layer2: true, layer3: false },
   layered: {
     layer1: {
-      wordCount: 35,
+      wordCount: 36,
       body: 'Thirty seconds each, no clothes change required. Three to five of these per day add up. Squats while the coffee brews, calf raises while brushing teeth. Stack them onto what already happens and movement becomes ambient.',
     },
     layer2: {

@@ -15,7 +15,7 @@ export const patternMaintenanceSystem: Tool = {
   layerSet: { layer1: true, layer2: true, layer3: false },
   layered: {
     layer1: {
-      wordCount: 41,
+      wordCount: 42,
       body: 'Patterns go quiet, not away. A monthly check-in keeps you aware: which pattern showed up, what triggered it, how you responded. When stress reveals an old pattern, that is not failure. It is information telling you which small tune-up move to run.',
     },
     layer2: {

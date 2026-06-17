@@ -15,7 +15,7 @@ export const sleepEnvironmentChecklist: Tool = {
   layerSet: { layer1: true, layer2: true, layer3: false },
   layered: {
     layer1: {
-      wordCount: 33,
+      wordCount: 37,
       body: 'Eight conditions that determine whether your bedroom is working for sleep. Walk through them now and check what is already true. Pick one to change this week. The environment does the convincing before your body even tries.',
     },
     layer2: {

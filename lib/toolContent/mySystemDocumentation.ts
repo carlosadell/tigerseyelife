@@ -15,7 +15,7 @@ export const mySystemDocumentation: Tool = {
   layerSet: { layer1: true, layer2: true, layer3: false },
   layered: {
     layer1: {
-      wordCount: 37,
+      wordCount: 36,
       body: 'Seven fields. Write down the system that is actually working for you. Patterns you now manage. Food. Movement. Energy. Recovery. Bare minimum. If you can describe it in your own words, you can repeat it anywhere.',
     },
     layer2: {

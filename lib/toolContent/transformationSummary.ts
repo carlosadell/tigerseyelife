@@ -15,7 +15,7 @@ export const transformationSummary: Tool = {
   layerSet: { layer1: true, layer2: true, layer3: false },
   layered: {
     layer1: {
-      wordCount: 33,
+      wordCount: 34,
       body: 'Week 1 versus Week 12, in your own words. Seven fields: body, mind, food, movement, stress, biggest win, what surprised you. Writing it down makes it real and makes it yours to carry forward.',
     },
     layer2: {

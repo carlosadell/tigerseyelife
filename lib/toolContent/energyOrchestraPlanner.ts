@@ -15,7 +15,7 @@ export const energyOrchestraPlanner: Tool = {
   layerSet: { layer1: true, layer2: true, layer3: false },
   layered: {
     layer1: {
-      wordCount: 39,
+      wordCount: 35,
       body: 'Your energy has three movements: morning, midday, and evening. Each one sets up the next. Design what goes in each slot, physical and mental, and you stop reacting to the day and start conducting it.',
     },
     layer2: {

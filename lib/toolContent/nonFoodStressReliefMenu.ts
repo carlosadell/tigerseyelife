@@ -15,7 +15,7 @@ export const nonFoodStressReliefMenu: Tool = {
   layerSet: { layer1: true, layer2: true, layer3: false },
   layered: {
     layer1: {
-      wordCount: 36,
+      wordCount: 40,
       body: 'Fifteen options that work before you reach for food. A two minute walk, cold water on the wrists, four rounds of box breathing, a text to a friend. The snack call is a stress call. This list answers it differently.',
     },
     layer2: {

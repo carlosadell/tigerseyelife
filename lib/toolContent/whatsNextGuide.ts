@@ -15,7 +15,7 @@ export const whatsNextGuide: Tool = {
   layerSet: { layer1: true, layer2: true, layer3: false },
   layered: {
     layer1: {
-      wordCount: 38,
+      wordCount: 42,
       body: 'Three paths from here. Stay in the membership for ongoing community and accountability. Move to GST for small group strength training. Or return for a second round of CREATE POWER with systems already built. Notice what you need and choose from that.',
     },
     layer2: {

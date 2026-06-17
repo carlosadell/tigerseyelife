@@ -15,7 +15,7 @@ export const bareMinimumProtocolBuilder: Tool = {
   layerSet: { layer1: true, layer2: true, layer3: false },
   layered: {
     layer1: {
-      wordCount: 40,
+      wordCount: 42,
       body: 'Design your floor before the hard day arrives. Five areas, one non-negotiable each: morning, movement, food, mind, sleep. Filling this in now means that when things fall apart, you already know what still happens. The floor is what keeps the streak alive.',
     },
     layer2: {

@@ -15,7 +15,7 @@ export const kitchenResetGuide: Tool = {
   layerSet: { layer1: true, layer2: true, layer3: false },
   layered: {
     layer1: {
-      wordCount: 36,
+      wordCount: 38,
       body: 'Thirty to forty five minutes, once. Move proteins to eye level. Pre-cut two vegetables. Put trigger foods out of sight. Set a protein snack on the counter. The environment does the work so you do not have to.',
     },
     layer2: {
