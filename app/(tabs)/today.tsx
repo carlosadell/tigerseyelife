@@ -128,7 +128,7 @@ const styles = StyleSheet.create({
   awarenessWrap: { marginTop: 22 },
   content: {
     paddingBottom: 128,
-    paddingHorizontal: 16,
+    paddingHorizontal: 12,
     paddingTop: 12,
   },
   devBody: {
