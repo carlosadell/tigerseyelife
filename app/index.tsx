@@ -5,6 +5,7 @@ import { ActivityIndicator, StyleSheet, View } from 'react-native';
 import { useAuth } from '../hooks/useAuth';
 import { useMembership } from '../hooks/useMembership';
 import { useOnboardingStatus } from '../hooks/useOnboardingStatus';
+import { useUserPathway } from '../hooks/useUserPathway';
 import { COLORS, THEME_COLORS } from '../lib/brand';
 
 const light = THEME_COLORS.light;
@@ -25,8 +26,9 @@ export default function Index() {
   const { loading: authLoading, session } = useAuth();
   const { loading: membershipLoading, membership } = useMembership();
   const { completed: intakeCompleted, loading: intakeLoading } = useOnboardingStatus();
+  const { pathway, isLoaded: pathwayLoaded } = useUserPathway();
 
-  const stillLoading = authLoading || (session && (membershipLoading || intakeLoading));
+  const stillLoading = authLoading || (session && (membershipLoading || intakeLoading || !pathwayLoaded));
 
   if (stillLoading) {
     return (
@@ -40,6 +42,7 @@ export default function Index() {
   if (!membership.forkAnswered) return <Redirect href="/membership" />;
   if (!membership.programMember) return <Redirect href="/non-member" />;
   if (!intakeCompleted) return <Redirect href="/onboarding/intake/welcome" />;
+  if (pathway === 'self-serve') return <Redirect href="/self-serve-coming-soon" />;
   return <Redirect href="/(tabs)/today" />;
 }
 
