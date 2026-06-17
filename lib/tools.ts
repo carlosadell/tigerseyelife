@@ -4,6 +4,8 @@
 // canonical curriculum map descriptions. Bodies live in lib/toolContent/.
 
 import type { WeekNumber } from './program';
+import type { ConceptMetadata, LayerSet } from './conceptMetadata';
+import type { LayeredContent } from './layeredContent';
 
 export type ToolSlug =
   | 'initial-questionnaire'
@@ -42,6 +44,11 @@ export type Tool = {
   title: string;
   introducedInWeek: WeekNumber | 0;
   isStar: boolean;
+  metadata: ConceptMetadata;
+  layerSet: LayerSet;
+  layered: LayeredContent;
+  // @deprecated kept for back-compat during migration; equals layered.layer2.body
+  // when layer2 is present, otherwise mirrors the static body.
   body: ToolBody;
 };
 
