@@ -8,6 +8,8 @@ import { useThemeColors } from '../../hooks/useTheme';
 import { FONTS } from '../../lib/brand';
 import type { ConceptScope } from '../../lib/conceptMetadata';
 import type { LayeredContent } from '../../lib/layeredContent';
+import { blockFor, THREAD_NAMES } from '../../lib/program';
+import type { CompassRole, ThreadLetter } from '../../lib/program';
 import { ChecklistBody } from '../tool/ChecklistBody';
 import { FillInTemplateBody } from '../tool/FillInTemplateBody';
 import { MenuListBody } from '../tool/MenuListBody';
@@ -64,6 +66,10 @@ export function LayeredConceptBody({ conceptSlug, block, content }: Props) {
 
   return (
     <View style={styles.wrap}>
+      {/* POWER Compass — which threads this block emphasizes. Only shown
+          for block-scoped concepts; 'library' concepts skip this. */}
+      {block !== 'library' ? <PowerCompassChips block={block} /> : null}
+
       {/* Layer 1 — required 30-sec overview */}
       <View style={[styles.layer1, { backgroundColor: colors.cardAlt, borderColor: colors.border }]}>
         <Text style={[styles.kicker, { color: colors.accent }]}>30 SECOND OVERVIEW</Text>
@@ -98,6 +104,7 @@ export function LayeredConceptBody({ conceptSlug, block, content }: Props) {
             <LayerAudioPlayer
               uri={content.layer2.audioUri}
               durationSec={content.layer2.audioDurationSec}
+              chapters={content.layer2.chapters}
               onComplete={() => t.recordLayer2ListenComplete(conceptSlug, block)}
             />
           ) : (
@@ -129,6 +136,7 @@ export function LayeredConceptBody({ conceptSlug, block, content }: Props) {
               <LayerAudioPlayer
                 uri={content.layer3.audioUri}
                 durationSec={content.layer3.audioDurationSec}
+                chapters={content.layer3.chapters}
                 onComplete={() => t.recordLayer3Complete(conceptSlug, block)}
               />
             </View>
@@ -176,6 +184,77 @@ function ModeButton({
   );
 }
 
+// POWER Compass chips — shows the block's Primary/Secondary/Maintain
+// emphasis across the 5 threads (Patterns, Ownership, Wisdom, Energy,
+// Resilience). Per the dev brief: "POWER stands tall at the program
+// level, but inside any given block the Compass's Primary / Secondary /
+// Maintain emphasis decides prominence." Concepts surface this so the
+// user can see why this content is taught now, without us forcing all
+// four threads to equal weight.
+function PowerCompassChips({ block }: { block: Exclude<ConceptScope, 'library'> }) {
+  const colors = useThemeColors();
+  const blockData = blockFor(block);
+  const order: ThreadLetter[] = ['P', 'O', 'W', 'E', 'R'];
+
+  return (
+    <View style={styles.compassWrap}>
+      <Text style={[styles.compassKicker, { color: colors.mutedText }]}>POWER COMPASS · THIS BLOCK</Text>
+      <View style={styles.compassRow}>
+        {order.map((letter) => {
+          const entry = blockData.powerCompass[letter];
+          return (
+            <CompassChip
+              key={letter}
+              letter={letter}
+              name={THREAD_NAMES[letter]}
+              role={entry.role}
+              colors={colors}
+            />
+          );
+        })}
+      </View>
+    </View>
+  );
+}
+
+function CompassChip({
+  letter,
+  name,
+  role,
+  colors,
+}: {
+  letter: ThreadLetter;
+  name: string;
+  role: CompassRole;
+  colors: ReturnType<typeof useThemeColors>;
+}) {
+  const isPrimary = role === 'PRIMARY';
+  const isSecondary = role === 'SECONDARY';
+
+  const chipStyle =
+    isPrimary
+      ? { backgroundColor: '#F1E6C8', borderColor: 'transparent' }
+      : isSecondary
+        ? { backgroundColor: colors.cardAlt, borderColor: colors.border }
+        : { backgroundColor: 'transparent', borderColor: colors.border, borderStyle: 'dashed' as const };
+
+  const textColor = isPrimary ? colors.accent : isSecondary ? colors.text : colors.mutedText;
+
+  return (
+    <View style={[styles.chip, chipStyle]}>
+      <Text style={[styles.chipLetter, { color: textColor }]}>{letter}</Text>
+      <View style={styles.chipBody}>
+        <Text style={[styles.chipName, { color: textColor }]} numberOfLines={1}>
+          {name}
+        </Text>
+        <Text style={[styles.chipRole, { color: textColor }]} numberOfLines={1}>
+          {role === 'PRIMARY' ? 'Primary' : role === 'SECONDARY' ? 'Secondary' : 'Maintain'}
+        </Text>
+      </View>
+    </View>
+  );
+}
+
 function Layer2ReadBody({
   body,
   conceptSlug,
@@ -194,6 +273,43 @@ function Layer2ReadBody({
 
 const styles = StyleSheet.create({
   chevOpen: { transform: [{ rotate: '180deg' }] },
+  chip: {
+    alignItems: 'center',
+    borderRadius: 12,
+    borderWidth: 1,
+    flex: 1,
+    flexDirection: 'row',
+    gap: 8,
+    paddingHorizontal: 10,
+    paddingVertical: 8,
+  },
+  chipBody: { flex: 1, minWidth: 0 },
+  chipLetter: {
+    fontFamily: FONTS.sansBold,
+    fontSize: 16,
+    letterSpacing: -0.5,
+    width: 14,
+    textAlign: 'center',
+  },
+  chipName: {
+    fontFamily: FONTS.sansBold,
+    fontSize: 11,
+    letterSpacing: -0.05,
+  },
+  chipRole: {
+    fontFamily: FONTS.sansMedium,
+    fontSize: 9,
+    letterSpacing: 0.3,
+    marginTop: 1,
+    opacity: 0.85,
+  },
+  compassKicker: {
+    fontFamily: FONTS.sansBold,
+    fontSize: 9.5,
+    letterSpacing: 1.6,
+  },
+  compassRow: { flexDirection: 'row', gap: 6 },
+  compassWrap: { gap: 8 },
   kicker: { fontFamily: FONTS.sansBold, fontSize: 10.5, letterSpacing: 1.6 },
   l3Body: { fontFamily: FONTS.sans, fontSize: 14, lineHeight: 20 },
   l3Inner: { gap: 12, marginTop: 12 },

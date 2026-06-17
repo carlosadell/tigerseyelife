@@ -1,7 +1,8 @@
 // components/ui/PhotoHeroCard.tsx
+import { LinearGradient } from 'expo-linear-gradient';
 import { Image, StyleSheet, Text, View, type ImageSourcePropType } from 'react-native';
 
-import { FONTS, THEME_COLORS } from '../../lib/brand';
+import { COLORS, FONTS, THEME_COLORS } from '../../lib/brand';
 
 const light = THEME_COLORS.light;
 
@@ -13,12 +14,16 @@ type PhotoHeroCardProps = {
 };
 
 /**
- * Photographic hero card — cream-gradient (flat cream here, since we don't
- * want a Reanimated/expo-linear-gradient dependency for this surface) bg,
- * gold kicker, bold sentence-case headline, photo bleeding into the right edge.
+ * Photographic hero card. Two layouts:
  *
- * Used for Today's "This Week's Focus," the verify-membership coach hero, and
- * the non-member landing.
+ * - `right` (default): cream card with the photo bleeding into the right
+ *   edge. Text sits on cream so contrast is inherent — no scrim needed.
+ * - `full`: photo fills the card, text overlays at the bottom. A real
+ *   `LinearGradient` from transparent at the top to ~78% black at the
+ *   bottom anchors the text region without showing horizontal banding
+ *   (which a stack of solid semi-transparent layers would). Plus a
+ *   brighter kicker and a text shadow on the headline for the rare
+ *   moment when the bottom of the photo is light.
  */
 export function PhotoHeroCard({ kicker, title, photoUri, photoSide = 'right' }: PhotoHeroCardProps) {
   const source: ImageSourcePropType = { uri: photoUri };
@@ -27,9 +32,15 @@ export function PhotoHeroCard({ kicker, title, photoUri, photoSide = 'right' }: 
     return (
       <View style={[styles.card, styles.full]}>
         <Image source={source} style={styles.fullPhoto} />
+        <LinearGradient
+          colors={['rgba(0,0,0,0)', 'rgba(0,0,0,0.20)', 'rgba(0,0,0,0.78)']}
+          locations={[0, 0.45, 1]}
+          style={styles.scrim}
+          pointerEvents="none"
+        />
         <View style={styles.fullOverlay}>
-          <Text style={styles.kicker}>{kicker}</Text>
-          <Text style={[styles.title, { color: '#FFFFFF' }]}>{title}</Text>
+          <Text style={styles.kickerOnPhoto}>{kicker}</Text>
+          <Text style={styles.titleOnPhoto}>{title}</Text>
         </View>
       </View>
     );
@@ -55,18 +66,18 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
   },
   full: {
-    minHeight: 180,
+    minHeight: 200,
     position: 'relative',
   },
   fullOverlay: {
-    bottom: 16,
-    gap: 4,
-    left: 16,
+    bottom: 18,
+    gap: 6,
+    left: 18,
     position: 'absolute',
-    right: 16,
+    right: 18,
   },
   fullPhoto: {
-    height: 180,
+    height: 200,
     width: '100%',
   },
   kicker: {
@@ -74,6 +85,17 @@ const styles = StyleSheet.create({
     fontFamily: FONTS.sansBold,
     fontSize: 12,
     letterSpacing: 0.4,
+  },
+  // Kicker rendered ON the photo — brighter gold + text shadow so it
+  // doesn't get swallowed by light backgrounds.
+  kickerOnPhoto: {
+    color: COLORS.electricYellow,
+    fontFamily: FONTS.sansBold,
+    fontSize: 11.5,
+    letterSpacing: 1.4,
+    textShadowColor: 'rgba(0, 0, 0, 0.55)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 4,
   },
   right: {
     alignItems: 'center',
@@ -83,6 +105,9 @@ const styles = StyleSheet.create({
   rightPhoto: {
     height: 130,
     width: 110,
+  },
+  scrim: {
+    ...StyleSheet.absoluteFillObject,
   },
   textCol: {
     flex: 1,
@@ -98,5 +123,15 @@ const styles = StyleSheet.create({
     letterSpacing: -0.4,
     lineHeight: 26,
     marginTop: 2,
+  },
+  titleOnPhoto: {
+    color: '#FFFFFF',
+    fontFamily: FONTS.sansBold,
+    fontSize: 22,
+    letterSpacing: -0.4,
+    lineHeight: 26,
+    textShadowColor: 'rgba(0, 0, 0, 0.5)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 6,
   },
 });

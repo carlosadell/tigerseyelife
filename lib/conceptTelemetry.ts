@@ -22,7 +22,12 @@ export type ConceptEventKind =
   | 'layer3_completed'
   | 'block_entered'
   | 'block_exited'
-  | 'time_eligibility_optout';
+  | 'time_eligibility_optout'
+  // Self-serve questionnaire outcome. Tests Assumption 2 — was the
+  // questionnaire's primary-limiter call confirmed by the member's
+  // later engagement? `meta` carries the full score breakdown so
+  // we can also see the runner-up.
+  | 'limiter_scored';
 
 export type ConceptEvent = {
   conceptSlug: string;

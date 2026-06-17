@@ -40,6 +40,11 @@ export function useConceptTelemetry() {
       recordBlockEntered: fire('block_entered'),
       recordBlockExited: fire('block_exited'),
       recordTimeEligibilityOptout: fire('time_eligibility_optout'),
+      // Limiter-scoring outcome from the self-serve intake. Pass the
+      // winning limiter as conceptSlug ("identity", "systems", …) and
+      // the full score breakdown in meta. Block is 'library' because
+      // scoring isn't block-scoped.
+      recordLimiterScored: fire('limiter_scored'),
     };
   }, [userId, isDevSession, pathway]);
 }

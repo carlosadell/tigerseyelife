@@ -111,3 +111,19 @@ export function toolBySlug(slug: string): Tool | undefined {
 export function toolsForWeek(week: WeekNumber): Tool[] {
   return Object.values(TOOLS).filter((t) => t.introducedInWeek === week);
 }
+
+// Dev-only Layer 1 length audit. Per the brief, Layer 1 must read in
+// ~30 seconds — sixty words is the cap. We run this at module load in
+// dev so the warning surfaces immediately when a content edit drifts
+// past the limit. Stripped from prod builds via __DEV__.
+import { validateLayered } from './layeredContent';
+
+if (typeof __DEV__ !== 'undefined' && __DEV__) {
+  const warnings = Object.values(TOOLS).flatMap((tool) =>
+    validateLayered(tool.slug, tool.layered),
+  );
+  for (const w of warnings) {
+    // eslint-disable-next-line no-console
+    console.warn(`[tool:${w.conceptSlug}] ${w.kind}: ${w.message}`);
+  }
+}
