@@ -128,7 +128,7 @@ const styles = StyleSheet.create({
   awarenessWrap: { marginTop: 22 },
   content: {
     paddingBottom: 128,
-    paddingHorizontal: 12,
+    paddingHorizontal: 16,
     paddingTop: 12,
   },
   devBody: {
@@ -155,7 +155,6 @@ const styles = StyleSheet.create({
   },
   greetingWrap: { marginBottom: 18, marginTop: 28 },
   screen: {
-    alignItems: 'center',
     flex: 1,
   },
   workoutCard: {
