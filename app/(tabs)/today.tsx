@@ -1,129 +1,194 @@
 // app/(tabs)/today.tsx
 import { router } from 'expo-router';
-import { ArrowRight, Dumbbell } from 'lucide-react-native';
-import { Platform, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { DailyActionRow } from '../../components/today/DailyActionRow';
-import { DiscussionCard } from '../../components/today/DiscussionCard';
-import { PrimaryFocusCard } from '../../components/today/PrimaryFocusCard';
+import { FocusHeroCard } from '../../components/today/FocusHeroCard';
+import { GreetingHeader } from '../../components/today/GreetingHeader';
+import { TodayHeader } from '../../components/today/TodayHeader';
+import { WeekStrip } from '../../components/history/WeekStrip';
+import { AnchorRow } from '../../components/ui/AnchorRow';
+import { AwarenessCard, type DailyPrompt } from '../../components/ui/AwarenessCard';
+import { SectionHeader } from '../../components/ui/SectionHeader';
+import { useAuth } from '../../hooks/useAuth';
 import { useCurrentWeek } from '../../hooks/useCurrentWeek';
-import { useDailyActions } from '../../hooks/useDailyActions';
-import { useThemeColors } from '../../hooks/useTheme';
-import { COLORS, FONTS, SPACING } from '../../lib/brand';
+import { useDailyEngagement } from '../../hooks/useDailyEngagement';
+import { useMembership } from '../../hooks/useMembership';
+import { useProfile } from '../../hooks/useProfile';
+import { COLORS, FONTS, SPACING, THEME_COLORS } from '../../lib/brand';
+import { anchorsForWeek, heroHeadlineFor, resolveAnchorIcon } from '../../lib/heroAnchors';
 import { weekFor } from '../../lib/program';
 import { workoutsForBlock } from '../../lib/workoutSchedule';
 
+const light = THEME_COLORS.light;
+
 export default function TodayScreen() {
-  const colors = useThemeColors();
+  const { isDevSession } = useAuth();
+  const { profile } = useProfile();
+  const { devReset } = useMembership();
   const { weekNumber, blockId } = useCurrentWeek();
+  const { recordEngagement } = useDailyEngagement();
+
   const week = weekFor(weekNumber);
-  const { todayCompletions, toggleAction } = useDailyActions(weekNumber);
-
-  const totalToday = week.weekAtAGlance.length;
-  const doneToday = week.weekAtAGlance.filter((a) => todayCompletions.has(a.id)).length;
-
+  const headline = heroHeadlineFor(weekNumber);
+  const anchors = anchorsForWeek(weekNumber);
   const blockWorkouts = workoutsForBlock(blockId);
   const todayWorkout = blockWorkouts[0];
+  const prompt: DailyPrompt = { kind: 'awareness', body: week.discussionPrompt };
+
+  const blockTitle = `${blockId.charAt(0)}${blockId.slice(1).toLowerCase()}`;
+
+  const openAnchor = async (anchorId: string, route: string) => {
+    await recordEngagement(anchorId);
+    router.push(route);
+  };
+
+  const onStartOver = async () => {
+    await devReset();
+    router.replace('/membership');
+  };
 
   return (
-    <SafeAreaView edges={['top']} style={[styles.screen, { backgroundColor: colors.background }]}>
-      <View style={styles.phoneFrame}>
-        <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
-          <View style={styles.header}>
-            <Text style={[styles.kicker, { color: colors.accent }]}>TODAY</Text>
-            <Text style={[styles.title, { color: colors.text }]}>
-              Week {weekNumber} of 12 · {blockId}
-            </Text>
-          </View>
+    <SafeAreaView edges={['top']} style={[styles.screen, { backgroundColor: light.background }]}>
+      <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+        <TodayHeader />
+        <WeekStrip />
 
-          <View style={[styles.actionsCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
-            <View style={styles.actionsHeader}>
-              <Text style={[styles.actionsTitle, { color: colors.text }]}>Today's Actions</Text>
-              <Text style={[styles.actionsCount, { color: colors.mutedText }]}>
-                {doneToday} of {totalToday}
-              </Text>
-            </View>
-            <View style={styles.actionsList}>
-              {week.weekAtAGlance.map((action) => (
-                <DailyActionRow
-                  key={action.id}
-                  label={action.label}
-                  thread={action.thread}
-                  completed={todayCompletions.has(action.id)}
-                  onToggle={() => toggleAction(action.id, action.weeklyTarget)}
-                />
-              ))}
-            </View>
-          </View>
-
-          <PrimaryFocusCard
-            primaryFocus={week.primaryFocus}
-            toolSlugs={week.toolSlugs}
-            weekNumber={weekNumber}
+        <View style={styles.greetingWrap}>
+          <GreetingHeader
+            firstName={profile.firstName}
+            subtitle={`${blockTitle} Block · Week ${weekNumber}`}
           />
+        </View>
 
-          {todayWorkout ? (
+        <FocusHeroCard weekIndex={weekNumber} headline={headline} />
+
+        <SectionHeader title="Today's Focus" meta={`${anchors.length} anchors`} />
+        <View>
+          {anchors.map((anchor) => {
+            const Icon = resolveAnchorIcon(anchor.icon);
+            return (
+              <AnchorRow
+                key={anchor.id}
+                Icon={Icon}
+                title={anchor.title}
+                sub={anchor.helper}
+                onPress={() => openAnchor(anchor.id, anchor.conceptRoute)}
+              />
+            );
+          })}
+        </View>
+
+        {todayWorkout ? (
+          <>
+            <SectionHeader title="Today's Workout" />
             <Pressable
               onPress={() => router.push(`/workout/${todayWorkout.slug}`)}
               style={({ pressed }) => ({ opacity: pressed ? 0.92 : 1 })}
             >
-              <View
-                style={[
-                  styles.workoutCard,
-                  { backgroundColor: colors.card, borderColor: colors.border },
-                ]}
-              >
-                <View style={styles.workoutTop}>
-                  <Dumbbell color={colors.accent} size={18} strokeWidth={1.8} />
-                  <Text style={[styles.workoutKicker, { color: colors.mutedText }]}>
-                    {todayWorkout.exercises.length} EXERCISES
-                  </Text>
-                </View>
-                <Text style={[styles.workoutTitle, { color: colors.text }]}>
-                  {todayWorkout.title}
+              <View style={styles.workoutCard}>
+                <Text style={styles.workoutKicker}>
+                  {todayWorkout.exercises.length} EXERCISES
                 </Text>
+                <Text style={styles.workoutTitle}>{todayWorkout.title}</Text>
                 {todayWorkout.helper ? (
-                  <Text style={[styles.workoutHelper, { color: colors.mutedText }]} numberOfLines={2}>
+                  <Text style={styles.workoutHelper} numberOfLines={2}>
                     {todayWorkout.helper}
                   </Text>
                 ) : null}
-                <View style={styles.workoutCta}>
-                  <Text style={[styles.workoutCtaText, { color: COLORS.tangerine }]}>Open</Text>
-                  <ArrowRight color={COLORS.tangerine} size={16} strokeWidth={2.4} />
-                </View>
+                <Text style={styles.workoutCta}>Open</Text>
               </View>
             </Pressable>
-          ) : null}
+          </>
+        ) : null}
 
-          <DiscussionCard prompt={week.discussionPrompt} weekNumber={weekNumber} />
-        </ScrollView>
-      </View>
+        <View style={styles.awarenessWrap}>
+          <AwarenessCard prompt={prompt} />
+        </View>
+
+        {isDevSession ? (
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="Dev: start over"
+            onPress={onStartOver}
+            style={({ pressed }) => ({ opacity: pressed ? 0.7 : 1 })}
+          >
+            <View style={styles.devReset}>
+              <Text style={styles.devKicker}>DEV ONLY</Text>
+              <Text style={styles.devBody}>Start over from the fork</Text>
+            </View>
+          </Pressable>
+        ) : null}
+      </ScrollView>
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  actionsCard: { borderRadius: 14, borderWidth: 1, gap: 12, padding: 14 },
-  actionsCount: { fontFamily: FONTS.sansBold, fontSize: 12, letterSpacing: 0.4 },
-  actionsHeader: {
-    alignItems: 'center',
-    flexDirection: 'row',
-    justifyContent: 'space-between',
+  awarenessWrap: { marginTop: 22 },
+  content: {
+    paddingBottom: 128,
+    paddingHorizontal: SPACING.screenX,
+    paddingTop: 12,
   },
-  actionsList: { gap: 8 },
-  actionsTitle: { fontFamily: FONTS.sansBold, fontSize: 18 },
-  content: { gap: 14, paddingBottom: 128, paddingHorizontal: SPACING.screenX, paddingTop: 12 },
-  header: { gap: 6 },
-  kicker: { fontFamily: FONTS.sansBold, fontSize: 11, letterSpacing: 2.4 },
-  phoneFrame: { flex: 1, maxWidth: Platform.OS === 'web' ? 430 : undefined, width: '100%' },
-  screen: { alignItems: 'center', flex: 1 },
-  title: { fontFamily: FONTS.sansBold, fontSize: 22, letterSpacing: -0.3, lineHeight: 28 },
-  workoutCard: { borderRadius: 14, borderWidth: 1, gap: 8, padding: 14 },
-  workoutCta: { alignItems: 'center', flexDirection: 'row', gap: 6, marginTop: 4 },
-  workoutCtaText: { fontFamily: FONTS.sansBold, fontSize: 13.5 },
-  workoutHelper: { fontFamily: FONTS.sans, fontSize: 13, lineHeight: 18 },
-  workoutKicker: { fontFamily: FONTS.sansBold, fontSize: 10.5, letterSpacing: 1.4 },
-  workoutTitle: { fontFamily: FONTS.sansBold, fontSize: 18, letterSpacing: -0.2, lineHeight: 22 },
-  workoutTop: { alignItems: 'center', flexDirection: 'row', gap: 8 },
+  devBody: {
+    color: light.text,
+    fontFamily: FONTS.sansMedium,
+    fontSize: 14,
+    letterSpacing: -0.1,
+    marginTop: 4,
+  },
+  devKicker: {
+    color: COLORS.tangerine,
+    fontFamily: FONTS.sansBold,
+    fontSize: 10.5,
+    letterSpacing: 1.4,
+  },
+  devReset: {
+    backgroundColor: light.card,
+    borderColor: light.border,
+    borderRadius: 14,
+    borderStyle: 'dashed',
+    borderWidth: 1,
+    marginTop: 28,
+    padding: 14,
+  },
+  greetingWrap: { marginBottom: 18, marginTop: 28 },
+  screen: {
+    alignItems: 'center',
+    flex: 1,
+  },
+  workoutCard: {
+    backgroundColor: light.card,
+    borderColor: light.border,
+    borderRadius: 16,
+    borderWidth: 1,
+    gap: 6,
+    padding: 16,
+  },
+  workoutCta: {
+    color: COLORS.tangerine,
+    fontFamily: FONTS.sansBold,
+    fontSize: 13.5,
+    marginTop: 6,
+  },
+  workoutHelper: {
+    color: light.mutedText,
+    fontFamily: FONTS.sans,
+    fontSize: 13,
+    lineHeight: 18,
+  },
+  workoutKicker: {
+    color: light.mutedText,
+    fontFamily: FONTS.sansBold,
+    fontSize: 10.5,
+    letterSpacing: 1.6,
+  },
+  workoutTitle: {
+    color: light.text,
+    fontFamily: FONTS.sansBold,
+    fontSize: 18,
+    letterSpacing: -0.2,
+    lineHeight: 22,
+  },
 });
