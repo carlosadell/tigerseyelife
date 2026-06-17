@@ -3,18 +3,20 @@ import { Sparkles } from 'lucide-react-native';
 import { StyleSheet, Text, View } from 'react-native';
 
 import { FONTS, THEME_COLORS } from '../../lib/brand';
-import { type DailyPrompt } from '../../lib/commitPrompts';
 
 const light = THEME_COLORS.light;
+
+export type DailyPrompt =
+  | { kind: 'awareness'; body: string }
+  | { kind: 'nudge'; body: string; attribution?: string };
 
 type AwarenessCardProps = {
   prompt: DailyPrompt;
 };
 
 /**
- * Single slot for the day. Awareness prompt OR coach nudge (never both at
- * once — see spec §5, AwarenessCard row). Kicker label adjusts; body and
- * attribution render conditionally.
+ * Single slot for the day. Awareness prompt OR coach nudge. Kicker label
+ * adjusts; body and attribution render conditionally.
  */
 export function AwarenessCard({ prompt }: AwarenessCardProps) {
   const kicker = prompt.kind === 'nudge' ? 'FROM YOUR COACH' : 'FOR TODAY';

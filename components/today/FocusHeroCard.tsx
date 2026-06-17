@@ -4,19 +4,20 @@ import { PhotoHeroCard } from '../ui/PhotoHeroCard';
 
 type FocusHeroCardProps = {
   weekIndex: number;
+  headline: string;
 };
 
 /**
- * Weekly Commit focus hero. Kicker + headline are spec-fixed; photo rotates
- * by week. When PHOTO_ASSETS_READY=true and real Karen/Ryan stills land, the
- * underlying pool swaps without any change here.
+ * Weekly focus hero. The kicker is fixed; the headline is the week's
+ * curated copy (Week.heroHeadline). Photo resolves through the block
+ * via coachStillForWeek.
  */
-export function FocusHeroCard({ weekIndex }: FocusHeroCardProps) {
+export function FocusHeroCard({ weekIndex, headline }: FocusHeroCardProps) {
   return (
     <PhotoHeroCard
       kicker="THIS WEEK'S FOCUS"
-      title="Three things, every plate."
-      photoUri={coachStillForWeek(weekIndex)}
+      title={headline}
+      photoUri={coachStillForWeek(weekIndex as 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12)}
     />
   );
 }
