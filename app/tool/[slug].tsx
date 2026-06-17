@@ -4,10 +4,7 @@ import { ChevronLeft } from 'lucide-react-native';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { ChecklistBody } from '../../components/tool/ChecklistBody';
-import { FillInTemplateBody } from '../../components/tool/FillInTemplateBody';
-import { MenuListBody } from '../../components/tool/MenuListBody';
-import { StaticPageBody } from '../../components/tool/StaticPageBody';
+import { LayeredConceptBody } from '../../components/concept/LayeredConceptBody';
 import { useCurrentWeek } from '../../hooks/useCurrentWeek';
 import { useThemeColors } from '../../hooks/useTheme';
 import { FONTS, SPACING } from '../../lib/brand';
@@ -65,18 +62,11 @@ export default function ToolScreen() {
         <View style={styles.spacer} />
       </View>
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
-        {tool.body.kind === 'static-page' && (
-          <StaticPageBody intro={tool.body.intro} sections={tool.body.sections} />
-        )}
-        {tool.body.kind === 'checklist' && (
-          <ChecklistBody toolSlug={tool.slug} intro={tool.body.intro} items={tool.body.items} />
-        )}
-        {tool.body.kind === 'menu-list' && (
-          <MenuListBody intro={tool.body.intro} items={tool.body.items} />
-        )}
-        {tool.body.kind === 'fill-in-template' && (
-          <FillInTemplateBody toolSlug={tool.slug} intro={tool.body.intro} fields={tool.body.fields} />
-        )}
+        <LayeredConceptBody
+          conceptSlug={tool.slug}
+          block={tool.metadata.block}
+          content={tool.layered}
+        />
       </ScrollView>
     </SafeAreaView>
   );
