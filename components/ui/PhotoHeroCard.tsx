@@ -82,13 +82,13 @@ const styles = StyleSheet.create({
   },
   rightPhoto: {
     height: 130,
-    width: 110,
+    width: 100,
   },
   textCol: {
     flex: 1,
     gap: 4,
     minWidth: 0,
-    paddingHorizontal: 16,
+    paddingHorizontal: 14,
     paddingVertical: 18,
   },
   title: {

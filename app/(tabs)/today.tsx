@@ -15,7 +15,7 @@ import { useCurrentWeek } from '../../hooks/useCurrentWeek';
 import { useDailyEngagement } from '../../hooks/useDailyEngagement';
 import { useMembership } from '../../hooks/useMembership';
 import { useProfile } from '../../hooks/useProfile';
-import { COLORS, FONTS, SPACING, THEME_COLORS } from '../../lib/brand';
+import { COLORS, FONTS, THEME_COLORS } from '../../lib/brand';
 import { anchorsForWeek, heroHeadlineFor, resolveAnchorIcon } from '../../lib/heroAnchors';
 import { weekFor } from '../../lib/program';
 import { workoutsForBlock } from '../../lib/workoutSchedule';
@@ -128,7 +128,7 @@ const styles = StyleSheet.create({
   awarenessWrap: { marginTop: 22 },
   content: {
     paddingBottom: 128,
-    paddingHorizontal: SPACING.screenX,
+    paddingHorizontal: 16,
     paddingTop: 12,
   },
   devBody: {
