@@ -50,6 +50,19 @@ async function fetchEngagementDates(userId: string, isDevSession: boolean): Prom
         dates.add(key.slice(dailyKeyPrefix.length));
       }
     }
+
+    const actionsKey = `tel:daily-actions:${userId}`;
+    const raw = await AsyncStorage.getItem(actionsKey);
+    if (raw) {
+      try {
+        const parsed = JSON.parse(raw) as { completedDate?: string }[];
+        for (const r of parsed) {
+          if (r.completedDate) dates.add(r.completedDate);
+        }
+      } catch {
+        // ignore malformed payload
+      }
+    }
   } else if (supabase) {
     const since = format(subDays(new Date(), LOOKBACK_DAYS), 'yyyy-MM-dd');
     const { data } = await supabase
@@ -59,6 +72,15 @@ async function fetchEngagementDates(userId: string, isDevSession: boolean): Prom
       .gte('entry_date', since);
     for (const row of data ?? []) {
       if (row.entry_date) dates.add(row.entry_date);
+    }
+
+    const { data: actionData } = await supabase
+      .from('user_daily_actions')
+      .select('completed_date')
+      .eq('user_id', userId)
+      .gte('completed_date', since);
+    for (const row of actionData ?? []) {
+      if (row.completed_date) dates.add(row.completed_date);
     }
   }
 
