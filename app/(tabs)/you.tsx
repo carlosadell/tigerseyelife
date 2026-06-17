@@ -1,13 +1,17 @@
 import { router } from 'expo-router';
 import {
+  ArrowRight,
   Bell,
   ChevronRight,
   ClipboardList,
   Dumbbell,
   LogOut,
+  Plus,
   Settings,
   Sparkles,
+  Target,
   User,
+  UserCircle2,
 } from 'lucide-react-native';
 import { ReactNode, useMemo } from 'react';
 import { Platform, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
@@ -15,11 +19,15 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { ThemeToggle } from '../../components/brand/ThemeToggle';
 import { useAuth } from '../../hooks/useAuth';
+import { useCurrentWeek } from '../../hooks/useCurrentWeek';
+import { useCustomGoals } from '../../hooks/useCustomGoals';
+import type { CustomGoal } from '../../hooks/useCustomGoals';
 import { usePowerActionProgress } from '../../hooks/usePowerActionProgress';
 import { useProfile } from '../../hooks/useProfile';
 import { useTheme, useThemeColors } from '../../hooks/useTheme';
 import { COLORS, FONTS, SPACING } from '../../lib/brand';
 import { POWER_LETTERS, PowerLetter } from '../../lib/powerBlocks';
+import { blockFor } from '../../lib/program';
 
 const LETTER_TINT: Record<PowerLetter, string> = {
   P: COLORS.tigerGold,
@@ -29,32 +37,57 @@ const LETTER_TINT: Record<PowerLetter, string> = {
   R: COLORS.deepGreen,
 };
 
-const STATS = [
-  { label: 'Streak', value: '23', sub: 'days' },
-  { label: 'Week', value: '4', sub: 'of program' },
-  { label: 'Workouts', value: '12', sub: 'completed' },
-];
-
 export default function YouScreen() {
   const colors = useThemeColors();
   const { mode } = useTheme();
   const { signOut } = useAuth();
   const { profile } = useProfile();
   const powerProgress = usePowerThreadProgress();
+  const { weekNumber, blockId } = useCurrentWeek();
+  const { goals: customGoals } = useCustomGoals();
+
+  // Current block's action progress, for the Block Progress card.
+  // usePowerActionProgress uses lowercase block slugs.
+  const blockSlug = blockId.toLowerCase();
+  const currentBlockProgress = usePowerActionProgress(blockSlug);
+  const programBlock = blockFor(blockId);
 
   const firstName = profile.firstName ?? 'Friend';
   const intake = readIntake(profile.intakeAnswers);
+  const blockTitle = `${blockId.charAt(0)}${blockId.slice(1).toLowerCase()}`;
+
+  const blockPct =
+    currentBlockProgress.summary.blockTarget > 0
+      ? Math.round(
+          (currentBlockProgress.summary.blockTotal /
+            currentBlockProgress.summary.blockTarget) *
+            100,
+        )
+      : 0;
+
+  const stats = [
+    { label: 'Streak', value: '23', sub: 'days' },
+    { label: 'Week', value: String(weekNumber), sub: 'of 12' },
+    { label: 'Workouts', value: '12', sub: 'completed' },
+  ];
 
   return (
     <SafeAreaView edges={['top']} style={[styles.screen, { backgroundColor: colors.background }]}>
       <View style={styles.phoneFrame}>
         <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
-          <View style={styles.intro}>
-            <Text style={[styles.headerKicker, { color: colors.accent }]}>YOU</Text>
-            <Text style={[styles.title, { color: colors.text }]}>{firstName}</Text>
-            <Text style={[styles.subtitle, { color: colors.mutedText }]}>
-              Member · Week 4 of CREATE POWER · {mode === 'dark' ? 'Dark' : 'Light'} theme
-            </Text>
+          {/* Program identity bar — matches Train and Fuel */}
+          <View style={styles.programBar}>
+            <View style={[styles.programIcon, { backgroundColor: colors.cardAlt }]}>
+              <UserCircle2 color={colors.accent} size={18} strokeWidth={2.2} />
+            </View>
+            <View style={styles.programText}>
+              <Text style={[styles.programKicker, { color: colors.mutedText }]}>
+                {blockTitle} Block · Week {weekNumber}
+              </Text>
+              <Text style={[styles.programTitle, { color: colors.text }]} numberOfLines={1}>
+                {firstName} · {mode === 'dark' ? 'Dark' : 'Light'} theme
+              </Text>
+            </View>
           </View>
 
           <View style={[styles.profileCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
@@ -82,7 +115,7 @@ export default function YouScreen() {
           </View>
 
           <View style={styles.statsRow}>
-            {STATS.map((stat) => (
+            {stats.map((stat) => (
               <View
                 key={stat.label}
                 style={[styles.statCard, { backgroundColor: colors.card, borderColor: colors.border }]}
@@ -94,6 +127,91 @@ export default function YouScreen() {
               </View>
             ))}
           </View>
+
+          {/* Block progress — current block's action tracker summary,
+              taps through to the full Karen-style grid */}
+          <View style={styles.sectionHead}>
+            <Text style={[styles.sectionLabel, { color: colors.mutedText }]}>
+              {blockTitle.toUpperCase()} BLOCK · TRACKER
+            </Text>
+          </View>
+          <Pressable
+            onPress={() => router.push(`/tracker/${blockSlug}` as never)}
+            style={({ pressed }) => [
+              styles.blockCard,
+              { backgroundColor: colors.card, borderColor: colors.border },
+              pressed && { opacity: 0.85 },
+            ]}
+          >
+            <View style={styles.blockCardHead}>
+              <View style={[styles.blockBadge, { backgroundColor: colors.cardAlt }]}>
+                <Target color={colors.accent} size={16} strokeWidth={2.2} />
+              </View>
+              <View style={styles.blockCardCopy}>
+                <Text style={[styles.blockTarget, { color: colors.text }]}>
+                  {programBlock.consistencyTarget} consistency
+                </Text>
+                <Text style={[styles.blockSub, { color: colors.mutedText }]}>
+                  {currentBlockProgress.summary.blockTotal} of {currentBlockProgress.summary.blockTarget}
+                  {' actions · weeks '}
+                  {programBlock.weekRange[0]}–{programBlock.weekRange[1]}
+                </Text>
+              </View>
+              <Text style={[styles.blockPct, { color: colors.accent }]}>{blockPct}%</Text>
+            </View>
+            <View style={[styles.blockBar, { backgroundColor: colors.cardAlt }]}>
+              <View
+                style={[styles.blockBarFill, { backgroundColor: colors.accent, width: `${blockPct}%` }]}
+              />
+            </View>
+            <View style={styles.blockCta}>
+              <Text style={[styles.blockCtaText, { color: COLORS.tangerine }]}>
+                Open the tracker
+              </Text>
+              <ArrowRight color={COLORS.tangerine} size={14} strokeWidth={2.4} />
+            </View>
+          </Pressable>
+
+          {/* My Goals — custom user goals (mirrors Karen's "My Goals" block) */}
+          <View style={styles.sectionHead}>
+            <Text style={[styles.sectionLabel, { color: colors.mutedText }]}>MY GOALS</Text>
+          </View>
+          {customGoals.length === 0 ? (
+            <Pressable
+              onPress={() => router.push('/goals/edit' as never)}
+              style={({ pressed }) => [
+                styles.goalsEmpty,
+                { backgroundColor: colors.card, borderColor: colors.border },
+                pressed && { opacity: 0.85 },
+              ]}
+            >
+              <Plus color={colors.accent} size={18} strokeWidth={2.2} />
+              <Text style={[styles.goalsEmptyTitle, { color: colors.text }]}>
+                Add your first goal
+              </Text>
+              <Text style={[styles.goalsEmptyBody, { color: colors.mutedText }]}>
+                A number to move, an identity to grow into, or an intention to hold.
+                Karen's "lose 10 lbs" and "60-sec sit-to-stands → 23" lived in this column.
+              </Text>
+            </Pressable>
+          ) : (
+            <View style={styles.goalsList}>
+              {customGoals.map((goal) => (
+                <CustomGoalRow key={goal.id} goal={goal} />
+              ))}
+              <Pressable
+                onPress={() => router.push('/goals/edit' as never)}
+                style={({ pressed }) => [
+                  styles.goalAdd,
+                  { borderColor: colors.border },
+                  pressed && { opacity: 0.7 },
+                ]}
+              >
+                <Plus color={colors.accent} size={16} strokeWidth={2.4} />
+                <Text style={[styles.goalAddLabel, { color: colors.accent }]}>Add goal</Text>
+              </Pressable>
+            </View>
+          )}
 
           <View style={styles.sectionHead}>
             <Text style={[styles.sectionLabel, { color: colors.mutedText }]}>POWER THREADS · LIFETIME</Text>
@@ -157,6 +275,41 @@ export default function YouScreen() {
         </ScrollView>
       </View>
     </SafeAreaView>
+  );
+}
+
+function CustomGoalRow({ goal }: { goal: CustomGoal }) {
+  const colors = useThemeColors();
+  const kindLabel =
+    goal.kind === 'metric' ? 'METRIC' : goal.kind === 'identity' ? 'IDENTITY' : 'INTENTION';
+
+  return (
+    <Pressable
+      onPress={() => router.push(`/goals/edit?id=${goal.id}` as never)}
+      style={({ pressed }) => [
+        styles.goalRow,
+        { backgroundColor: colors.card, borderColor: colors.border },
+        pressed && { opacity: 0.85 },
+      ]}
+    >
+      <Text style={[styles.goalKind, { color: colors.accent }]}>{kindLabel}</Text>
+      <Text style={[styles.goalLabel, { color: colors.text }]} numberOfLines={2}>
+        {goal.label}
+      </Text>
+      {goal.kind === 'metric' && (goal.baseline || goal.target) ? (
+        <Text style={[styles.goalMetric, { color: colors.mutedText }]}>
+          {goal.baseline ? `Baseline ${goal.baseline}` : null}
+          {goal.baseline && goal.target ? ' · ' : null}
+          {goal.target ? `Target ${goal.target}` : null}
+          {goal.unit ? ` ${goal.unit}` : null}
+        </Text>
+      ) : null}
+      {goal.note ? (
+        <Text style={[styles.goalNote, { color: colors.mutedText }]} numberOfLines={2}>
+          {goal.note}
+        </Text>
+      ) : null}
+    </Pressable>
   );
 }
 
@@ -350,10 +503,153 @@ const styles = StyleSheet.create({
     paddingHorizontal: SPACING.screenX,
     paddingTop: 4,
   },
-  headerKicker: {
+  blockBadge: {
+    alignItems: 'center',
+    borderRadius: 10,
+    height: 36,
+    justifyContent: 'center',
+    width: 36,
+  },
+  blockBar: {
+    borderRadius: 999,
+    height: 5,
+    marginTop: 12,
+    overflow: 'hidden',
+    width: '100%',
+  },
+  blockBarFill: {
+    borderRadius: 999,
+    height: '100%',
+  },
+  blockCard: {
+    borderRadius: 16,
+    borderWidth: 1,
+    marginTop: 8,
+    padding: 16,
+  },
+  blockCardCopy: { flex: 1 },
+  blockCardHead: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    gap: 12,
+  },
+  blockCta: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    gap: 4,
+    marginTop: 12,
+  },
+  blockCtaText: {
     fontFamily: FONTS.sansBold,
-    fontSize: 11,
-    letterSpacing: 2.4,
+    fontSize: 13,
+  },
+  blockPct: {
+    fontFamily: FONTS.sansBold,
+    fontSize: 22,
+    letterSpacing: -0.4,
+  },
+  blockSub: {
+    fontFamily: FONTS.sans,
+    fontSize: 12.5,
+    lineHeight: 17,
+    marginTop: 2,
+  },
+  blockTarget: {
+    fontFamily: FONTS.sansBold,
+    fontSize: 16,
+    letterSpacing: -0.2,
+  },
+  goalAdd: {
+    alignItems: 'center',
+    borderRadius: 12,
+    borderStyle: 'dashed',
+    borderWidth: 1,
+    flexDirection: 'row',
+    gap: 6,
+    justifyContent: 'center',
+    marginTop: 4,
+    paddingVertical: 12,
+  },
+  goalAddLabel: {
+    fontFamily: FONTS.sansBold,
+    fontSize: 13,
+    letterSpacing: -0.05,
+  },
+  goalKind: {
+    fontFamily: FONTS.sansBold,
+    fontSize: 10,
+    letterSpacing: 1.4,
+  },
+  goalLabel: {
+    fontFamily: FONTS.sansBold,
+    fontSize: 15,
+    letterSpacing: -0.1,
+    marginTop: 4,
+  },
+  goalMetric: {
+    fontFamily: FONTS.sansMedium,
+    fontSize: 12.5,
+    marginTop: 4,
+  },
+  goalNote: {
+    fontFamily: FONTS.sans,
+    fontSize: 12.5,
+    fontStyle: 'italic',
+    lineHeight: 17,
+    marginTop: 4,
+  },
+  goalRow: {
+    borderRadius: 14,
+    borderWidth: 1,
+    marginBottom: 8,
+    padding: 14,
+  },
+  goalsEmpty: {
+    alignItems: 'flex-start',
+    borderRadius: 16,
+    borderStyle: 'dashed',
+    borderWidth: 1,
+    gap: 6,
+    marginTop: 8,
+    padding: 16,
+  },
+  goalsEmptyBody: {
+    fontFamily: FONTS.sans,
+    fontSize: 13,
+    lineHeight: 18,
+  },
+  goalsEmptyTitle: {
+    fontFamily: FONTS.sansBold,
+    fontSize: 15,
+    letterSpacing: -0.1,
+    marginTop: 4,
+  },
+  goalsList: { marginTop: 8 },
+  programBar: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    gap: 12,
+    marginBottom: 4,
+    paddingVertical: 8,
+  },
+  programIcon: {
+    alignItems: 'center',
+    borderRadius: 12,
+    height: 36,
+    justifyContent: 'center',
+    width: 36,
+  },
+  programKicker: {
+    fontFamily: FONTS.sansMedium,
+    fontSize: 12,
+    letterSpacing: -0.05,
+  },
+  programText: { flex: 1, minWidth: 0 },
+  programTitle: {
+    fontFamily: FONTS.sansBold,
+    fontSize: 17,
+    letterSpacing: -0.3,
+    marginTop: 1,
   },
   intakeCard: {
     borderRadius: 12,
@@ -377,10 +673,6 @@ const styles = StyleSheet.create({
     fontFamily: FONTS.sansMedium,
     fontSize: 13.5,
     textAlign: 'right',
-  },
-  intro: {
-    gap: 6,
-    paddingTop: 4,
   },
   phoneFrame: {
     alignSelf: 'center',
@@ -560,17 +852,6 @@ const styles = StyleSheet.create({
   statsRow: {
     flexDirection: 'row',
     gap: 10,
-  },
-  subtitle: {
-    fontFamily: FONTS.sans,
-    fontSize: 13,
-    lineHeight: 19,
-  },
-  title: {
-    fontFamily: FONTS.sansBold,
-    fontSize: 26,
-    letterSpacing: -0.4,
-    lineHeight: 32,
   },
   whyBody: {
     flex: 1,
