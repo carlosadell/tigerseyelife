@@ -82,7 +82,7 @@ const styles = StyleSheet.create({
   },
   rightPhoto: {
     height: 130,
-    width: 100,
+    width: 140,
   },
   textCol: {
     flex: 1,
@@ -94,9 +94,9 @@ const styles = StyleSheet.create({
   title: {
     color: light.text,
     fontFamily: FONTS.sansBold,
-    fontSize: 20,
-    letterSpacing: -0.4,
-    lineHeight: 24,
+    fontSize: 19,
+    letterSpacing: -0.5,
+    lineHeight: 23,
     marginTop: 2,
   },
 });
