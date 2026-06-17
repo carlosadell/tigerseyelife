@@ -118,6 +118,8 @@ export const WEEKS: readonly Week[] = [
     ],
     toolSlugs: ['five-universal-patterns', 'nutrition-track-chooser'],
     discussionPrompt: 'Which pattern did you identify as your main one? Share with the group.',
+    heroHeadline: '',
+    heroAnchors: [],
   },
   {
     weekNumber: 2,
@@ -143,6 +145,8 @@ export const WEEKS: readonly Week[] = [
     ],
     toolSlugs: ['movement-breaks-menu', 'sleep-environment-checklist'],
     discussionPrompt: "What's one thing that's already feeling easier than Day 1?",
+    heroHeadline: '',
+    heroAnchors: [],
   },
   {
     weekNumber: 3,
@@ -167,6 +171,8 @@ export const WEEKS: readonly Week[] = [
     ],
     toolSlugs: ['kitchen-reset-guide', 'abc-power-meals-guide'],
     discussionPrompt: 'Post a photo of your kitchen reset (fridge, pantry, or workout space).',
+    heroHeadline: '',
+    heroAnchors: [],
   },
   {
     weekNumber: 4,
@@ -192,6 +198,8 @@ export const WEEKS: readonly Week[] = [
     ],
     toolSlugs: ['pause-practice-guide', 'wind-down-routine-builder'],
     discussionPrompt: 'What does your wind down routine look like? Share what you are trying.',
+    heroHeadline: '',
+    heroAnchors: [],
   },
   {
     weekNumber: 5,
@@ -217,6 +225,8 @@ export const WEEKS: readonly Week[] = [
     ],
     toolSlugs: ['teb-loop-guide', 'meal-prep-system-guide'],
     discussionPrompt: 'Complete this: I am someone who __________. Share your identity statement.',
+    heroHeadline: '',
+    heroAnchors: [],
   },
   {
     weekNumber: 6,
@@ -242,6 +252,8 @@ export const WEEKS: readonly Week[] = [
     ],
     toolSlugs: ['social-situations-playbook', 'movement-snacks-menu'],
     discussionPrompt: 'What social situation did you navigate this week? How did it go?',
+    heroHeadline: '',
+    heroAnchors: [],
   },
   {
     weekNumber: 7,
@@ -267,6 +279,8 @@ export const WEEKS: readonly Week[] = [
     ],
     toolSlugs: ['box-breathing-guide', 'non-food-stress-relief-menu'],
     discussionPrompt: 'What are your early stress signals? How does your body tell you?',
+    heroHeadline: '',
+    heroAnchors: [],
   },
   {
     weekNumber: 8,
@@ -292,6 +306,8 @@ export const WEEKS: readonly Week[] = [
     ],
     toolSlugs: ['bare-minimum-protocol-builder'],
     discussionPrompt: "What's your bare minimum when life gets hard? Share your protocol.",
+    heroHeadline: '',
+    heroAnchors: [],
   },
   {
     weekNumber: 9,
@@ -316,6 +332,8 @@ export const WEEKS: readonly Week[] = [
     ],
     toolSlugs: ['automaticity-audit', 'stress-signal-identifier'],
     discussionPrompt: 'What habit that was hard in Week 1 is now automatic?',
+    heroHeadline: '',
+    heroAnchors: [],
   },
   {
     weekNumber: 10,
@@ -340,6 +358,8 @@ export const WEEKS: readonly Week[] = [
     ],
     toolSlugs: ['energy-orchestra-planner', 'my-system-documentation'],
     discussionPrompt: 'What would you tell Week 1 you about this journey?',
+    heroHeadline: '',
+    heroAnchors: [],
   },
   {
     weekNumber: 11,
@@ -363,6 +383,8 @@ export const WEEKS: readonly Week[] = [
     ],
     toolSlugs: ['pattern-maintenance-system'],
     discussionPrompt: 'What pattern that used to own you is now under your control?',
+    heroHeadline: '',
+    heroAnchors: [],
   },
   {
     weekNumber: 12,
@@ -386,5 +408,7 @@ export const WEEKS: readonly Week[] = [
     ],
     toolSlugs: ['transformation-summary', 'whats-next-guide'],
     discussionPrompt: 'Share your biggest transformation. What changed for you?',
+    heroHeadline: '',
+    heroAnchors: [],
   },
 ];

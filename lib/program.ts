@@ -27,6 +27,21 @@ export type ActionItem = {
   weeklyTarget: number;
 };
 
+export type AnchorIcon =
+  | 'tag' | 'leaf' | 'carrot' | 'dumbbell' | 'footprints' | 'moon'
+  | 'brain' | 'compass' | 'zap' | 'shield' | 'eye' | 'hand'
+  | 'utensils' | 'wind' | 'sparkles' | 'message-circle' | 'book-open'
+  | 'sunrise' | 'apple' | 'droplet';
+
+export type HeroAnchor = {
+  id: string;
+  title: string;
+  helper: string;
+  icon: AnchorIcon;
+  thread: ThreadLetter;
+  conceptRoute: string;
+};
+
 export type Week = {
   weekNumber: WeekNumber;
   blockId: BlockId;
@@ -36,6 +51,8 @@ export type Week = {
   weekAtAGlance: ActionItem[];
   toolSlugs: string[];
   discussionPrompt: string;
+  heroHeadline: string;
+  heroAnchors: HeroAnchor[];
 };
 
 export type Block = {
