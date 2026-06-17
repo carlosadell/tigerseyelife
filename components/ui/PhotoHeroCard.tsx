@@ -82,20 +82,21 @@ const styles = StyleSheet.create({
   },
   rightPhoto: {
     height: 130,
-    width: 120,
+    width: 110,
   },
   textCol: {
     flex: 1,
     gap: 4,
     minWidth: 0,
-    padding: 18,
+    paddingHorizontal: 16,
+    paddingVertical: 18,
   },
   title: {
     color: light.text,
     fontFamily: FONTS.sansBold,
-    fontSize: 22,
+    fontSize: 20,
     letterSpacing: -0.4,
-    lineHeight: 26,
+    lineHeight: 24,
     marginTop: 2,
   },
 });
