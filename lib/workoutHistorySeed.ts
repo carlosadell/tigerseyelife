@@ -1,170 +1,66 @@
+import type { ExerciseId } from './exerciseLibrary';
 import { WorkoutSession, WorkoutSetLog } from './workouts';
 
-type ExerciseHistoryRow = {
-  exercise_id: string;
+// Dev-mode seed history for the Train tab and the exercise detail
+// "Your history" view. Three sessions of COMMIT Workout 1 spaced one
+// week apart, with progression that tells Karen's worked story:
+// most exercises step up across the three weeks, a couple plateau
+// then push, push-ups grow in reps rather than weight.
+//
+// Weights are stored in kg (schema is SI). The values below were
+// chosen so the lbs display formatter (lib/units.ts) renders clean
+// numbers — 15lb, 17.5lb, 20lb, etc.
+
+type SetRow = { reps: number; weight_kg: number; rpe: number };
+type ExerciseRow = {
+  exercise_id: ExerciseId;
   is_warmup: boolean;
-  sets: Array<{ reps: number; weight_kg: number; rpe: number }>;
+  sets: SetRow[];
 };
 
-const lowerBodyAHistory: Record<number, ExerciseHistoryRow[]> = {
-  21: [
-    { exercise_id: 'ex_1', is_warmup: true, sets: [{ reps: 0, weight_kg: 0, rpe: 0 }] },
-    {
-      exercise_id: 'ex_2',
-      is_warmup: false,
-      sets: [
-        { reps: 10, weight_kg: 15, rpe: 7 },
-        { reps: 10, weight_kg: 15, rpe: 7 },
-        { reps: 8, weight_kg: 17.5, rpe: 8 },
-        { reps: 8, weight_kg: 17.5, rpe: 8 },
-      ],
-    },
-    {
-      exercise_id: 'ex_3',
-      is_warmup: false,
-      sets: [
-        { reps: 10, weight_kg: 17.5, rpe: 7 },
-        { reps: 10, weight_kg: 17.5, rpe: 7 },
-        { reps: 10, weight_kg: 20, rpe: 8 },
-        { reps: 8, weight_kg: 20, rpe: 8 },
-      ],
-    },
-    {
-      exercise_id: 'ex_4',
-      is_warmup: false,
-      sets: [
-        { reps: 10, weight_kg: 10, rpe: 7 },
-        { reps: 10, weight_kg: 10, rpe: 7 },
-        { reps: 10, weight_kg: 12.5, rpe: 8 },
-      ],
-    },
-    {
-      exercise_id: 'ex_5',
-      is_warmup: false,
-      sets: [
-        { reps: 15, weight_kg: 0, rpe: 6 },
-        { reps: 15, weight_kg: 0, rpe: 6 },
-        { reps: 12, weight_kg: 10, rpe: 7 },
-      ],
-    },
-    {
-      exercise_id: 'ex_6',
-      is_warmup: false,
-      sets: [
-        { reps: 10, weight_kg: 0, rpe: 6 },
-        { reps: 10, weight_kg: 0, rpe: 7 },
-        { reps: 10, weight_kg: 0, rpe: 7 },
-      ],
-    },
-  ],
-  14: [
-    { exercise_id: 'ex_1', is_warmup: true, sets: [{ reps: 0, weight_kg: 0, rpe: 0 }] },
-    {
-      exercise_id: 'ex_2',
-      is_warmup: false,
-      sets: [
-        { reps: 10, weight_kg: 17.5, rpe: 7 },
-        { reps: 10, weight_kg: 17.5, rpe: 8 },
-        { reps: 9, weight_kg: 20, rpe: 8 },
-        { reps: 8, weight_kg: 20, rpe: 9 },
-      ],
-    },
-    {
-      exercise_id: 'ex_3',
-      is_warmup: false,
-      sets: [
-        { reps: 10, weight_kg: 20, rpe: 7 },
-        { reps: 10, weight_kg: 20, rpe: 7 },
-        { reps: 10, weight_kg: 22.5, rpe: 8 },
-        { reps: 8, weight_kg: 22.5, rpe: 8 },
-      ],
-    },
-    {
-      exercise_id: 'ex_4',
-      is_warmup: false,
-      sets: [
-        { reps: 10, weight_kg: 12.5, rpe: 7 },
-        { reps: 10, weight_kg: 12.5, rpe: 7 },
-        { reps: 10, weight_kg: 12.5, rpe: 8 },
-      ],
-    },
-    {
-      exercise_id: 'ex_5',
-      is_warmup: false,
-      sets: [
-        { reps: 15, weight_kg: 10, rpe: 7 },
-        { reps: 15, weight_kg: 10, rpe: 7 },
-        { reps: 12, weight_kg: 12.5, rpe: 8 },
-      ],
-    },
-    {
-      exercise_id: 'ex_6',
-      is_warmup: false,
-      sets: [
-        { reps: 10, weight_kg: 0, rpe: 7 },
-        { reps: 10, weight_kg: 0, rpe: 7 },
-        { reps: 10, weight_kg: 0, rpe: 7 },
-      ],
-    },
-  ],
-  7: [
-    { exercise_id: 'ex_1', is_warmup: true, sets: [{ reps: 0, weight_kg: 0, rpe: 0 }] },
-    {
-      exercise_id: 'ex_2',
-      is_warmup: false,
-      sets: [
-        { reps: 10, weight_kg: 20, rpe: 7 },
-        { reps: 10, weight_kg: 20, rpe: 8 },
-        { reps: 10, weight_kg: 22.5, rpe: 8 },
-        { reps: 8, weight_kg: 22.5, rpe: 9 },
-      ],
-    },
-    {
-      exercise_id: 'ex_3',
-      is_warmup: false,
-      sets: [
-        { reps: 10, weight_kg: 22.5, rpe: 7 },
-        { reps: 10, weight_kg: 22.5, rpe: 7 },
-        { reps: 10, weight_kg: 25, rpe: 8 },
-        { reps: 8, weight_kg: 25, rpe: 8 },
-      ],
-    },
-    {
-      exercise_id: 'ex_4',
-      is_warmup: false,
-      sets: [
-        { reps: 10, weight_kg: 12.5, rpe: 7 },
-        { reps: 10, weight_kg: 12.5, rpe: 8 },
-        { reps: 10, weight_kg: 15, rpe: 8 },
-      ],
-    },
-    {
-      exercise_id: 'ex_5',
-      is_warmup: false,
-      sets: [
-        { reps: 15, weight_kg: 12.5, rpe: 7 },
-        { reps: 15, weight_kg: 12.5, rpe: 8 },
-        { reps: 12, weight_kg: 15, rpe: 8 },
-      ],
-    },
-    {
-      exercise_id: 'ex_6',
-      is_warmup: false,
-      sets: [
-        { reps: 10, weight_kg: 0, rpe: 7 },
-        { reps: 10, weight_kg: 0, rpe: 7 },
-        { reps: 10, weight_kg: 0, rpe: 7 },
-      ],
-    },
-  ],
+const session21Days: ExerciseRow[] = [
+  { exercise_id: 'db-squat',         is_warmup: false, sets: row(3, 10, 6.80, 7) },
+  { exercise_id: 'db-deadlift',      is_warmup: false, sets: row(3, 10, 9.07, 7) },
+  { exercise_id: 'db-split-squat',   is_warmup: false, sets: row(3, 10, 4.54, 7) },
+  { exercise_id: 'push-ups',         is_warmup: false, sets: row(3,  8, 0,    7) },
+  { exercise_id: 'db-bent-over-row', is_warmup: false, sets: row(3, 12, 6.80, 7) },
+  { exercise_id: 'biceps-curls',     is_warmup: false, sets: row(2, 14, 3.63, 6) },
+];
+
+const session14Days: ExerciseRow[] = [
+  { exercise_id: 'db-squat',         is_warmup: false, sets: row(3, 10, 7.94, 8) },
+  { exercise_id: 'db-deadlift',      is_warmup: false, sets: row(3, 10, 10.21, 8) },
+  { exercise_id: 'db-split-squat',   is_warmup: false, sets: row(3, 10, 4.54, 8) },
+  { exercise_id: 'push-ups',         is_warmup: false, sets: row(3, 10, 0,    7) },
+  { exercise_id: 'db-bent-over-row', is_warmup: false, sets: row(3, 12, 7.94, 8) },
+  { exercise_id: 'biceps-curls',     is_warmup: false, sets: row(2, 14, 4.54, 7) },
+];
+
+const session7Days: ExerciseRow[] = [
+  { exercise_id: 'db-squat',         is_warmup: false, sets: row(3,  9, 9.07, 8) },
+  { exercise_id: 'db-deadlift',      is_warmup: false, sets: row(3,  9, 11.34, 8) },
+  { exercise_id: 'db-split-squat',   is_warmup: false, sets: row(3, 10, 5.67, 8) },
+  { exercise_id: 'push-ups',         is_warmup: false, sets: row(3, 12, 0,    8) },
+  { exercise_id: 'db-bent-over-row', is_warmup: false, sets: row(3, 11, 7.94, 8) },
+  { exercise_id: 'biceps-curls',     is_warmup: false, sets: row(2, 14, 4.54, 7) },
+];
+
+const HISTORY: Record<number, ExerciseRow[]> = {
+  21: session21Days,
+  14: session14Days,
+  7: session7Days,
 };
+
+function row(count: number, reps: number, weight_kg: number, rpe: number): SetRow[] {
+  return Array.from({ length: count }, () => ({ reps, weight_kg, rpe }));
+}
 
 export function buildWorkoutHistorySeed(userId: string): WorkoutSession[] {
   const sessions: WorkoutSession[] = [];
   const now = Date.now();
   const day = 24 * 60 * 60 * 1000;
 
-  for (const [daysAgoKey, exercises] of Object.entries(lowerBodyAHistory)) {
+  for (const [daysAgoKey, exercises] of Object.entries(HISTORY)) {
     const daysAgo = Number(daysAgoKey);
     const startedAt = new Date(now - daysAgo * day);
     const completedAt = new Date(startedAt.getTime() + 32 * 60 * 1000);
@@ -191,7 +87,7 @@ export function buildWorkoutHistorySeed(userId: string): WorkoutSession[] {
       notes: null,
       perceived_effort: 7,
       set_logs: setLogs,
-      source_id: 'seed-lower-body-a',
+      source_id: 'commit-workout-1',
       source_type: 'library',
       started_at: startedAt.toISOString(),
       total_duration_seconds: 32 * 60,
