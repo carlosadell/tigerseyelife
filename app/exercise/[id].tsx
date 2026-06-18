@@ -2,11 +2,12 @@
 import * as Haptics from 'expo-haptics';
 import { router, useLocalSearchParams } from 'expo-router';
 import { ChevronLeft, Lightbulb } from 'lucide-react-native';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import YoutubePlayer from 'react-native-youtube-iframe';
 
+import { ProgressionTable } from '../../components/workout/ProgressionTable';
 import { useAuth } from '../../hooks/useAuth';
 import { useThemeColors } from '../../hooks/useTheme';
 import { useWorkoutSessions } from '../../hooks/useWorkoutSessions';
@@ -25,12 +26,21 @@ export default function ExerciseDetailScreen() {
   const insets = useSafeAreaInsets();
   const { session } = useAuth();
   const startSession = useActiveWorkoutStore((state) => state.startSession);
-  const { saveSession } = useWorkoutSessions();
+  const { saveSession, sessions } = useWorkoutSessions();
   const [playerHeight] = useState(220);
 
   const exercise = id && id in EXERCISE_LIBRARY ? EXERCISE_LIBRARY[id as ExerciseId] : undefined;
   const workout = workoutSlug ? workoutBySlug(workoutSlug) : undefined;
   const canStart = Boolean(workout && workout.exercises.length > 0 && session?.user.id);
+
+  const hasHistory = useMemo(() => {
+    if (!exercise) return false;
+    return sessions.some(
+      (s) =>
+        Boolean(s.completed_at) &&
+        s.set_logs.some((log) => log.exercise_id === exercise.id),
+    );
+  }, [sessions, exercise]);
 
   const startWorkout = async () => {
     if (!workout || !session?.user.id) return;
@@ -94,6 +104,40 @@ export default function ExerciseDetailScreen() {
             </Text>
           </View>
         )}
+
+        <View>
+          <Text style={[styles.sectionTitle, { color: colors.text }]}>Your history</Text>
+          {hasHistory ? (
+            <View style={styles.historyWrap}>
+              <ProgressionTable
+                exercise={{
+                  id: exercise.id,
+                  name: exercise.name,
+                  equipment: '',
+                  target_sets: 4,
+                  target_reps: '',
+                  rest_seconds: 0,
+                  is_warmup: false,
+                }}
+                sessions={sessions}
+                todaySetLogs={[]}
+                showTodayColumn={false}
+                maxColumns={6}
+              />
+            </View>
+          ) : (
+            <View
+              style={[
+                styles.historyEmpty,
+                { backgroundColor: colors.card, borderColor: colors.border },
+              ]}
+            >
+              <Text style={[styles.historyEmptyText, { color: colors.mutedText }]}>
+                No history yet. Your weights and reps will show here after your first session of this exercise.
+              </Text>
+            </View>
+          )}
+        </View>
 
         <View>
           <Text style={[styles.sectionTitle, { color: colors.text }]}>Muscle Groups</Text>
@@ -198,6 +242,21 @@ const styles = StyleSheet.create({
     fontSize: 17,
     letterSpacing: -0.1,
     textAlign: 'center',
+  },
+  historyEmpty: {
+    borderRadius: 14,
+    borderWidth: 1,
+    marginTop: 12,
+    paddingHorizontal: 14,
+    paddingVertical: 16,
+  },
+  historyEmptyText: {
+    fontFamily: FONTS.sans,
+    fontSize: 14,
+    lineHeight: 20,
+  },
+  historyWrap: {
+    marginTop: 12,
   },
   instructionNum: {
     fontFamily: FONTS.sansBold,
