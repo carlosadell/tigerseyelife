@@ -4,6 +4,7 @@ import { StyleSheet, Text, View } from 'react-native';
 
 import { useThemeColors } from '../../hooks/useTheme';
 import { FONTS } from '../../lib/brand';
+import { formatWeight } from '../../lib/units';
 import { WorkoutExercise, WorkoutSession, WorkoutSetLog } from '../../lib/workouts';
 
 type Props = {
@@ -12,6 +13,7 @@ type Props = {
   workoutId?: string | null;
   todaySetLogs: WorkoutSetLog[];
   maxColumns?: number;
+  showTodayColumn?: boolean;
 };
 
 type HistoryColumn = {
@@ -28,6 +30,7 @@ export function ProgressionTable({
   workoutId,
   todaySetLogs,
   maxColumns = 3,
+  showTodayColumn = true,
 }: Props) {
   const colors = useThemeColors();
   const isWarmup = exercise.is_warmup;
@@ -53,16 +56,18 @@ export function ProgressionTable({
       sublabel: weekLabel(entry.date, sliced.length - index - 1),
     }));
 
-    cols.push({
-      isToday: true,
-      key: 'today',
-      label: 'TODAY',
-      setLogs: todaySetLogs,
-      sublabel: format(new Date(), 'MMM d'),
-    });
+    if (showTodayColumn) {
+      cols.push({
+        isToday: true,
+        key: 'today',
+        label: 'TODAY',
+        setLogs: todaySetLogs,
+        sublabel: format(new Date(), 'MMM d'),
+      });
+    }
 
     return cols;
-  }, [sessions, workoutId, exercise.id, todaySetLogs, maxColumns]);
+  }, [sessions, workoutId, exercise.id, todaySetLogs, maxColumns, showTodayColumn]);
 
   const setNumbers = useMemo(
     () => Array.from({ length: exercise.target_sets }, (_, i) => i + 1),
@@ -198,7 +203,7 @@ function ProgressionCell({
           { color: isToday && filled ? '#FFFFFF' : colors.text },
         ]}
       >
-        {match.weight_kg > 0 ? `${formatWeight(match.weight_kg)}kg` : '…'}
+        {match.weight_kg > 0 ? formatWeight(match.weight_kg) : '…'}
       </Text>
       <Text
         style={[
@@ -210,10 +215,6 @@ function ProgressionCell({
       </Text>
     </View>
   );
-}
-
-function formatWeight(kg: number) {
-  return Number.isInteger(kg) ? String(kg) : kg.toFixed(1);
 }
 
 function weekLabel(date: Date, offsetWeeks: number) {
