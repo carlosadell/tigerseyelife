@@ -6,7 +6,10 @@ import { hasSupabaseConfig, supabase } from '../lib/supabase';
 import { calculateVolume, WorkoutSession, WorkoutSetLog } from '../lib/workouts';
 import { buildWorkoutHistorySeed } from '../lib/workoutHistorySeed';
 
-const localKey = (userId: string) => `tel:workout-sessions:${userId}`;
+// Bumped to v2 on 2026-06-24 when the dev seed switched from placeholder
+// ex_1..ex_6 IDs to real EXERCISE_LIBRARY ids. Old caches stay orphaned
+// so a fresh seed loads on next read.
+const localKey = (userId: string) => `tel:workout-sessions-v2:${userId}`;
 
 export function useWorkoutSessions() {
   const { isDevSession, session } = useAuth();
