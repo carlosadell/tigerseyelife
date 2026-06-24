@@ -10,6 +10,7 @@ import { useStreak } from '../../../hooks/useStreak';
 import { useThemeColors } from '../../../hooks/useTheme';
 import { completeSession, useWorkoutSessions } from '../../../hooks/useWorkoutSessions';
 import { COLORS, FONTS, SPACING } from '../../../lib/brand';
+import { kgToLb } from '../../../lib/units';
 import { calculateVolume } from '../../../lib/workouts';
 import { useActiveWorkoutStore } from '../../../stores/activeWorkout';
 
@@ -41,7 +42,7 @@ export default function WorkoutCompleteScreen() {
   }
 
   const setLogs = currentSession.set_logs;
-  const volume = calculateVolume(setLogs);
+  const volumeLb = Math.round(kgToLb(calculateVolume(setLogs)));
   const duration = Math.max(1, Math.round((Date.now() - Date.parse(currentSession.started_at)) / 1000));
   const avgRpe = setLogs.length
     ? Math.round(setLogs.reduce((sum, set) => sum + set.rpe, 0) / setLogs.length)
@@ -70,8 +71,10 @@ export default function WorkoutCompleteScreen() {
           <View style={[styles.volumeCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
             <Text style={[styles.volumeLabel, { color: colors.mutedText }]}>TOTAL VOLUME</Text>
             <View style={styles.volumeRow}>
-              <Text style={[styles.volumeValue, { color: colors.accent }]}>{volume}</Text>
-              <Text style={[styles.volumeUnit, { color: colors.mutedText }]}>KG</Text>
+              <Text style={[styles.volumeValue, { color: colors.accent }]}>
+                {volumeLb.toLocaleString()}
+              </Text>
+              <Text style={[styles.volumeUnit, { color: colors.mutedText }]}>LB</Text>
             </View>
             <View style={[styles.volumeBar, { backgroundColor: colors.cardAlt }]}>
               <View style={[styles.volumeBarFill, { backgroundColor: colors.accent }]} />
