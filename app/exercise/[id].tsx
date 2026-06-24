@@ -1,7 +1,7 @@
 // app/exercise/[id].tsx
 import * as Haptics from 'expo-haptics';
 import { router, useLocalSearchParams } from 'expo-router';
-import { ChevronLeft, Lightbulb } from 'lucide-react-native';
+import { ChevronLeft, Lightbulb, TrendingUp } from 'lucide-react-native';
 import { useMemo, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -13,6 +13,7 @@ import { useThemeColors } from '../../hooks/useTheme';
 import { useWorkoutSessions } from '../../hooks/useWorkoutSessions';
 import { COLORS, FONTS, SPACING, THEME_COLORS } from '../../lib/brand';
 import { EXERCISE_LIBRARY, type ExerciseId } from '../../lib/exerciseLibrary';
+import { progressionFor } from '../../lib/recentSets';
 import { adaptWorkout } from '../../lib/workoutSessionAdapter';
 import { workoutBySlug } from '../../lib/workoutSchedule';
 import type { WorkoutSession } from '../../lib/workouts';
@@ -41,6 +42,11 @@ export default function ExerciseDetailScreen() {
         s.set_logs.some((log) => log.exercise_id === exercise.id),
     );
   }, [sessions, exercise]);
+
+  const progression = useMemo(
+    () => (exercise ? progressionFor(sessions, exercise.id) : null),
+    [sessions, exercise],
+  );
 
   const startWorkout = async () => {
     if (!workout || !session?.user.id) return;
@@ -106,7 +112,22 @@ export default function ExerciseDetailScreen() {
         )}
 
         <View>
-          <Text style={[styles.sectionTitle, { color: colors.text }]}>Your history</Text>
+          <View style={styles.historyHeader}>
+            <Text style={[styles.sectionTitle, { color: colors.text }]}>Your history</Text>
+            {progression && progression.trend === 'up' ? (
+              <View
+                style={[
+                  styles.progressionPill,
+                  { backgroundColor: '#F4E9D2', borderColor: COLORS.tigerGold },
+                ]}
+              >
+                <TrendingUp color={COLORS.tigerGold} size={12} strokeWidth={2.4} />
+                <Text style={[styles.progressionText, { color: COLORS.tigerGold }]}>
+                  {progression.label}
+                </Text>
+              </View>
+            ) : null}
+          </View>
           {hasHistory ? (
             <View style={styles.historyWrap}>
               <ProgressionTable
@@ -255,8 +276,29 @@ const styles = StyleSheet.create({
     fontSize: 14,
     lineHeight: 20,
   },
+  historyHeader: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 10,
+    justifyContent: 'space-between',
+  },
   historyWrap: {
     marginTop: 12,
+  },
+  progressionPill: {
+    alignItems: 'center',
+    borderRadius: 999,
+    borderWidth: 1,
+    flexDirection: 'row',
+    gap: 5,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+  },
+  progressionText: {
+    fontFamily: FONTS.sansBold,
+    fontSize: 11,
+    letterSpacing: 0.2,
   },
   instructionNum: {
     fontFamily: FONTS.sansBold,
