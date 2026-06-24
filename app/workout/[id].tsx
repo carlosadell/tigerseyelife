@@ -6,13 +6,16 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { SectionLabel } from '../../components/brand/SectionLabel';
 import { useThemeColors } from '../../hooks/useTheme';
+import { useWorkoutSessions } from '../../hooks/useWorkoutSessions';
 import { COLORS, FONTS, SPACING } from '../../lib/brand';
 import { exerciseById } from '../../lib/exerciseLibrary';
+import { lastSessionFor } from '../../lib/recentSets';
 import { workoutBySlug } from '../../lib/workoutSchedule';
 
 export default function WorkoutDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const colors = useThemeColors();
+  const { sessions } = useWorkoutSessions();
 
   const workout = id ? workoutBySlug(id) : undefined;
 
@@ -52,6 +55,7 @@ export default function WorkoutDetailScreen() {
         {workout.exercises.map((entry, index) => {
           const lib = exerciseById(entry.exerciseId);
           const primaries = lib.muscleGroups.filter((m) => m.primary);
+          const recent = lastSessionFor(sessions, entry.exerciseId);
           return (
             <Pressable
               key={`${entry.exerciseId}-${index}`}
@@ -71,6 +75,16 @@ export default function WorkoutDetailScreen() {
                 <Text style={[styles.target, { color: colors.mutedText }]}>
                   {entry.sets} SETS · {entry.reps} REPS · {entry.restSeconds ?? 60}S REST
                 </Text>
+                {recent ? (
+                  <View style={styles.recentRow}>
+                    <Text style={[styles.recentLabel, { color: colors.accent }]}>
+                      LAST · {recent.relativeDate.toUpperCase()}
+                    </Text>
+                    <Text style={[styles.recentSummary, { color: colors.text }]}>
+                      {recent.summary}
+                    </Text>
+                  </View>
+                ) : null}
                 <View style={styles.chips}>
                   {primaries.map((m) => (
                     <Text
@@ -129,6 +143,20 @@ const styles = StyleSheet.create({
   },
   number: { alignItems: 'center', borderRadius: 12, height: 24, justifyContent: 'center', width: 24 },
   numberText: { fontFamily: FONTS.sansBold, fontSize: 12 },
+  recentLabel: {
+    fontFamily: FONTS.sansBold,
+    fontSize: 10,
+    letterSpacing: 1.2,
+  },
+  recentRow: {
+    gap: 3,
+    marginTop: 2,
+  },
+  recentSummary: {
+    fontFamily: FONTS.sansMedium,
+    fontSize: 13,
+    letterSpacing: -0.1,
+  },
   screen: { flex: 1 },
   target: { fontFamily: FONTS.sansMedium, fontSize: 11, letterSpacing: 1.1 },
   tipCard: {
