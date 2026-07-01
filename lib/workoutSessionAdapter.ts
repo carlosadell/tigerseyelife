@@ -14,7 +14,7 @@ const DEFAULT_REST_SECONDS = 60;
 const DEFAULT_DIFFICULTY: WorkoutDifficulty = 'beginner';
 const DEFAULT_FOCUS: WorkoutFocus = 'full';
 
-export function adaptWorkout(workout: Workout): WorkoutLibraryItem {
+export function adaptWorkout(workout: Workout, helper?: string): WorkoutLibraryItem {
   const exercises = workout.exercises.map((e, index) =>
     adaptExercise(e, index),
   );
@@ -22,7 +22,7 @@ export function adaptWorkout(workout: Workout): WorkoutLibraryItem {
   return {
     id: workout.slug,
     name: workout.title,
-    description: workout.helper ?? '',
+    description: helper ?? '',
     duration_minutes: estimateDurationMinutes(exercises),
     equipment,
     difficulty: DEFAULT_DIFFICULTY,

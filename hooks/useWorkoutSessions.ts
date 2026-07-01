@@ -6,10 +6,11 @@ import { hasSupabaseConfig, supabase } from '../lib/supabase';
 import { calculateVolume, WorkoutSession, WorkoutSetLog } from '../lib/workouts';
 import { buildWorkoutHistorySeed } from '../lib/workoutHistorySeed';
 
-// Bumped to v2 on 2026-06-24 when the dev seed switched from placeholder
-// ex_1..ex_6 IDs to real EXERCISE_LIBRARY ids. Old caches stay orphaned
-// so a fresh seed loads on next read.
-const localKey = (userId: string) => `tel:workout-sessions-v2:${userId}`;
+// v2 (2026-06-24): switched from ex_1..ex_6 to real EXERCISE_LIBRARY ids.
+// v3 (2026-07-01): 4-workout collapse changed source_id from
+//   'commit-workout-1' to 'workout-1'. Old v2 caches would filter wrong
+//   in the active session's progression view.
+const localKey = (userId: string) => `tel:workout-sessions-v3:${userId}`;
 
 export function useWorkoutSessions() {
   const { isDevSession, session } = useAuth();

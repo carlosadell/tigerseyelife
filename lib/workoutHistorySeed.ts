@@ -87,7 +87,7 @@ export function buildWorkoutHistorySeed(userId: string): WorkoutSession[] {
       notes: null,
       perceived_effort: 7,
       set_logs: setLogs,
-      source_id: 'commit-workout-1',
+      source_id: 'workout-1',
       source_type: 'library',
       started_at: startedAt.toISOString(),
       total_duration_seconds: 32 * 60,

@@ -5,8 +5,10 @@ import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { SectionLabel } from '../../components/brand/SectionLabel';
+import { useCurrentWeek } from '../../hooks/useCurrentWeek';
 import { useThemeColors } from '../../hooks/useTheme';
 import { useWorkoutSessions } from '../../hooks/useWorkoutSessions';
+import { getBlockHelper } from '../../lib/blockContext';
 import { COLORS, FONTS, SPACING } from '../../lib/brand';
 import { exerciseById } from '../../lib/exerciseLibrary';
 import { lastSessionFor } from '../../lib/recentSets';
@@ -16,8 +18,10 @@ export default function WorkoutDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const colors = useThemeColors();
   const { sessions } = useWorkoutSessions();
+  const { blockId } = useCurrentWeek();
 
   const workout = id ? workoutBySlug(id) : undefined;
+  const helper = workout ? getBlockHelper(blockId, workout.slotIndex) : '';
 
   if (!workout) {
     return (
@@ -40,10 +44,10 @@ export default function WorkoutDetailScreen() {
         <Pressable onPress={() => router.back()} style={styles.back}>
           <ChevronLeft color={colors.accent} size={26} />
         </Pressable>
-        <Text style={[styles.kicker, { color: colors.accent }]}>BLOCK · {workout.blockId}</Text>
+        <Text style={[styles.kicker, { color: colors.accent }]}>BLOCK · {blockId}</Text>
         <Text style={[styles.title, { color: colors.text }]}>{workout.title}</Text>
-        {workout.helper ? (
-          <Text style={[styles.body, { color: colors.mutedText }]}>{workout.helper}</Text>
+        {helper ? (
+          <Text style={[styles.body, { color: colors.mutedText }]}>{helper}</Text>
         ) : null}
         <View style={[styles.tipCard, { backgroundColor: colors.cardAlt, borderColor: colors.border }]}>
           <PlayCircle color={colors.accent} size={18} strokeWidth={1.8} />
