@@ -19,6 +19,7 @@ import { useMembership } from '../../hooks/useMembership';
 import { useProfile } from '../../hooks/useProfile';
 import { COLORS, FONTS, THEME_COLORS } from '../../lib/brand';
 import type { ConceptScope } from '../../lib/conceptMetadata';
+import { getBlockTagline } from '../../lib/greetings';
 import { anchorsForWeek, heroHeadlineFor, resolveAnchorIcon } from '../../lib/heroAnchors';
 import { weekFor } from '../../lib/program';
 import { workoutsForBlock } from '../../lib/workoutSchedule';
@@ -28,7 +29,7 @@ const light = THEME_COLORS.light;
 export default function TodayScreen() {
   const { isDevSession } = useAuth();
   const { profile } = useProfile();
-  const { devReset } = useMembership();
+  const { devReset, devSetWeek } = useMembership();
   const { weekNumber, blockId } = useCurrentWeek();
   const { recordEngagement } = useDailyEngagement();
   const t = useConceptTelemetry();
@@ -50,6 +51,8 @@ export default function TodayScreen() {
   const blockWorkouts = workoutsForBlock(blockId);
   const todayWorkout = blockWorkouts[0];
   const prompt: DailyPrompt = { kind: 'awareness', body: week.discussionPrompt };
+  const tagline = getBlockTagline(blockId, weekNumber);
+  const showDipCallout = blockId === 'COMMIT' && weekNumber === 2;
 
   const blockTitle = `${blockId.charAt(0)}${blockId.slice(1).toLowerCase()}`;
 
@@ -74,9 +77,19 @@ export default function TodayScreen() {
             firstName={profile.firstName}
             subtitle={`${blockTitle} Block · Week ${weekNumber}`}
           />
+          {tagline ? <Text style={styles.tagline}>{tagline}</Text> : null}
         </View>
 
         <FocusHeroCard weekIndex={weekNumber} headline={headline} />
+
+        {showDipCallout ? (
+          <View style={styles.dipCallout}>
+            <Text style={styles.dipKicker}>HEADS UP · WEEK 3 PREVIEW</Text>
+            <Text style={styles.dipBody}>
+              Motivation often dips in Week 3. Notice it, name it, keep going. Your systems carry you.
+            </Text>
+          </View>
+        ) : null}
 
         <SectionHeader title="Today's Focus" meta={`${anchors.length} anchors`} />
         <View>
@@ -122,17 +135,50 @@ export default function TodayScreen() {
         </View>
 
         {isDevSession ? (
-          <Pressable
-            accessibilityRole="button"
-            accessibilityLabel="Dev: start over"
-            onPress={onStartOver}
-            style={({ pressed }) => ({ opacity: pressed ? 0.7 : 1 })}
-          >
-            <View style={styles.devReset}>
-              <Text style={styles.devKicker}>DEV ONLY</Text>
-              <Text style={styles.devBody}>Start over from the fork</Text>
+          <>
+            <View style={styles.devWeekCard}>
+              <Text style={styles.devKicker}>DEV ONLY · JUMP TO WEEK</Text>
+              <View style={styles.devWeekRow}>
+                {([1, 3, 5, 7, 9, 11] as const).map((w) => {
+                  const isActive = w === weekNumber;
+                  return (
+                    <Pressable
+                      key={w}
+                      accessibilityRole="button"
+                      accessibilityLabel={`Dev: jump to week ${w}`}
+                      onPress={() => devSetWeek(w)}
+                      style={({ pressed }) => [
+                        styles.devWeekBtn,
+                        isActive && styles.devWeekBtnActive,
+                        pressed && { opacity: 0.7 },
+                      ]}
+                    >
+                      <Text
+                        style={[
+                          styles.devWeekLabel,
+                          isActive && styles.devWeekLabelActive,
+                        ]}
+                      >
+                        W{w}
+                      </Text>
+                    </Pressable>
+                  );
+                })}
+              </View>
             </View>
-          </Pressable>
+
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel="Dev: start over"
+              onPress={onStartOver}
+              style={({ pressed }) => ({ opacity: pressed ? 0.7 : 1 })}
+            >
+              <View style={styles.devReset}>
+                <Text style={styles.devKicker}>DEV ONLY</Text>
+                <Text style={styles.devBody}>Start over from the fork</Text>
+              </View>
+            </Pressable>
+          </>
         ) : null}
       </ScrollView>
     </SafeAreaView>
@@ -165,10 +211,77 @@ const styles = StyleSheet.create({
     borderRadius: 14,
     borderStyle: 'dashed',
     borderWidth: 1,
+    marginTop: 12,
+    padding: 14,
+  },
+  devWeekBtn: {
+    alignItems: 'center',
+    backgroundColor: light.card,
+    borderColor: light.border,
+    borderRadius: 10,
+    borderWidth: 1,
+    flexBasis: 0,
+    flexGrow: 1,
+    paddingVertical: 9,
+  },
+  devWeekBtnActive: {
+    backgroundColor: COLORS.tangerine,
+    borderColor: COLORS.tangerine,
+  },
+  devWeekCard: {
+    backgroundColor: light.card,
+    borderColor: light.border,
+    borderRadius: 14,
+    borderStyle: 'dashed',
+    borderWidth: 1,
+    gap: 10,
     marginTop: 28,
     padding: 14,
   },
+  devWeekLabel: {
+    color: light.text,
+    fontFamily: FONTS.sansBold,
+    fontSize: 13,
+    letterSpacing: -0.05,
+  },
+  devWeekLabelActive: {
+    color: '#FFFFFF',
+  },
+  devWeekRow: {
+    flexDirection: 'row',
+    gap: 6,
+  },
+  dipBody: {
+    color: light.text,
+    fontFamily: FONTS.sansMedium,
+    fontSize: 14,
+    letterSpacing: -0.1,
+    lineHeight: 20,
+    marginTop: 6,
+  },
+  dipCallout: {
+    backgroundColor: '#F4E9D2',
+    borderColor: COLORS.tigerGold,
+    borderRadius: 14,
+    borderWidth: 1,
+    marginTop: 18,
+    padding: 14,
+  },
+  dipKicker: {
+    color: COLORS.tigerGold,
+    fontFamily: FONTS.sansBold,
+    fontSize: 11,
+    letterSpacing: 1.6,
+  },
   greetingWrap: { marginBottom: 18, marginTop: 28 },
+  tagline: {
+    color: light.mutedText,
+    fontFamily: FONTS.sansMedium,
+    fontSize: 14,
+    letterSpacing: -0.1,
+    lineHeight: 20,
+    marginTop: 8,
+  },
   screen: {
     flex: 1,
   },
