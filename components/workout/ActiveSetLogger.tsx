@@ -5,21 +5,26 @@ import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 
 import { useThemeColors } from '../../hooks/useTheme';
 import { COLORS, FONTS } from '../../lib/brand';
+import { formatWeight, lbToKg, toLbInputValue } from '../../lib/units';
 import { WorkoutExercise } from '../../lib/workouts';
 import { useActiveWorkoutStore } from '../../stores/activeWorkout';
 
+// Draft.lb is what the user types — pounds. Storage stays kg
+// (WorkoutSetLog.weight_kg schema) so we convert at logSet time.
 type DraftSet = {
   reps: string;
-  kg: string;
+  lb: string;
   rpe: string;
 };
 
 type Props = {
   exercise: WorkoutExercise;
+  // Suggested weight is kg (from historical set logs); the UI
+  // converts to lb for display and input semantics.
   suggestedFromHistory?: number | null;
 };
 
-const emptyDraft = (): DraftSet => ({ kg: '', reps: '', rpe: '7' });
+const emptyDraft = (): DraftSet => ({ lb: '', reps: '', rpe: '7' });
 
 export function ActiveSetLogger({ exercise, suggestedFromHistory }: Props) {
   const colors = useThemeColors();
@@ -40,7 +45,8 @@ export function ActiveSetLogger({ exercise, suggestedFromHistory }: Props) {
   );
 
   const completeSet = (setNumber: number) => {
-    const draft = drafts[setNumber] ?? { kg: '0', reps: '0', rpe: '7' };
+    const draft = drafts[setNumber] ?? { lb: '0', reps: '0', rpe: '7' };
+    const lbEntered = Number(draft.lb || 0);
     logSet({
       exercise_id: exercise.id,
       is_warmup: exercise.is_warmup,
@@ -48,7 +54,7 @@ export function ActiveSetLogger({ exercise, suggestedFromHistory }: Props) {
       reps: Number(draft.reps || 0),
       rpe: Number(draft.rpe || 7),
       set_number: setNumber,
-      weight_kg: Number(draft.kg || 0),
+      weight_kg: lbToKg(lbEntered),
     });
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     if (exercise.rest_seconds > 0) {
@@ -61,7 +67,7 @@ export function ActiveSetLogger({ exercise, suggestedFromHistory }: Props) {
     setDrafts((current) => ({
       ...current,
       [setNumber]: {
-        kg: String(suggestedFromHistory),
+        lb: toLbInputValue(suggestedFromHistory),
         reps: current[setNumber]?.reps ?? '',
         rpe: current[setNumber]?.rpe ?? '7',
       },
@@ -82,7 +88,7 @@ export function ActiveSetLogger({ exercise, suggestedFromHistory }: Props) {
         <Text style={[styles.title, { color: colors.text }]}>Log today’s sets</Text>
         {!exercise.is_warmup && suggestedFromHistory != null ? (
           <Text style={[styles.suggestion, { color: colors.mutedText }]}>
-            Last time: {formatWeight(suggestedFromHistory)} kg
+            Last time: {formatWeight(suggestedFromHistory)}
           </Text>
         ) : null}
       </View>
@@ -96,7 +102,7 @@ export function ActiveSetLogger({ exercise, suggestedFromHistory }: Props) {
             </Text>
           ) : (
             <>
-              <Text style={[styles.colHeader, styles.numCol, { color: colors.mutedText }]}>KG</Text>
+              <Text style={[styles.colHeader, styles.numCol, { color: colors.mutedText }]}>LB</Text>
               <Text style={[styles.colHeader, styles.numCol, { color: colors.mutedText }]}>REPS</Text>
               <Text style={[styles.colHeader, styles.numCol, { color: colors.mutedText }]}>RPE</Text>
             </>
@@ -108,7 +114,7 @@ export function ActiveSetLogger({ exercise, suggestedFromHistory }: Props) {
           const isLogged = logged.some(
             (set) => set.exercise_id === exercise.id && set.set_number === setNumber,
           );
-          const draft = drafts[setNumber] ?? { kg: '', reps: '', rpe: '7' };
+          const draft = drafts[setNumber] ?? { lb: '', reps: '', rpe: '7' };
 
           return (
             <View key={setNumber} style={styles.tableRow}>
@@ -126,11 +132,11 @@ export function ActiveSetLogger({ exercise, suggestedFromHistory }: Props) {
                   >
                     <TextInput
                       keyboardType="numeric"
-                      onChangeText={(value) => updateDraft(setNumber, 'kg', value)}
-                      placeholder={suggestedFromHistory != null ? String(formatWeight(suggestedFromHistory)) : '0'}
+                      onChangeText={(value) => updateDraft(setNumber, 'lb', value)}
+                      placeholder={suggestedFromHistory != null ? toLbInputValue(suggestedFromHistory) : '0'}
                       placeholderTextColor={colors.mutedText}
                       style={[styles.input, { backgroundColor: colors.card, color: colors.text }]}
-                      value={draft.kg}
+                      value={draft.lb}
                     />
                   </Pressable>
                   <TextInput
@@ -170,15 +176,11 @@ export function ActiveSetLogger({ exercise, suggestedFromHistory }: Props) {
 
       {!exercise.is_warmup && suggestedFromHistory != null ? (
         <Text style={[styles.footnote, { color: colors.mutedText }]}>
-          Long-press the kg field to copy last session’s weight.
+          Long-press the lb field to copy last session’s weight.
         </Text>
       ) : null}
     </View>
   );
-}
-
-function formatWeight(kg: number) {
-  return Number.isInteger(kg) ? kg : Number(kg.toFixed(1));
 }
 
 const styles = StyleSheet.create({
