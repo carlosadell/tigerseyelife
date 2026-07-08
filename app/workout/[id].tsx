@@ -55,11 +55,12 @@ export default function WorkoutDetailScreen() {
             Tap any exercise to watch the tutorial and start the workout.
           </Text>
         </View>
-        <SectionLabel label="EXERCISES" />
+        <SectionLabel label={`${workout.exercises.length} EXERCISES IN THIS WORKOUT`} />
         {workout.exercises.map((entry, index) => {
           const lib = exerciseById(entry.exerciseId);
           const primaries = lib.muscleGroups.filter((m) => m.primary);
           const recent = lastSessionFor(sessions, entry.exerciseId);
+          const positionLabel = `${index + 1} / ${workout.exercises.length}`;
           return (
             <Pressable
               key={`${entry.exerciseId}-${index}`}
@@ -72,7 +73,7 @@ export default function WorkoutDetailScreen() {
               >
                 <View style={styles.exerciseTop}>
                   <View style={[styles.number, { backgroundColor: colors.cardAlt }]}>
-                    <Text style={[styles.numberText, { color: colors.text }]}>{index + 1}</Text>
+                    <Text style={[styles.numberText, { color: colors.text }]}>{positionLabel}</Text>
                   </View>
                   <Text style={[styles.exerciseName, { color: colors.text }]}>{lib.name}</Text>
                 </View>
@@ -145,8 +146,8 @@ const styles = StyleSheet.create({
     fontSize: 10.5,
     letterSpacing: 2.2,
   },
-  number: { alignItems: 'center', borderRadius: 12, height: 24, justifyContent: 'center', width: 24 },
-  numberText: { fontFamily: FONTS.sansBold, fontSize: 12 },
+  number: { alignItems: 'center', borderRadius: 12, height: 26, justifyContent: 'center', paddingHorizontal: 8 },
+  numberText: { fontFamily: FONTS.sansBold, fontSize: 11, letterSpacing: 0.4 },
   recentLabel: {
     fontFamily: FONTS.sansBold,
     fontSize: 10,
