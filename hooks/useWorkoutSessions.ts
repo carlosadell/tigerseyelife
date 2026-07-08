@@ -10,7 +10,10 @@ import { buildWorkoutHistorySeed } from '../lib/workoutHistorySeed';
 // v3 (2026-07-01): 4-workout collapse changed source_id from
 //   'commit-workout-1' to 'workout-1'. Old v2 caches would filter wrong
 //   in the active session's progression view.
-const localKey = (userId: string) => `tel:workout-sessions-v3:${userId}`;
+// v4 (2026-07-08): single-movement model — each workout has only one
+//   exercise. Old v3 caches contained multi-exercise sessions whose
+//   set_logs include exercises no longer part of any workout.
+const localKey = (userId: string) => `tel:workout-sessions-v4:${userId}`;
 
 export function useWorkoutSessions() {
   const { isDevSession, session } = useAuth();

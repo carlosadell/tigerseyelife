@@ -2,54 +2,69 @@ import type { ExerciseId } from './exerciseLibrary';
 import { WorkoutSession, WorkoutSetLog } from './workouts';
 
 // Dev-mode seed history for the Train tab and the exercise detail
-// "Your history" view. Three sessions of COMMIT Workout 1 spaced one
-// week apart, with progression that tells Karen's worked story:
-// most exercises step up across the three weeks, a couple plateau
-// then push, push-ups grow in reps rather than weight.
+// "Your history" view. Under Karen's single-movement model, each
+// workout is one exercise, so a session logs sets against just that
+// movement. This seed produces 3 sessions per workout spaced one
+// week apart, showing Karen's worked story: weight steps up across
+// weeks; push-ups (bodyweight) grow in reps instead.
 //
-// Weights are stored in kg (schema is SI). The values below were
-// chosen so the lbs display formatter (lib/units.ts) renders clean
-// numbers — 15lb, 17.5lb, 20lb, etc.
+// Weights are stored in kg (schema is SI). Values are chosen so the
+// lbs display formatter (lib/units.ts) renders clean numbers
+// (15lb, 17.5lb, 20lb, etc.).
 
 type SetRow = { reps: number; weight_kg: number; rpe: number };
-type ExerciseRow = {
-  exercise_id: ExerciseId;
-  is_warmup: boolean;
-  sets: SetRow[];
+
+type WorkoutSeed = {
+  slug: 'workout-1' | 'workout-2' | 'workout-3' | 'workout-4';
+  exerciseId: ExerciseId;
+  displayName: string;
+  // Sessions keyed by days-ago (21, 14, 7). Each session has a
+  // sets array — the primary lift, N working sets that week.
+  sessionsByDaysAgo: Record<number, SetRow[]>;
 };
 
-const session21Days: ExerciseRow[] = [
-  { exercise_id: 'db-squat',         is_warmup: false, sets: row(3, 10, 6.80, 7) },
-  { exercise_id: 'db-deadlift',      is_warmup: false, sets: row(3, 10, 9.07, 7) },
-  { exercise_id: 'db-split-squat',   is_warmup: false, sets: row(3, 10, 4.54, 7) },
-  { exercise_id: 'push-ups',         is_warmup: false, sets: row(3,  8, 0,    7) },
-  { exercise_id: 'db-bent-over-row', is_warmup: false, sets: row(3, 12, 6.80, 7) },
-  { exercise_id: 'biceps-curls',     is_warmup: false, sets: row(2, 14, 3.63, 6) },
+const WORKOUT_SEEDS: readonly WorkoutSeed[] = [
+  {
+    slug: 'workout-1',
+    exerciseId: 'db-squat',
+    displayName: 'Workout 1',
+    sessionsByDaysAgo: {
+      21: row(3, 10, 6.80, 7),
+      14: row(3, 10, 7.94, 8),
+      7: row(3, 9, 9.07, 8),
+    },
+  },
+  {
+    slug: 'workout-2',
+    exerciseId: 'db-deadlift',
+    displayName: 'Workout 2',
+    sessionsByDaysAgo: {
+      21: row(3, 10, 9.07, 7),
+      14: row(3, 10, 10.21, 8),
+      7: row(3, 9, 11.34, 8),
+    },
+  },
+  {
+    slug: 'workout-3',
+    exerciseId: 'push-ups',
+    displayName: 'Workout 3',
+    sessionsByDaysAgo: {
+      21: row(3, 8, 0, 7),
+      14: row(3, 10, 0, 7),
+      7: row(3, 12, 0, 8),
+    },
+  },
+  {
+    slug: 'workout-4',
+    exerciseId: 'db-bent-over-row',
+    displayName: 'Workout 4',
+    sessionsByDaysAgo: {
+      21: row(3, 12, 6.80, 7),
+      14: row(3, 12, 7.94, 8),
+      7: row(3, 11, 7.94, 8),
+    },
+  },
 ];
-
-const session14Days: ExerciseRow[] = [
-  { exercise_id: 'db-squat',         is_warmup: false, sets: row(3, 10, 7.94, 8) },
-  { exercise_id: 'db-deadlift',      is_warmup: false, sets: row(3, 10, 10.21, 8) },
-  { exercise_id: 'db-split-squat',   is_warmup: false, sets: row(3, 10, 4.54, 8) },
-  { exercise_id: 'push-ups',         is_warmup: false, sets: row(3, 10, 0,    7) },
-  { exercise_id: 'db-bent-over-row', is_warmup: false, sets: row(3, 12, 7.94, 8) },
-  { exercise_id: 'biceps-curls',     is_warmup: false, sets: row(2, 14, 4.54, 7) },
-];
-
-const session7Days: ExerciseRow[] = [
-  { exercise_id: 'db-squat',         is_warmup: false, sets: row(3,  9, 9.07, 8) },
-  { exercise_id: 'db-deadlift',      is_warmup: false, sets: row(3,  9, 11.34, 8) },
-  { exercise_id: 'db-split-squat',   is_warmup: false, sets: row(3, 10, 5.67, 8) },
-  { exercise_id: 'push-ups',         is_warmup: false, sets: row(3, 12, 0,    8) },
-  { exercise_id: 'db-bent-over-row', is_warmup: false, sets: row(3, 11, 7.94, 8) },
-  { exercise_id: 'biceps-curls',     is_warmup: false, sets: row(2, 14, 4.54, 7) },
-];
-
-const HISTORY: Record<number, ExerciseRow[]> = {
-  21: session21Days,
-  14: session14Days,
-  7: session7Days,
-};
 
 function row(count: number, reps: number, weight_kg: number, rpe: number): SetRow[] {
   return Array.from({ length: count }, () => ({ reps, weight_kg, rpe }));
@@ -60,40 +75,36 @@ export function buildWorkoutHistorySeed(userId: string): WorkoutSession[] {
   const now = Date.now();
   const day = 24 * 60 * 60 * 1000;
 
-  for (const [daysAgoKey, exercises] of Object.entries(HISTORY)) {
-    const daysAgo = Number(daysAgoKey);
-    const startedAt = new Date(now - daysAgo * day);
-    const completedAt = new Date(startedAt.getTime() + 32 * 60 * 1000);
-    const setLogs: WorkoutSetLog[] = [];
+  for (const workout of WORKOUT_SEEDS) {
+    for (const [daysAgoKey, sets] of Object.entries(workout.sessionsByDaysAgo)) {
+      const daysAgo = Number(daysAgoKey);
+      const startedAt = new Date(now - daysAgo * day);
+      const completedAt = new Date(startedAt.getTime() + 18 * 60 * 1000);
+      const setLogs: WorkoutSetLog[] = sets.map((set, index) => ({
+        exercise_id: workout.exerciseId,
+        is_warmup: false,
+        logged_at: startedAt.toISOString(),
+        reps: set.reps,
+        rpe: set.rpe,
+        set_number: index + 1,
+        weight_kg: set.weight_kg,
+      }));
 
-    for (const row of exercises) {
-      row.sets.forEach((set, index) => {
-        setLogs.push({
-          exercise_id: row.exercise_id,
-          is_warmup: row.is_warmup,
-          logged_at: startedAt.toISOString(),
-          reps: set.reps,
-          rpe: set.rpe,
-          set_number: index + 1,
-          weight_kg: set.weight_kg,
-        });
+      sessions.push({
+        completed_at: completedAt.toISOString(),
+        id: `seed-history-${workout.slug}-${daysAgo}`,
+        name: workout.displayName,
+        notes: null,
+        perceived_effort: 7,
+        set_logs: setLogs,
+        source_id: workout.slug,
+        source_type: 'library',
+        started_at: startedAt.toISOString(),
+        total_duration_seconds: 18 * 60,
+        total_volume_kg: setLogs.reduce((acc, log) => acc + log.weight_kg * log.reps, 0),
+        user_id: userId,
       });
     }
-
-    sessions.push({
-      completed_at: completedAt.toISOString(),
-      id: `seed-history-${daysAgo}`,
-      name: 'Workout 1',
-      notes: null,
-      perceived_effort: 7,
-      set_logs: setLogs,
-      source_id: 'workout-1',
-      source_type: 'library',
-      started_at: startedAt.toISOString(),
-      total_duration_seconds: 32 * 60,
-      total_volume_kg: setLogs.reduce((acc, log) => acc + log.weight_kg * log.reps, 0),
-      user_id: userId,
-    });
   }
 
   return sessions;
