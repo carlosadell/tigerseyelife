@@ -128,50 +128,98 @@ function RootStack() {
 }
 
 // Fallback shown between the native splash unmount and the point at
-// which fonts finish loading. Intentionally uses onyx to match the
-// native splash background so there is no visual jump. System fonts
-// only — Inter is not loaded yet in this window.
+// which fonts finish loading. Onyx background matches the native
+// splash config so there is no visual jump. Entrance is a staggered
+// choreography: (1) logo fades + gently scales in, (2) CREATE POWER
+// kicker fades in, (3) Tigers Eye Life wordmark fades in, (4) a
+// tigerGold dot near the bottom breathes on a slow loop. A soft
+// gold halo behind the logo grounds it in the brand palette without
+// requiring any new asset. System fonts only — Inter is not loaded
+// yet in this window.
 function SplashFallback() {
+  const logoOpacity = useRef(new Animated.Value(0)).current;
+  const logoScale = useRef(new Animated.Value(0.94)).current;
+  const glowOpacity = useRef(new Animated.Value(0)).current;
+  const kickerOpacity = useRef(new Animated.Value(0)).current;
   const wordmarkOpacity = useRef(new Animated.Value(0)).current;
-  const dotOpacity = useRef(new Animated.Value(0.35)).current;
+  const dotOpacity = useRef(new Animated.Value(0.25)).current;
 
   useEffect(() => {
-    Animated.timing(wordmarkOpacity, {
-      toValue: 1,
-      duration: 420,
-      useNativeDriver: true,
-    }).start();
-    // A soft pulse on the tigerGold dot — barely perceptible movement so
-    // the screen feels alive without looking like a spinner. Loops for
-    // however long the fallback is on screen (usually <500ms).
+    const entrance = Animated.sequence([
+      Animated.parallel([
+        Animated.timing(logoOpacity, {
+          toValue: 1,
+          duration: 380,
+          useNativeDriver: true,
+        }),
+        Animated.timing(logoScale, {
+          toValue: 1,
+          duration: 520,
+          useNativeDriver: true,
+        }),
+        Animated.timing(glowOpacity, {
+          toValue: 1,
+          duration: 620,
+          useNativeDriver: true,
+        }),
+      ]),
+      Animated.timing(kickerOpacity, {
+        toValue: 1,
+        duration: 260,
+        useNativeDriver: true,
+      }),
+      Animated.timing(wordmarkOpacity, {
+        toValue: 1,
+        duration: 260,
+        useNativeDriver: true,
+      }),
+    ]);
+    entrance.start();
+
+    // Slow breathing loop on the tigerGold dot. Barely perceptible
+    // movement so the screen feels alive without reading as a
+    // spinner. Runs for however long the fallback stays mounted
+    // (usually <500ms in dev, longer on cold prod starts).
     const pulse = Animated.loop(
       Animated.sequence([
         Animated.timing(dotOpacity, {
-          toValue: 1,
-          duration: 780,
+          toValue: 0.9,
+          duration: 900,
           useNativeDriver: true,
         }),
         Animated.timing(dotOpacity, {
-          toValue: 0.35,
-          duration: 780,
+          toValue: 0.25,
+          duration: 900,
           useNativeDriver: true,
         }),
       ]),
     );
     pulse.start();
     return () => pulse.stop();
-  }, [wordmarkOpacity, dotOpacity]);
+  }, [logoOpacity, logoScale, glowOpacity, kickerOpacity, wordmarkOpacity, dotOpacity]);
 
   return (
     <View style={styles.splash}>
       <View style={styles.splashInner}>
-        <Image
-          source={require('../assets/splash-icon.png')}
-          style={styles.splashLogo}
-          resizeMode="contain"
-        />
-        <Animated.View style={[styles.splashText, { opacity: wordmarkOpacity }]}>
+        <View style={styles.splashLogoWrap}>
+          <Animated.View
+            pointerEvents="none"
+            style={[styles.splashGlow, { opacity: glowOpacity }]}
+          />
+          <Animated.View
+            style={{ opacity: logoOpacity, transform: [{ scale: logoScale }] }}
+          >
+            <Image
+              source={require('../assets/splash-icon.png')}
+              style={styles.splashLogo}
+              resizeMode="contain"
+            />
+          </Animated.View>
+        </View>
+        <Animated.View style={[styles.splashKickerWrap, { opacity: kickerOpacity }]}>
           <Text style={styles.splashKicker}>CREATE POWER</Text>
+        </Animated.View>
+        <Animated.View style={[styles.splashWordmarkWrap, { opacity: wordmarkOpacity }]}>
           <Text style={styles.splashWordmark}>Tigers Eye Life</Text>
         </Animated.View>
       </View>
@@ -202,6 +250,15 @@ const styles = StyleSheet.create({
     position: 'absolute',
     width: 6,
   },
+  splashGlow: {
+    backgroundColor: COLORS.goldGlow,
+    borderRadius: 999,
+    height: 220,
+    left: -44,
+    position: 'absolute',
+    top: -44,
+    width: 220,
+  },
   splashInner: {
     alignItems: 'center',
   },
@@ -211,19 +268,28 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     letterSpacing: 2.6,
   },
+  splashKickerWrap: {
+    alignItems: 'center',
+    marginTop: 32,
+  },
   splashLogo: {
     height: 132,
     width: 132,
   },
-  splashText: {
+  splashLogoWrap: {
     alignItems: 'center',
-    gap: 8,
-    marginTop: 28,
+    height: 132,
+    justifyContent: 'center',
+    width: 132,
   },
   splashWordmark: {
     color: COLORS.bone,
     fontSize: 22,
     fontWeight: '700',
     letterSpacing: -0.3,
+  },
+  splashWordmarkWrap: {
+    alignItems: 'center',
+    marginTop: 8,
   },
 });
