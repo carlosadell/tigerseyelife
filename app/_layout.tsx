@@ -13,8 +13,8 @@ import { useFonts } from 'expo-font';
 import { Stack } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
-import { useEffect } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { useEffect, useRef } from 'react';
+import { Animated, Image, StyleSheet, Text, View } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
@@ -64,7 +64,7 @@ export default function RootLayout() {
   }
 
   if (!fontsLoaded) {
-    return <View style={styles.splash} />;
+    return <SplashFallback />;
   }
 
   return (
@@ -127,13 +127,103 @@ function RootStack() {
   );
 }
 
+// Fallback shown between the native splash unmount and the point at
+// which fonts finish loading. Intentionally uses onyx to match the
+// native splash background so there is no visual jump. System fonts
+// only — Inter is not loaded yet in this window.
+function SplashFallback() {
+  const wordmarkOpacity = useRef(new Animated.Value(0)).current;
+  const dotOpacity = useRef(new Animated.Value(0.35)).current;
+
+  useEffect(() => {
+    Animated.timing(wordmarkOpacity, {
+      toValue: 1,
+      duration: 420,
+      useNativeDriver: true,
+    }).start();
+    // A soft pulse on the tigerGold dot — barely perceptible movement so
+    // the screen feels alive without looking like a spinner. Loops for
+    // however long the fallback is on screen (usually <500ms).
+    const pulse = Animated.loop(
+      Animated.sequence([
+        Animated.timing(dotOpacity, {
+          toValue: 1,
+          duration: 780,
+          useNativeDriver: true,
+        }),
+        Animated.timing(dotOpacity, {
+          toValue: 0.35,
+          duration: 780,
+          useNativeDriver: true,
+        }),
+      ]),
+    );
+    pulse.start();
+    return () => pulse.stop();
+  }, [wordmarkOpacity, dotOpacity]);
+
+  return (
+    <View style={styles.splash}>
+      <View style={styles.splashInner}>
+        <Image
+          source={require('../assets/splash-icon.png')}
+          style={styles.splashLogo}
+          resizeMode="contain"
+        />
+        <Animated.View style={[styles.splashText, { opacity: wordmarkOpacity }]}>
+          <Text style={styles.splashKicker}>CREATE POWER</Text>
+          <Text style={styles.splashWordmark}>Tigers Eye Life</Text>
+        </Animated.View>
+      </View>
+      <Animated.View
+        style={[styles.splashDot, { opacity: dotOpacity }]}
+      />
+    </View>
+  );
+}
+
 const styles = StyleSheet.create({
   root: {
     backgroundColor: COLORS.onyx,
     flex: 1,
   },
   splash: {
+    alignItems: 'center',
     backgroundColor: COLORS.onyx,
     flex: 1,
+    justifyContent: 'center',
+    paddingBottom: 96,
+  },
+  splashDot: {
+    backgroundColor: COLORS.tigerGold,
+    borderRadius: 999,
+    bottom: 96,
+    height: 6,
+    position: 'absolute',
+    width: 6,
+  },
+  splashInner: {
+    alignItems: 'center',
+  },
+  splashKicker: {
+    color: COLORS.tigerGold,
+    fontSize: 11,
+    fontWeight: '700',
+    letterSpacing: 2.6,
+  },
+  splashLogo: {
+    height: 132,
+    width: 132,
+  },
+  splashText: {
+    alignItems: 'center',
+    gap: 8,
+    marginTop: 28,
+  },
+  splashWordmark: {
+    color: COLORS.bone,
+    fontSize: 22,
+    fontWeight: '700',
+    letterSpacing: -0.3,
   },
 });
