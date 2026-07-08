@@ -35,6 +35,19 @@ export type Layer2Content =
       audioUri: string;
       audioDurationSec: number;
       chapters?: ReadonlyArray<AudioChapter>;
+    }
+  // Karen retired audio content 2026-07-01 and shifted teaching to
+  // YouTube unlisted (same pipeline as the exercise tutorials). This
+  // variant is what new authored L2 content targets. `youtubeVideoId`
+  // is the raw ID (the "abc123" part of youtu.be/abc123), rendered
+  // with react-native-youtube-iframe like exercise videos.
+  | {
+      kind: 'text-or-video';
+      body: ToolBody;
+      youtubeVideoId: string;
+      // Optional runtime hint for the mode-toggle label. Empty string or
+      // undefined falls back to "Watch". Kept short — the button is narrow.
+      watchCtaLabel?: string;
     };
 
 export type Layer3Content = {

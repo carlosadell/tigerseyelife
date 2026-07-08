@@ -1,18 +1,20 @@
 // components/concept/LayeredConceptBody.tsx
-import { ChevronDown, Headphones, ScrollText } from 'lucide-react-native';
+import { ChevronDown, Headphones, Play, ScrollText } from 'lucide-react-native';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
+import YoutubePlayer from 'react-native-youtube-iframe';
 
 import { useConceptTelemetry } from '../../hooks/useConceptTelemetry';
 import { useThemeColors } from '../../hooks/useTheme';
 import { FONTS } from '../../lib/brand';
 import type { ConceptScope } from '../../lib/conceptMetadata';
-import type { LayeredContent } from '../../lib/layeredContent';
+import type { LayeredContent, Layer2Content } from '../../lib/layeredContent';
 import { blockFor, THREAD_NAMES } from '../../lib/program';
 import type { CompassRole, ThreadLetter } from '../../lib/program';
 import { ChecklistBody } from '../tool/ChecklistBody';
 import { FillInTemplateBody } from '../tool/FillInTemplateBody';
 import { MenuListBody } from '../tool/MenuListBody';
+import { ReferenceTablesBody } from '../tool/ReferenceTablesBody';
 import { StaticPageBody } from '../tool/StaticPageBody';
 import { LayerAudioPlayer } from './LayerAudioPlayer';
 
@@ -22,14 +24,27 @@ type Props = {
   content: LayeredContent;
 };
 
-type L2Mode = 'read' | 'listen';
+// L2 has three physical shapes (text-only / text-or-audio / text-or-video)
+// but only two user-visible modes: 'read' (text) or 'media' (audio-or-video,
+// whichever the concept provides). The mode toggle picks between text and
+// whichever media form is authored; there is never both audio and video on
+// the same concept.
+type L2Mode = 'read' | 'media';
+
+function layer2MediaKind(layer2?: Layer2Content): 'audio' | 'video' | null {
+  if (!layer2) return null;
+  if (layer2.kind === 'text-or-audio') return 'audio';
+  if (layer2.kind === 'text-or-video') return 'video';
+  return null;
+}
 
 export function LayeredConceptBody({ conceptSlug, block, content }: Props) {
   const colors = useThemeColors();
   const t = useConceptTelemetry();
 
-  const hasAudio = content.layer2?.kind === 'text-or-audio';
-  const [l2Mode, setL2Mode] = useState<L2Mode>(hasAudio ? 'listen' : 'read');
+  const mediaKind = layer2MediaKind(content.layer2);
+  const hasMedia = mediaKind !== null;
+  const [l2Mode, setL2Mode] = useState<L2Mode>(hasMedia ? 'media' : 'read');
   const [l3Open, setL3Open] = useState(false);
   const layer1Fired = useRef(false);
   const layer2ReadStartFired = useRef(false);
@@ -43,14 +58,16 @@ export function LayeredConceptBody({ conceptSlug, block, content }: Props) {
     t.recordLayer1Viewed(conceptSlug, block);
   }, [conceptSlug, block, t]);
 
-  // Layer 2 start event depends on the chosen mode.
+  // Layer 2 start event depends on the chosen mode. Video mode fires the
+  // same "listen" events as audio for now; media-generic telemetry names
+  // are a follow-up refactor that doesn't block shipping the video path.
   useEffect(() => {
     if (!content.layer2) return;
     if (l2Mode === 'read' && !layer2ReadStartFired.current) {
       layer2ReadStartFired.current = true;
       t.recordLayer2ReadStart(conceptSlug, block);
     }
-    if (l2Mode === 'listen' && !layer2ListenStartFired.current) {
+    if (l2Mode === 'media' && !layer2ListenStartFired.current) {
       layer2ListenStartFired.current = true;
       t.recordLayer2ListenStart(conceptSlug, block);
     }
@@ -76,10 +93,10 @@ export function LayeredConceptBody({ conceptSlug, block, content }: Props) {
         <Text style={[styles.layer1Body, { color: colors.text }]}>{content.layer1.body}</Text>
       </View>
 
-      {/* Layer 2 — core teaching, read OR listen */}
+      {/* Layer 2 — core teaching, read OR listen/watch */}
       {content.layer2 ? (
         <View style={styles.layer2Wrap}>
-          {hasAudio ? (
+          {hasMedia ? (
             <View style={styles.modeRow}>
               <ModeButton
                 active={l2Mode === 'read'}
@@ -89,24 +106,36 @@ export function LayeredConceptBody({ conceptSlug, block, content }: Props) {
                 colors={colors}
               />
               <ModeButton
-                active={l2Mode === 'listen'}
+                active={l2Mode === 'media'}
                 icon={
-                  <Headphones size={16} color={l2Mode === 'listen' ? '#FFFFFF' : colors.text} />
+                  mediaKind === 'video' ? (
+                    <Play size={16} color={l2Mode === 'media' ? '#FFFFFF' : colors.text} />
+                  ) : (
+                    <Headphones size={16} color={l2Mode === 'media' ? '#FFFFFF' : colors.text} />
+                  )
                 }
-                label="Listen"
-                onPress={() => setL2Mode('listen')}
+                label={
+                  mediaKind === 'video'
+                    ? ((content.layer2.kind === 'text-or-video' && content.layer2.watchCtaLabel) || 'Watch')
+                    : 'Listen'
+                }
+                onPress={() => setL2Mode('media')}
                 colors={colors}
               />
             </View>
           ) : null}
 
-          {l2Mode === 'listen' && content.layer2.kind === 'text-or-audio' ? (
+          {l2Mode === 'media' && content.layer2.kind === 'text-or-audio' ? (
             <LayerAudioPlayer
               uri={content.layer2.audioUri}
               durationSec={content.layer2.audioDurationSec}
               chapters={content.layer2.chapters}
               onComplete={() => t.recordLayer2ListenComplete(conceptSlug, block)}
             />
+          ) : l2Mode === 'media' && content.layer2.kind === 'text-or-video' ? (
+            <View style={styles.videoWrap}>
+              <YoutubePlayer height={220} videoId={content.layer2.youtubeVideoId} />
+            </View>
           ) : (
             <Layer2ReadBody body={content.layer2.body} conceptSlug={conceptSlug} />
           )}
@@ -268,6 +297,8 @@ function Layer2ReadBody({
     return <ChecklistBody toolSlug={conceptSlug} intro={body.intro} items={body.items} />;
   if (body.kind === 'menu-list')
     return <MenuListBody intro={body.intro} items={body.items} />;
+  if (body.kind === 'reference-tables')
+    return <ReferenceTablesBody intro={body.intro} views={body.views} footnote={body.footnote} />;
   return <FillInTemplateBody toolSlug={conceptSlug} intro={body.intro} fields={body.fields} />;
 }
 
@@ -332,5 +363,10 @@ const styles = StyleSheet.create({
   },
   modeLabel: { fontFamily: FONTS.sansBold, fontSize: 13 },
   modeRow: { flexDirection: 'row', gap: 8 },
+  videoWrap: {
+    backgroundColor: '#000000',
+    borderRadius: 14,
+    overflow: 'hidden',
+  },
   wrap: { gap: 16 },
 });
