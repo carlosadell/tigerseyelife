@@ -8,6 +8,7 @@ import {
 } from '@expo-google-fonts/inter';
 import { VT323_400Regular } from '@expo-google-fonts/vt323';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { setAudioModeAsync } from 'expo-audio';
 import { useFonts } from 'expo-font';
 import { Stack } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
@@ -38,6 +39,25 @@ export default function RootLayout() {
       SplashScreen.hideAsync();
     }
   }, [fontsLoaded]);
+
+  // Audio session config — set once on app start. `mixWithOthers`
+  // lets a member keep Spotify / Apple Music / any other background
+  // audio playing while they use the app. iOS ducks the background
+  // music automatically when we play video/audio content
+  // (exercise demos, coach playback later), so voiceovers stay audible
+  // without cutting music. See memory: music_integration_decision.
+  useEffect(() => {
+    setAudioModeAsync({
+      playsInSilentMode: true,
+      interruptionMode: 'mixWithOthers',
+      shouldPlayInBackground: false,
+      allowsRecording: false,
+    }).catch(() => {
+      // Not fatal — worst case background music behavior falls back
+      // to platform defaults. Deliberately swallowed to avoid crashing
+      // startup on a config quirk.
+    });
+  }, []);
 
   if (fontError) {
     throw fontError;
