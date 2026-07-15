@@ -11,6 +11,12 @@ import { useThemeColors } from '../../hooks/useTheme';
 import { FONTS, SPACING } from '../../lib/brand';
 import { estimateCalories, sumMacros } from '../../lib/meals';
 
+const MOOD_LABEL: Record<'strong' | 'steady' | 'drained', string> = {
+  strong: 'Strong',
+  steady: 'Steady',
+  drained: 'Drained',
+};
+
 export default function HistoryDayScreen() {
   const { date: dateParam } = useLocalSearchParams<{ date: string }>();
   const colors = useThemeColors();
@@ -100,6 +106,38 @@ export default function HistoryDayScreen() {
                   />
                 </View>
               </View>
+
+              {day.entry.mood || day.entry.intention || day.entry.reflection ? (
+                <View style={styles.section}>
+                  <Text style={[styles.sectionLabel, { color: colors.mutedText }]}>REFLECTION</Text>
+                  <View style={[styles.entryCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
+                    {day.entry.mood ? (
+                      <View style={styles.entryBlock}>
+                        <Text style={[styles.entryLabel, { color: colors.mutedText }]}>MOOD</Text>
+                        <Text style={[styles.entryValue, { color: colors.text }]}>
+                          {MOOD_LABEL[day.entry.mood]}
+                        </Text>
+                      </View>
+                    ) : null}
+                    {day.entry.intention ? (
+                      <View style={styles.entryBlock}>
+                        <Text style={[styles.entryLabel, { color: colors.mutedText }]}>INTENTION</Text>
+                        <Text style={[styles.entryValue, { color: colors.text }]}>
+                          {day.entry.intention}
+                        </Text>
+                      </View>
+                    ) : null}
+                    {day.entry.reflection ? (
+                      <View style={styles.entryBlock}>
+                        <Text style={[styles.entryLabel, { color: colors.mutedText }]}>REFLECTION</Text>
+                        <Text style={[styles.entryValue, { color: colors.text }]}>
+                          {day.entry.reflection}
+                        </Text>
+                      </View>
+                    ) : null}
+                  </View>
+                </View>
+              ) : null}
 
               {day.meals.length > 0 ? (
                 <View style={styles.section}>
@@ -205,6 +243,25 @@ const styles = StyleSheet.create({
     gap: 12,
     justifyContent: 'center',
     paddingTop: 40,
+  },
+  entryBlock: {
+    gap: 3,
+  },
+  entryCard: {
+    borderRadius: 12,
+    borderWidth: 1,
+    gap: 12,
+    padding: 14,
+  },
+  entryLabel: {
+    fontFamily: FONTS.sansBold,
+    fontSize: 9.5,
+    letterSpacing: 1.6,
+  },
+  entryValue: {
+    fontFamily: FONTS.sans,
+    fontSize: 13.5,
+    lineHeight: 19,
   },
   emptyCard: {
     borderRadius: 12,

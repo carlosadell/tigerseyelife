@@ -7,11 +7,21 @@ import { useAuth } from './useAuth';
 import { useWorkoutSessions } from './useWorkoutSessions';
 import { LoggedMeal } from '../lib/meals';
 import { getPowerBlock, PowerLetter } from '../lib/powerBlocks';
+import { hasSupabaseConfig, supabase } from '../lib/supabase';
 
 type HistoryEngagement = {
   walk: boolean;
   water: number;
   sleep: boolean;
+};
+
+export type HistoryMood = 'strong' | 'steady' | 'drained';
+
+export type HistoryEntry = {
+  intention: string | null;
+  mood: HistoryMood | null;
+  reflection: string | null;
+  movementTags: string[];
 };
 
 type HistoryPowerEntry = {
@@ -26,19 +36,27 @@ export type HistoryDay = {
   meals: LoggedMeal[];
   engagement: HistoryEngagement;
   powerActions: HistoryPowerEntry[];
+  entry: HistoryEntry;
   workoutNames: string[];
   hasAnyEngagement: boolean;
 };
 
+const EMPTY_ENTRY: HistoryEntry = {
+  intention: null,
+  mood: null,
+  reflection: null,
+  movementTags: [],
+};
+
 export function useHistoryDay(dateKey: string) {
-  const { session } = useAuth();
+  const { session, isDevSession } = useAuth();
   const userId = session?.user.id ?? 'anonymous';
   const { sessions: workoutSessions } = useWorkoutSessions();
 
   const query = useQuery({
     enabled: Boolean(dateKey),
-    queryKey: ['history-day', userId, dateKey],
-    queryFn: () => fetchHistoryDay(userId, dateKey),
+    queryKey: ['history-day', userId, dateKey, isDevSession],
+    queryFn: () => fetchHistoryDay(userId, dateKey, isDevSession),
   });
 
   return useMemo(() => {
@@ -52,12 +70,18 @@ export function useHistoryDay(dateKey: string) {
         day: null as HistoryDay | null,
       };
     }
+    const hasEntry =
+      Boolean(local.entry.intention) ||
+      Boolean(local.entry.mood) ||
+      Boolean(local.entry.reflection) ||
+      local.entry.movementTags.length > 0;
     const hasAnyEngagement =
       local.meals.length > 0 ||
       local.engagement.walk ||
       local.engagement.water > 0 ||
       local.engagement.sleep ||
       local.powerActions.length > 0 ||
+      hasEntry ||
       workoutNames.length > 0;
     return {
       loading: false,
@@ -69,11 +93,50 @@ export function useHistoryDay(dateKey: string) {
 async function fetchHistoryDay(
   userId: string,
   dateKey: string,
+  isDevSession: boolean,
 ): Promise<Omit<HistoryDay, 'workoutNames' | 'hasAnyEngagement'>> {
   const meals = await loadMeals(userId, dateKey);
   const engagement = await loadEngagement(userId, dateKey);
   const powerActions = await loadPowerActions(userId, dateKey);
-  return { meals, engagement, powerActions };
+  const entry = await loadEntry(userId, dateKey, isDevSession);
+  return { meals, engagement, powerActions, entry };
+}
+
+async function loadEntry(
+  userId: string,
+  dateKey: string,
+  isDevSession: boolean,
+): Promise<HistoryEntry> {
+  const useLocal = !hasSupabaseConfig || !supabase || isDevSession;
+  if (useLocal) {
+    try {
+      const raw = await AsyncStorage.getItem(`tel:daily-entry:${userId}:${dateKey}`);
+      if (!raw) return EMPTY_ENTRY;
+      const parsed = JSON.parse(raw) as Partial<HistoryEntry>;
+      return {
+        intention: parsed.intention ?? null,
+        mood: (parsed.mood as HistoryMood | null) ?? null,
+        reflection: parsed.reflection ?? null,
+        movementTags: parsed.movementTags ?? [],
+      };
+    } catch {
+      return EMPTY_ENTRY;
+    }
+  }
+
+  const { data } = await supabase!
+    .from('daily_entries')
+    .select('intention,mood,movement_tags,reflection')
+    .eq('user_id', userId)
+    .eq('entry_date', dateKey)
+    .maybeSingle();
+  if (!data) return EMPTY_ENTRY;
+  return {
+    intention: data.intention ?? null,
+    mood: (data.mood as HistoryMood | null) ?? null,
+    reflection: data.reflection ?? null,
+    movementTags: data.movement_tags ?? [],
+  };
 }
 
 async function loadMeals(userId: string, dateKey: string): Promise<LoggedMeal[]> {

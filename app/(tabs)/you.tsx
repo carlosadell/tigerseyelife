@@ -5,6 +5,7 @@ import {
   ChevronRight,
   ClipboardList,
   Dumbbell,
+  History,
   LogOut,
   Plus,
   Settings,
@@ -231,6 +232,17 @@ export default function YouScreen() {
             <IntakeRow label="EQUIPMENT" value={intake.location} />
             <IntakeRow label="SKILL" value={intake.skill} />
           </View>
+
+          <View style={styles.sectionHead}>
+            <Text style={[styles.sectionLabel, { color: colors.mutedText }]}>LOOKING BACK</Text>
+          </View>
+
+          <SettingsRow
+            icon={<History color={colors.accent} size={18} strokeWidth={1.8} />}
+            title="Your history"
+            body="Your whole program, day by day. Look back and see how far you have come."
+            onPress={() => router.push('/history' as never)}
+          />
 
           <View style={styles.sectionHead}>
             <Text style={[styles.sectionLabel, { color: colors.mutedText }]}>SETTINGS</Text>
