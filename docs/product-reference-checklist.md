@@ -83,6 +83,8 @@ Program-assignment key (the 4-axis picker):
 
 These four axes form a deterministic key into a fixed program. Same key → same 4-workout program, every time, per cohort. No randomness, no model-generated assignment. This is the contract `program_slotting_rules` is being built to honor.
 
+> **SUPERSEDED for workout slotting (pending Karen clarifications) — 2026-07-21.** Karen sent a simpler 2-question "Apex" decision tree that replaces these four axes for *which workout program a member gets*. It drops the skill-level axis, collapses equipment/location to home-vs-commercial, and makes format a conditional (live vs pre-recorded) that only appears at 60 min. The four axes below remain the historical contract; read the new tree first. See "Program-slotting decision tree — Karen 2026-07-21" later in this doc. The deterministic "same key → same program, no model selection" rule still holds — only the axes changed.
+
 1. **Duration** — 30 or 60 min (single-select). 45 min is removed from the eventual picker.
 2. **Format** — pre-recorded / live / just-the-workout (no recording).
 3. **Equipment + location** — basic at-home (dumbbells + bands) / home gym (barbell + plates) / commercial gym.
@@ -103,6 +105,42 @@ Ancillary fields captured but NOT part of the assignment key:
 - Sport/activity interests
 - Nutrition precision level
 - Dietary pattern and avoidances
+
+### Program-slotting decision tree — Karen 2026-07-21
+
+Karen sent the decision tree for which **workout program** a member is slotted into at join. This supersedes the 4-axis key above for workout slotting (it does **not** touch the §3.2 behavioral intake — Big WHY, obstacles, coaching style — which stays as-is). Captured verbatim intent, then reconciled.
+
+**The tree:**
+
+- **Q1 — "Home gym or commercial gym?"** → **Apex Home** vs **Apex Gym**.
+  - ⚠️ Commercial-gym content does **not** exist yet (no gym-equipment video tutorials until **Q3/Q4 2026**). Selecting commercial gym today lands a member in a program with no exercise tutorials.
+- **Q2 — "30 or 60 minutes?"**
+  - **30 min** → pre-recorded **Apex30**.
+  - **60 min** → member chooses **Live group strength training** (Zoom, 60 min, 4×/week: Sun 8:00 AM ET, Tue 7:40 AM ET, Thu & Fri 6:15 PM ET) **or** pre-recorded **Apex60**.
+- **Naming / continuation:** pre-recorded programs are `Apex30 A, Apex30 B, …` and `Apex60 A, Apex60 B, …`. Each is **12 weeks**. On completion, the member **purchases a new program** (next letter). The **letter is the continuation/retention arc, not a join-time axis** — see memory `[[continuation_program_is_the_retention_arc]]`.
+
+**Reconciliation with the old 4-axis key:**
+
+| Old axis | Fate in Karen's tree |
+|---|---|
+| Duration (30/60) | Kept as **Q2** (30/60, no 45). |
+| Format (pre-recorded / live / just-the-workout) | **Not an independent axis** — live-vs-pre-recorded appears **only at 60 min**; "just-the-workout / written + tutorials" is **dropped** (pending confirmation, since a "Written + Tutorials" program is still seeded). |
+| Equipment + location (basic-at-home / home-gym / commercial) | **Collapsed to 2** — home vs commercial. The dumbbells+bands vs barbell+plates split disappears into one "Apex Home." |
+| Skill level (multi-select) | **Dropped from slotting entirely.** |
+
+**Code reality (2026-07-21 recon):** slotting is **greenfield** — `program_slotting_rules` is empty, `PowerTrainingSteps` is stubbed and not in the live flow, no code maps intake → program, and no "Apex"/live concept exists yet. The 7 seeded `workout_programs` carry `delivery_type` (live / pre_recorded / written / future) + `level`, and `program_workouts` carry unused `slotting_tags` — scaffolding to build on, not a working slotter.
+
+**Open questions for Karen (block a clean build):**
+
+1. Does this 2-question tree **fully replace** the 4-axis key — i.e. are skill-level and the home-equipment split dropped for good, or do they still pick *within* an Apex family?
+2. Letter progression: always start at **A**? At completion, next letter in the **same** family or free re-choice of duration/location/live? Auto-assigned or member-picked?
+3. **Live is Zoom follow-along (location-agnostic)** — does Q1 (home/gym) apply to live members, what equipment does live assume, and do they also get Apex60 recordings for missed sessions?
+4. Commercial gym has no content until Q3/Q4 — for now: hide the option, show "coming soon / waitlist," or serve Apex Home as interim?
+5. Is **Apex Home** one program regardless of home equipment level (dumbbells+bands vs full barbell rig)?
+6. Where does workout-slotting sit relative to the §3.2 intake (before/after), and is it CREATE-POWER-only or also the general-public track?
+7. Is the "written + tutorials / just-the-workout" format dropped now (Karen offers only pre-recorded + live)?
+
+**Build phases (gated on the answers):** P1 data model (Apex families + Live type in `lib/programs.ts` + migration) · P2 onboarding 2-question step-set (repurpose `PowerTrainingSteps`) · P3 deterministic slotting fn `(location, duration, format) → family + letter A` writing `assigned_program_id`/`assigned_workout_id` · P4 commercial-gym gate + Live schedule/Zoom surface · P5 continuation/repurchase next-letter flow.
 
 ### First Five Minutes
 
@@ -190,6 +228,17 @@ Nutrition precision levels:
 - Hand portions and ABC Power Meals
 - Calorie awareness and protein focus
 - Full macro tracking
+
+Reference artifact, 2026-06-18 (Karen's Protein Reference Guide):
+
+- Karen authored a printable editorial-style "Protein Reference Guide" as a Claude design learning exercise (hosted at `tigerseyelife-protein-guide.tiiny.site`). It is a candidate Layer 3 deep-dive companion to ABC Power Meals.
+- **Treatment confirmed by John 2026-06-18:** "stick to the app's branding but we can use this resource to get the designs, elements and content." → The artifact is a **mining source**, not a brand pivot. When building Fuel reference surfaces:
+  - **Mine** the protein content (reference data, framing), editorial layout patterns (cover/hero, sectioning, macro and protein/carb table shapes), and specific element compositions.
+  - **Apply TEL brand tokens** (`COLORS` / `THEME_COLORS`) and TEL typography (Inter + VT323). Do NOT carry the artifact's palette (Editorial Cream + Charcoal Premium toggle) or fonts (Cormorant Garamond + Karla + Montserrat + Poppins) into the app.
+  - The deeper editorial accent `#A0673B` and warm cover-gold `#e8c88a` are NOT being added to `lib/brand.ts`.
+- Two constraints any user-facing surface must honor: (1) attribution stays "Karen and Ryan," not "Karen's…"; (2) the title's em dash must be rewritten (no em dashes rule).
+- Public HTML hosting of paid reference content remains in tension with the anti-piracy gating constraint — default delivery for adapted material is in-app or gated download, not a public URL.
+- Still open for Karen: intended surface (in-app native screen vs gated PDF vs marketing asset) and where in the unlock schedule it lives.
 
 ### Grow
 
