@@ -42,6 +42,50 @@ export const programSeed: WorkoutProgram[] = [
     published: true,
     sort_order: 3,
   },
+  // Apex slotting families (Karen 2026-07-21). One row per APEX_FAMILY except
+  // apex30-home, which reuses the Foundations program above as its join program.
+  // ids match lib/apexPrograms.ts joinProgramId slugs and the workout_programs.slug
+  // backfill in supabase/migrations/0012_apex_program_slotting.sql.
+  {
+    id: 'apex60-home-a',
+    name: 'Apex60 Home',
+    delivery_type: 'pre_recorded',
+    level: 'Home',
+    description:
+      'Sixty-minute home strength program. Four workouts on a lower / upper split with scoped tutorials for each session.',
+    published: true,
+    sort_order: 4,
+  },
+  {
+    id: 'apex30-gym-a',
+    name: 'Apex30 Gym',
+    delivery_type: 'pre_recorded',
+    level: 'Commercial gym',
+    description:
+      'Thirty-minute strength program for a commercial gym. Commercial-gym video tutorials arrive later in 2026.',
+    published: false,
+    sort_order: 5,
+  },
+  {
+    id: 'apex60-gym-a',
+    name: 'Apex60 Gym',
+    delivery_type: 'pre_recorded',
+    level: 'Commercial gym',
+    description:
+      'Sixty-minute strength program for a commercial gym. Commercial-gym video tutorials arrive later in 2026.',
+    published: false,
+    sort_order: 6,
+  },
+  {
+    id: 'live-gst',
+    name: 'Live Group Strength',
+    delivery_type: 'live',
+    level: 'Live',
+    description:
+      'Sixty-minute live group strength training over Zoom, four sessions a week on a fixed schedule.',
+    published: true,
+    sort_order: 7,
+  },
 ];
 
 export const programWorkoutSeed: ProgramWorkout[] = [
@@ -120,6 +164,88 @@ export const programWorkoutSeed: ProgramWorkout[] = [
     tutorial_urls: [
       { title: 'Warm-up tutorial', url: 'https://example.com/upper-b-warmup' },
       { title: 'Exercise playlist (6 clips)', url: 'https://example.com/upper-b-exercises' },
+    ],
+    sort_order: 4,
+  },
+  // Apex60 Home (apex60-home-a) — 60-minute mirror of the Foundations 4-workout
+  // Lower / Upper A/B structure. Only this Apex family is seeded here:
+  //  - apex30-gym / apex60-gym content lands Q3/Q4 2026 (gated, published: false).
+  //  - live-gst is schedule-based Zoom (see LIVE_GST_SCHEDULE); no video library.
+  {
+    id: 'apex60-home-a-w1',
+    program_id: 'apex60-home-a',
+    day_label: 'Workout 1',
+    name: 'Workout 1',
+    duration_minutes: 60,
+    exercise_count: 6,
+    equipment: ['dumbbells', 'bands'],
+    slotting_tags: {
+      duration: '60 min',
+      equipment: 'Home',
+      experience: ['novice', 'rusty'],
+    },
+    tutorial_urls: [
+      { title: 'Warm-up tutorial', url: 'https://example.com/apex60-home-a-w1-warmup' },
+      { title: 'Exercise playlist (6 clips)', url: 'https://example.com/apex60-home-a-w1-exercises' },
+      { title: 'Full session — group view', url: 'https://example.com/apex60-home-a-w1-group' },
+      { title: 'Full session — speaker only', url: 'https://example.com/apex60-home-a-w1-speaker' },
+    ],
+    sort_order: 1,
+  },
+  {
+    id: 'apex60-home-a-w2',
+    program_id: 'apex60-home-a',
+    day_label: 'Workout 2',
+    name: 'Workout 2',
+    duration_minutes: 60,
+    exercise_count: 6,
+    equipment: ['dumbbells', 'bands'],
+    slotting_tags: {
+      duration: '60 min',
+      equipment: 'Home',
+      experience: ['novice', 'rusty'],
+    },
+    tutorial_urls: [
+      { title: 'Warm-up tutorial', url: 'https://example.com/apex60-home-a-w2-warmup' },
+      { title: 'Exercise playlist (6 clips)', url: 'https://example.com/apex60-home-a-w2-exercises' },
+    ],
+    sort_order: 2,
+  },
+  {
+    id: 'apex60-home-a-w3',
+    program_id: 'apex60-home-a',
+    day_label: 'Workout 3',
+    name: 'Workout 3',
+    duration_minutes: 60,
+    exercise_count: 6,
+    equipment: ['dumbbells', 'bands'],
+    slotting_tags: {
+      duration: '60 min',
+      equipment: 'Home',
+      experience: ['novice', 'rusty'],
+    },
+    tutorial_urls: [
+      { title: 'Warm-up tutorial', url: 'https://example.com/apex60-home-a-w3-warmup' },
+      { title: 'Exercise playlist (6 clips)', url: 'https://example.com/apex60-home-a-w3-exercises' },
+    ],
+    sort_order: 3,
+  },
+  {
+    id: 'apex60-home-a-w4',
+    program_id: 'apex60-home-a',
+    day_label: 'Workout 4',
+    name: 'Workout 4',
+    duration_minutes: 60,
+    exercise_count: 6,
+    equipment: ['dumbbells', 'bands'],
+    slotting_tags: {
+      duration: '60 min',
+      equipment: 'Home',
+      experience: ['novice', 'rusty'],
+    },
+    tutorial_urls: [
+      { title: 'Warm-up tutorial', url: 'https://example.com/apex60-home-a-w4-warmup' },
+      { title: 'Exercise playlist (6 clips)', url: 'https://example.com/apex60-home-a-w4-exercises' },
     ],
     sort_order: 4,
   },

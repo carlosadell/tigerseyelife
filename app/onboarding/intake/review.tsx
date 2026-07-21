@@ -37,6 +37,9 @@ const light = THEME_COLORS.light;
 
 const LABELS: Record<keyof Intake, string> = {
   age: 'AGE',
+  training_location: 'WHERE YOU TRAIN',
+  training_duration: 'SESSION LENGTH',
+  training_format: 'SESSION FORMAT',
   primary_goal: 'YOUR GOAL',
   success_vision: 'SUCCESS IN 12 WEEKS',
   importance_level: 'HOW IMPORTANT',
@@ -60,6 +63,9 @@ const LABELS: Record<keyof Intake, string> = {
 
 const FIELD_TO_STEP: Partial<Record<keyof Intake, string>> = {
   age: 'age',
+  training_location: 'training-location',
+  training_duration: 'training-duration',
+  training_format: 'training-format',
   primary_goal: 'primary-goal',
   success_vision: 'success-vision',
   importance_level: 'importance-confidence',
@@ -78,8 +84,21 @@ const FIELD_TO_STEP: Partial<Record<keyof Intake, string>> = {
   emotion_response: 'final-prompts',
 };
 
-function display(value: PartialIntake[keyof PartialIntake]): string {
+// Friendly labels for the Apex slotting answers so the review reads as prose
+// rather than raw enum values.
+const TRAINING_DISPLAY: Partial<Record<keyof Intake, Record<string, string>>> = {
+  training_location: { home: 'Home gym', commercial: 'Commercial gym' },
+  training_duration: { '30': '30 minutes', '60': '60 minutes' },
+  training_format: { live: 'Live group strength', prerecorded: 'Pre-recorded (Apex60)' },
+};
+
+function display(field: keyof Intake, value: PartialIntake[keyof PartialIntake]): string {
   if (value === undefined || value === null) return '';
+  const overrides = TRAINING_DISPLAY[field];
+  if (overrides) {
+    const key = String(value);
+    if (overrides[key]) return overrides[key];
+  }
   if (Array.isArray(value)) return value.join(', ');
   if (typeof value === 'number') return String(value);
   return String(value);
@@ -119,6 +138,9 @@ export default function ReviewScreen() {
   // Order matches the spec's logical group.
   const fieldsToReview: (keyof Intake)[] = [
     'age',
+    'training_location',
+    'training_duration',
+    'training_format',
     'primary_goal',
     'success_vision',
     'importance_level',
@@ -158,7 +180,7 @@ export default function ReviewScreen() {
                 <ReviewCard
                   key={field}
                   label={LABELS[field]}
-                  value={display(v)}
+                  value={display(field, v)}
                   onEdit={() => onEdit(field)}
                 />
               );

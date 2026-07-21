@@ -14,6 +14,9 @@ import type { PartialIntake } from './onboardingSchema';
 export type StepSlug =
   | 'welcome'
   | 'age'
+  | 'training-location'
+  | 'training-duration'
+  | 'training-format'
   | 'primary-goal'
   | 'success-vision'
   | 'importance-confidence'
@@ -47,6 +50,25 @@ export const STEPS: readonly IntakeStepDef[] = [
     kicker: 'ABOUT YOU',
     prompt: 'How old are you?',
     helper: 'We use this to scale the workouts safely.',
+  },
+  {
+    slug: 'training-location',
+    kicker: 'HOW YOU TRAIN',
+    prompt: 'Where will you be working out?',
+    helper: 'This points us at the right set of workouts. You can revisit it later.',
+  },
+  {
+    slug: 'training-duration',
+    kicker: 'HOW YOU TRAIN',
+    prompt: 'How long do you prefer per session?',
+    helper: 'Both build real strength. Pick what fits your days.',
+  },
+  {
+    slug: 'training-format',
+    kicker: 'HOW YOU TRAIN',
+    prompt: 'For your 60-minute sessions, live or on your schedule?',
+    helper: 'Live meets on Zoom at set times. Pre-recorded runs whenever you like.',
+    skipIf: (v) => v.training_duration !== 60,
   },
   {
     slug: 'primary-goal',

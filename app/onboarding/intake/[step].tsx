@@ -14,6 +14,7 @@ import { SingleSelectStack } from '../../../components/onboarding/SingleSelectSt
 import { SliderField } from '../../../components/onboarding/SliderField';
 import { TapToRank } from '../../../components/onboarding/TapToRank';
 import { TextAreaField } from '../../../components/onboarding/TextAreaField';
+import { LIVE_GST_SCHEDULE } from '../../../lib/apexPrograms';
 import { FONTS, THEME_COLORS } from '../../../lib/brand';
 import {
   STEPS,
@@ -52,6 +53,31 @@ const LIVING_OPTIONS = [
   { value: 'children', label: 'Children' },
   { value: 'roommates', label: 'Roommates' },
   { value: 'family', label: 'Other family' },
+] as const;
+
+const TRAINING_LOCATION_OPTIONS = [
+  { value: 'home', label: 'Home gym', description: 'Training at home with your own setup.' },
+  { value: 'commercial', label: 'Commercial gym', description: 'A gym or fitness center you go to.' },
+] as const;
+
+// SingleSelectStack is string-keyed, so duration uses string values that we
+// convert to the numeric schema field on change.
+const TRAINING_DURATION_OPTIONS = [
+  { value: '30', label: '30 minutes', description: 'Shorter sessions that fit a full day.' },
+  { value: '60', label: '60 minutes', description: 'More room to build and progress.' },
+] as const;
+
+const TRAINING_FORMAT_OPTIONS = [
+  {
+    value: 'live',
+    label: 'Live group strength',
+    description: 'Follow along on Zoom with the group.',
+  },
+  {
+    value: 'prerecorded',
+    label: 'Pre-recorded (Apex60)',
+    description: 'On your own schedule, whenever it fits.',
+  },
 ] as const;
 
 const COACHING_OPTIONS = [
@@ -118,6 +144,9 @@ function computeCanContinue(slug: StepSlug, v: PartialIntake): boolean {
   switch (slug) {
     case 'welcome':                return true;
     case 'age':                    return typeof v.age === 'number' && v.age >= 13 && v.age <= 120;
+    case 'training-location':      return v.training_location === 'home' || v.training_location === 'commercial';
+    case 'training-duration':      return v.training_duration === 30 || v.training_duration === 60;
+    case 'training-format':        return v.training_format === 'live' || v.training_format === 'prerecorded';
     case 'primary-goal':           return (v.primary_goal ?? '').trim().length > 2;
     case 'success-vision':         return (v.success_vision ?? '').trim().length > 2;
     case 'importance-confidence':  return typeof v.importance_level === 'number' && typeof v.confidence_level === 'number';
@@ -166,6 +195,79 @@ function StepBody({ slug, control, values, setValue }: BodyProps) {
               max={120}
               step={1}
             />
+          )}
+        />
+      );
+
+    case 'training-location':
+      return (
+        <Controller
+          control={control}
+          name="training_location"
+          render={({ field }) => (
+            <View>
+              <SingleSelectStack
+                options={TRAINING_LOCATION_OPTIONS}
+                value={field.value}
+                onChange={field.onChange}
+              />
+              {field.value === 'commercial' ? (
+                <View style={styles.inlineNote}>
+                  <Text style={styles.inlineNoteText}>
+                    Commercial-gym video tutorials are coming later this year. You can start
+                    now and they will show up when they land.
+                  </Text>
+                </View>
+              ) : null}
+            </View>
+          )}
+        />
+      );
+
+    case 'training-duration':
+      return (
+        <Controller
+          control={control}
+          name="training_duration"
+          render={({ field }) => (
+            <SingleSelectStack
+              options={TRAINING_DURATION_OPTIONS}
+              value={field.value === undefined ? undefined : String(field.value)}
+              onChange={(v) => {
+                const minutes = v === '60' ? 60 : 30;
+                field.onChange(minutes);
+                // A 30-minute path has no format choice; clear any stale one.
+                if (minutes === 30) setValue('training_format', undefined);
+              }}
+            />
+          )}
+        />
+      );
+
+    case 'training-format':
+      return (
+        <Controller
+          control={control}
+          name="training_format"
+          render={({ field }) => (
+            <View>
+              <SingleSelectStack
+                options={TRAINING_FORMAT_OPTIONS}
+                value={field.value}
+                onChange={field.onChange}
+              />
+              {field.value === 'live' ? (
+                <View style={styles.scheduleCard}>
+                  <Text style={styles.scheduleTitle}>Live sessions meet</Text>
+                  {LIVE_GST_SCHEDULE.map((slot) => (
+                    <View key={slot.day} style={styles.scheduleRow}>
+                      <Text style={styles.scheduleDay}>{slot.day}</Text>
+                      <Text style={styles.scheduleTime}>{slot.timeET}</Text>
+                    </View>
+                  ))}
+                </View>
+              ) : null}
+            </View>
           )}
         />
       );
@@ -431,6 +533,52 @@ function StepBody({ slug, control, values, setValue }: BodyProps) {
 }
 
 const styles = StyleSheet.create({
+  inlineNote: {
+    backgroundColor: light.cardAlt,
+    borderColor: light.border,
+    borderRadius: 14,
+    borderWidth: 1,
+    marginTop: 4,
+    padding: 14,
+  },
+  inlineNoteText: {
+    color: light.mutedText,
+    fontFamily: FONTS.sans,
+    fontSize: 13,
+    lineHeight: 19,
+  },
+  scheduleCard: {
+    backgroundColor: light.cardAlt,
+    borderColor: light.border,
+    borderRadius: 14,
+    borderWidth: 1,
+    marginTop: 6,
+    padding: 14,
+  },
+  scheduleDay: {
+    color: light.text,
+    fontFamily: FONTS.sansMedium,
+    fontSize: 14,
+  },
+  scheduleRow: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    paddingVertical: 5,
+  },
+  scheduleTime: {
+    color: light.mutedText,
+    fontFamily: FONTS.sans,
+    fontSize: 14,
+  },
+  scheduleTitle: {
+    color: light.mutedText,
+    fontFamily: FONTS.sansBold,
+    fontSize: 12,
+    letterSpacing: 0.6,
+    marginBottom: 6,
+    textTransform: 'uppercase',
+  },
   stack: {
     gap: 14,
   },
