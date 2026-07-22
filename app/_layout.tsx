@@ -13,7 +13,7 @@ import { useFonts } from 'expo-font';
 import { Stack } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { StyleSheet } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
@@ -34,6 +34,15 @@ export default function RootLayout() {
     Inter_700Bold,
     VT323_400Regular,
   });
+
+  // Minimum on-screen time for our own splash, so the branded entrance
+  // actually plays instead of flashing by in a few frames. Without this the
+  // splash is gone the instant fonts resolve (often <500ms).
+  const [minTimeElapsed, setMinTimeElapsed] = useState(false);
+  useEffect(() => {
+    const t = setTimeout(() => setMinTimeElapsed(true), 1600);
+    return () => clearTimeout(t);
+  }, []);
 
   useEffect(() => {
     if (fontsLoaded) {
@@ -64,7 +73,7 @@ export default function RootLayout() {
     throw fontError;
   }
 
-  if (!fontsLoaded) {
+  if (!fontsLoaded || !minTimeElapsed) {
     return <SplashFallback />;
   }
 
