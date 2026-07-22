@@ -4,14 +4,16 @@
 // Slim program-context bar up top, big full-width hero, slot-numbered workout
 // rows with state, and a floating "resume" pill when an active session exists.
 
-import { Activity, Dumbbell, MoreVertical, RotateCcw, X } from 'lucide-react-native';
+import { Activity, CalendarClock, Clock, Dumbbell, MoreVertical, RotateCcw, X } from 'lucide-react-native';
 import { router } from 'expo-router';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { PhotoHeroCard } from '../../components/ui/PhotoHeroCard';
 import { SectionHeader } from '../../components/ui/SectionHeader';
+import { useApexAssignmentValue } from '../../hooks/useApexAssignment';
 import { useCurrentWeek } from '../../hooks/useCurrentWeek';
+import { LIVE_GST_SCHEDULE } from '../../lib/apexPrograms';
 import { FONTS, THEME_COLORS } from '../../lib/brand';
 import { trainHeroPhotoForWeek } from '../../lib/heroPhotos';
 import { blockFor } from '../../lib/program';
@@ -39,6 +41,16 @@ export default function TrainScreen() {
   const workouts = workoutsForBlock(blockId);
   const todayWorkout = workouts.find((w) => w.slotIndex === TODAY_SLOT) ?? workouts[0];
   const blockTitle = `${blockId.charAt(0)}${blockId.slice(1).toLowerCase()}`;
+
+  // The member's assigned Apex program (from onboarding slotting). Drives the
+  // program identity line and two informational states: a live-session schedule
+  // for Live GST members, and a "being prepared" note for commercial-gym
+  // families whose tutorials are not authored yet. The workout list below stays
+  // as the trainable content in every case.
+  const { family: apexFamily } = useApexAssignmentValue();
+  const programName = apexFamily?.displayName ?? 'CREATE POWER';
+  const isLiveProgram = apexFamily?.id === 'live-gst';
+  const isContentPending = apexFamily ? !apexFamily.contentAvailable : false;
 
   const currentSession = useActiveWorkoutStore((s) => s.currentSession);
   const currentWorkout = useActiveWorkoutStore((s) => s.currentWorkout);
@@ -77,10 +89,43 @@ export default function TrainScreen() {
               {blockTitle} Block · Week {weekNumber}
             </Text>
             <Text style={styles.programTitle} numberOfLines={1}>
-              CREATE POWER · {workouts.length} workouts
+              {isLiveProgram ? programName : `${programName} · ${workouts.length} workouts`}
             </Text>
           </View>
         </View>
+
+        {isLiveProgram ? (
+          <View style={styles.apexCard}>
+            <View style={styles.apexCardHead}>
+              <CalendarClock color={light.accent} size={16} strokeWidth={2.2} />
+              <Text style={styles.apexCardKicker}>LIVE SESSIONS MEET</Text>
+            </View>
+            {LIVE_GST_SCHEDULE.map((slot) => (
+              <View key={`${slot.day}-${slot.timeET}`} style={styles.apexScheduleRow}>
+                <Text style={styles.apexScheduleDay}>{slot.day}</Text>
+                <Text style={styles.apexScheduleTime}>{slot.timeET}</Text>
+              </View>
+            ))}
+            <Text style={styles.apexCardNote}>
+              Your program meets live on Zoom. The workouts below are here for the days between
+              sessions.
+            </Text>
+          </View>
+        ) : null}
+
+        {isContentPending ? (
+          <View style={styles.apexCard}>
+            <View style={styles.apexCardHead}>
+              <Clock color={light.accent} size={16} strokeWidth={2.2} />
+              <Text style={styles.apexCardKicker}>{programName.toUpperCase()}</Text>
+            </View>
+            <Text style={styles.apexCardNote}>
+              Your commercial gym program is being prepared. The video tutorials for gym equipment
+              arrive later this year. You can start with the workouts below, and the gym sessions
+              will show up when they land.
+            </Text>
+          </View>
+        ) : null}
 
         {todayWorkout ? (
           <View style={styles.heroWrap}>
@@ -185,6 +230,49 @@ export default function TrainScreen() {
 void Activity;
 
 const styles = StyleSheet.create({
+  apexCard: {
+    backgroundColor: light.card,
+    borderColor: light.border,
+    borderRadius: 14,
+    borderWidth: 1,
+    gap: 8,
+    marginTop: 14,
+    padding: 16,
+  },
+  apexCardHead: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    gap: 8,
+    marginBottom: 2,
+  },
+  apexCardKicker: {
+    color: light.accent,
+    fontFamily: FONTS.sansBold,
+    fontSize: 10.5,
+    letterSpacing: 1.8,
+  },
+  apexCardNote: {
+    color: light.mutedText,
+    fontFamily: FONTS.sans,
+    fontSize: 12.5,
+    lineHeight: 18,
+    marginTop: 4,
+  },
+  apexScheduleDay: {
+    color: light.text,
+    fontFamily: FONTS.sansBold,
+    fontSize: 13.5,
+  },
+  apexScheduleRow: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+  },
+  apexScheduleTime: {
+    color: light.mutedText,
+    fontFamily: FONTS.sansMedium,
+    fontSize: 13,
+  },
   badge: {
     color: light.mutedText,
     fontFamily: FONTS.sansBold,

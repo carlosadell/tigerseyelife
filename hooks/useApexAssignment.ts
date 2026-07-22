@@ -23,14 +23,17 @@
 // it never throws, so a failure here cannot block onboarding routing.
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useQuery } from '@tanstack/react-query';
 import { useCallback } from 'react';
 
 import { useAuth } from './useAuth';
 import { supabase } from '../lib/supabase';
 import {
+  apexFamilyById,
   buildApexAssignment,
   type ApexAnswers,
   type ApexAssignment,
+  type ApexFamily,
 } from '../lib/apexPrograms';
 
 const devKey = (userId: string) => `tel:apex-assignment:${userId}`;
@@ -117,4 +120,65 @@ export function useApexAssignment() {
   );
 
   return { record };
+}
+
+/**
+ * Read side of the Apex assignment (dual-path). Returns the persisted
+ * assignment and its resolved family, or null when a member has none yet.
+ *
+ * Dev writes to the local key; Supabase stores it in profiles.intake_answers
+ * under `apex`. We check the local key first (it is authoritative in dev and
+ * harmless in Supabase mode) and fall back to the profile row.
+ */
+export function useApexAssignmentValue(): {
+  assignment: ApexAssignment | null;
+  family: ApexFamily | null;
+  loading: boolean;
+} {
+  const { isDevSession, session } = useAuth();
+  const userId = session?.user.id ?? null;
+
+  const query = useQuery({
+    enabled: Boolean(userId),
+    queryKey: ['apex-assignment', userId, isDevSession],
+    queryFn: () => readApexAssignment(userId!, isDevSession),
+  });
+
+  const assignment = query.data ?? null;
+  const family = assignment ? safeFamily(assignment.familyId) : null;
+  return { assignment, family, loading: query.isLoading };
+}
+
+async function readApexAssignment(
+  userId: string,
+  isDevSession: boolean,
+): Promise<ApexAssignment | null> {
+  try {
+    const raw = await AsyncStorage.getItem(devKey(userId));
+    if (raw) return JSON.parse(raw) as ApexAssignment;
+  } catch {
+    // fall through to Supabase
+  }
+
+  if (isDevSession || !supabase) return null;
+
+  try {
+    const { data } = await supabase
+      .from('profiles')
+      .select('intake_answers')
+      .eq('id', userId)
+      .maybeSingle();
+    const apex = (data?.intake_answers as Record<string, unknown> | null)?.apex;
+    return (apex as ApexAssignment | undefined) ?? null;
+  } catch {
+    return null;
+  }
+}
+
+function safeFamily(id: ApexAssignment['familyId']): ApexFamily | null {
+  try {
+    return apexFamilyById(id);
+  } catch {
+    return null;
+  }
 }
