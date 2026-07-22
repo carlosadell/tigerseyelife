@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from 'react';
 
 import { useAuth } from './useAuth';
 import { supabase } from '../lib/supabase';
+import { currentBlockFor, type WeekNumber } from '../lib/program';
 
 export type Block = 'COMMIT' | 'REFINE' | 'EVOLVE' | 'ADAPT' | 'THRIVE' | 'EXCEL';
 
@@ -178,5 +179,29 @@ export function useMembership() {
     setMembership(EMPTY);
   }, [userId]);
 
-  return { loading, membership, refresh: load, devMarkVerified, recordNonMember, devReset };
+  /**
+   * Dev-only: jump the current week (and matching block) so gated content
+   * can be verified without waiting twelve real weeks. Marks the user as a
+   * program member if not already. Persisted to AsyncStorage; no Supabase
+   * write — this is for the local dev client only.
+   */
+  const devSetWeek = useCallback(
+    async (weekNumber: WeekNumber) => {
+      if (!userId) return;
+      const next: Membership = {
+        forkAnswered: true,
+        programMember: true,
+        joinEmail: membership.joinEmail ?? 'dev@tigerseyelife',
+        verifiedAt: membership.verifiedAt ?? new Date().toISOString(),
+        currentBlock: currentBlockFor(weekNumber) as Block,
+        currentWeek: weekNumber,
+        nonMemberDiagnostic: null,
+      };
+      await AsyncStorage.setItem(devKey(userId), JSON.stringify(next));
+      setMembership(next);
+    },
+    [userId, membership.joinEmail, membership.verifiedAt],
+  );
+
+  return { loading, membership, refresh: load, devMarkVerified, recordNonMember, devReset, devSetWeek };
 }

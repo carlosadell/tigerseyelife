@@ -16,6 +16,7 @@ export type ToolSlug =
   | 'sleep-environment-checklist'
   | 'kitchen-reset-guide'
   | 'abc-power-meals-guide'
+  | 'protein-reference-guide'
   | 'pause-practice-guide'
   | 'wind-down-routine-builder'
   | 'teb-loop-guide'
@@ -33,11 +34,35 @@ export type ToolSlug =
   | 'transformation-summary'
   | 'whats-next-guide';
 
+// Reference table types — for lookup-style content (food/macro guides)
+// where the teaching is in the data itself, not in prose. Each view is a
+// scoped collection (e.g. Quick Reference vs Complete Macros) toggled at
+// the top of the screen.
+export type ReferenceTable = {
+  label: string;
+  headers: string[];
+  rows: string[][];
+};
+
+export type ReferenceSection = {
+  label: string;
+  subtitle?: string;
+  tables: ReferenceTable[];
+};
+
+export type ReferenceView = {
+  id: string;
+  label: string;
+  description?: string;
+  sections: ReferenceSection[];
+};
+
 export type ToolBody =
   | { kind: 'static-page'; intro?: string; sections: { heading: string; body: string }[] }
   | { kind: 'checklist'; intro?: string; items: { id: string; label: string }[] }
   | { kind: 'menu-list'; intro?: string; items: { title: string; body: string }[] }
-  | { kind: 'fill-in-template'; intro?: string; fields: { id: string; label: string; placeholder?: string }[] };
+  | { kind: 'fill-in-template'; intro?: string; fields: { id: string; label: string; placeholder?: string }[] }
+  | { kind: 'reference-tables'; intro?: string; views: ReferenceView[]; footnote?: string };
 
 export type Tool = {
   slug: ToolSlug;
@@ -60,6 +85,7 @@ import { movementBreaksMenu } from './toolContent/movementBreaksMenu';
 import { sleepEnvironmentChecklist } from './toolContent/sleepEnvironmentChecklist';
 import { kitchenResetGuide } from './toolContent/kitchenResetGuide';
 import { abcPowerMealsGuide } from './toolContent/abcPowerMealsGuide';
+import { proteinReferenceGuide } from './toolContent/proteinReferenceGuide';
 import { pausePracticeGuide } from './toolContent/pausePracticeGuide';
 import { windDownRoutineBuilder } from './toolContent/windDownRoutineBuilder';
 import { tebLoopGuide } from './toolContent/tebLoopGuide';
@@ -86,6 +112,7 @@ export const TOOLS: Record<ToolSlug, Tool> = {
   'sleep-environment-checklist': sleepEnvironmentChecklist,
   'kitchen-reset-guide': kitchenResetGuide,
   'abc-power-meals-guide': abcPowerMealsGuide,
+  'protein-reference-guide': proteinReferenceGuide,
   'pause-practice-guide': pausePracticeGuide,
   'wind-down-routine-builder': windDownRoutineBuilder,
   'teb-loop-guide': tebLoopGuide,
