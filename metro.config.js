@@ -17,6 +17,17 @@ config.resolver.resolveRequest = (context, moduleName, platform) => {
     };
   }
 
+  // Web-only: `react-native-web-webview` (optional peer of
+  // react-native-youtube-iframe's web build) is not installed, and its missing
+  // import fails the whole web bundle. Stub it so non-YouTube surfaces preview
+  // in a browser. Native builds are unaffected.
+  if (platform === 'web' && moduleName === 'react-native-web-webview') {
+    return {
+      filePath: path.join(__dirname, 'web-shims/react-native-web-webview.js'),
+      type: 'sourceFile',
+    };
+  }
+
   if (defaultResolveRequest) {
     return defaultResolveRequest(context, moduleName, platform);
   }
