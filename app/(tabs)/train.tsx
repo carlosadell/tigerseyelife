@@ -4,19 +4,18 @@
 // Slim program-context bar up top, big full-width hero, slot-numbered workout
 // rows with state, and a floating "resume" pill when an active session exists.
 
-import { Activity, CalendarClock, Clock, Dumbbell, MoreVertical, RotateCcw, X } from 'lucide-react-native';
+import { Activity, Dumbbell, MoreVertical, RotateCcw, X } from 'lucide-react-native';
 import { router } from 'expo-router';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { PhotoHeroCard } from '../../components/ui/PhotoHeroCard';
+import { ProgramHeroCard, type ProgramHeroBody } from '../../components/ui/ProgramHeroCard';
 import { SectionHeader } from '../../components/ui/SectionHeader';
 import { useApexAssignmentValue } from '../../hooks/useApexAssignment';
 import { useCurrentWeek } from '../../hooks/useCurrentWeek';
-import { LIVE_GST_SCHEDULE } from '../../lib/apexPrograms';
+import { APEX_PROGRAM_WEEKS, LIVE_GST_SCHEDULE } from '../../lib/apexPrograms';
 import { FONTS, THEME_COLORS } from '../../lib/brand';
 import { trainHeroPhotoForWeek } from '../../lib/heroPhotos';
-import { blockFor } from '../../lib/program';
 import type { Workout } from '../../lib/workoutSchedule';
 import { workoutsForBlock } from '../../lib/workoutSchedule';
 import { useActiveWorkoutStore } from '../../stores/activeWorkout';
@@ -37,7 +36,6 @@ function badgeFor(status: WorkoutStatus): string {
 
 export default function TrainScreen() {
   const { weekNumber, blockId } = useCurrentWeek();
-  const block = blockFor(blockId);
   const workouts = workoutsForBlock(blockId);
   const todayWorkout = workouts.find((w) => w.slotIndex === TODAY_SLOT) ?? workouts[0];
   const blockTitle = `${blockId.charAt(0)}${blockId.slice(1).toLowerCase()}`;
@@ -48,9 +46,40 @@ export default function TrainScreen() {
   // families whose tutorials are not authored yet. The workout list below stays
   // as the trainable content in every case.
   const { family: apexFamily } = useApexAssignmentValue();
-  const programName = apexFamily?.displayName ?? 'CREATE POWER';
   const isLiveProgram = apexFamily?.id === 'live-gst';
   const isContentPending = apexFamily ? !apexFamily.contentAvailable : false;
+
+  // Program hero identity. Big name is the brand (APEX30 / LIVE GST); the
+  // subtitle is the location wing. The instrument band below varies per family.
+  const heroName = apexFamily?.brand?.toUpperCase() ?? 'CREATE POWER';
+  const heroSubtitle = isLiveProgram
+    ? 'Group Strength Training'
+    : apexFamily
+      ? apexFamily.location === 'commercial'
+        ? 'Commercial Gym'
+        : 'Home'
+      : 'Foundations';
+
+  const heroBody: ProgramHeroBody = isLiveProgram
+    ? {
+        kind: 'schedule',
+        label: 'LIVE SESSIONS · ALL TIMES ET',
+        slots: LIVE_GST_SCHEDULE,
+        note: 'Your program meets live on Zoom. The workouts below are here for the days between sessions.',
+      }
+    : isContentPending
+      ? {
+          kind: 'note',
+          text: 'Your commercial gym program is being prepared. The video tutorials for gym equipment arrive later this year. You can start with the workouts below, and the gym sessions will show up when they land.',
+        }
+      : {
+          kind: 'stats',
+          items: [
+            { value: String(apexFamily?.durationMinutes ?? 30), label: 'MIN' },
+            { value: String(APEX_PROGRAM_WEEKS), label: 'WEEKS' },
+            { value: String(weekNumber), label: 'CURRENT' },
+          ],
+        };
 
   const currentSession = useActiveWorkoutStore((s) => s.currentSession);
   const currentWorkout = useActiveWorkoutStore((s) => s.currentWorkout);
@@ -79,64 +108,20 @@ export default function TrainScreen() {
         ]}
         showsVerticalScrollIndicator={false}
       >
-        {/* Program identity bar — Train's own header, not Today's chrome */}
-        <View style={styles.programBar}>
-          <View style={styles.programIcon}>
-            <Dumbbell color={light.accent} size={16} strokeWidth={2.2} />
-          </View>
-          <View style={styles.programText}>
-            <Text style={styles.programKicker}>
-              {blockTitle} Block · Week {weekNumber}
-            </Text>
-            <Text style={styles.programTitle} numberOfLines={1}>
-              {isLiveProgram ? programName : `${programName} · ${workouts.length} workouts`}
-            </Text>
-          </View>
-        </View>
-
-        {isLiveProgram ? (
-          <View style={styles.apexCard}>
-            <View style={styles.apexCardHead}>
-              <CalendarClock color={light.accent} size={16} strokeWidth={2.2} />
-              <Text style={styles.apexCardKicker}>LIVE SESSIONS MEET</Text>
-            </View>
-            {LIVE_GST_SCHEDULE.map((slot) => (
-              <View key={`${slot.day}-${slot.timeET}`} style={styles.apexScheduleRow}>
-                <Text style={styles.apexScheduleDay}>{slot.day}</Text>
-                <Text style={styles.apexScheduleTime}>{slot.timeET}</Text>
-              </View>
-            ))}
-            <Text style={styles.apexCardNote}>
-              Your program meets live on Zoom. The workouts below are here for the days between
-              sessions.
-            </Text>
-          </View>
-        ) : null}
-
-        {isContentPending ? (
-          <View style={styles.apexCard}>
-            <View style={styles.apexCardHead}>
-              <Clock color={light.accent} size={16} strokeWidth={2.2} />
-              <Text style={styles.apexCardKicker}>{programName.toUpperCase()}</Text>
-            </View>
-            <Text style={styles.apexCardNote}>
-              Your commercial gym program is being prepared. The video tutorials for gym equipment
-              arrive later this year. You can start with the workouts below, and the gym sessions
-              will show up when they land.
-            </Text>
-          </View>
-        ) : null}
-
-        {todayWorkout ? (
-          <View style={styles.heroWrap}>
-            <PhotoHeroCard
-              kicker={`TODAY · WORKOUT ${todayWorkout.slotIndex}`}
-              title={todayWorkout.helper ?? block.mindset}
-              photoUri={trainHeroPhotoForWeek(weekNumber)}
-              photoSide="full"
-            />
-          </View>
-        ) : null}
+        {/* Program hero — Train's own identity: photo band + instrument band.
+            Replaces the old identity bar, the Live/pending cards, and the
+            today photo-hero with one cohesive card. */}
+        <ProgramHeroCard
+          kicker={`${blockTitle.toUpperCase()} BLOCK · WEEK ${weekNumber}`}
+          name={heroName}
+          subtitle={heroSubtitle}
+          photoUri={trainHeroPhotoForWeek(weekNumber)}
+          body={heroBody}
+          ctaLabel={todayWorkout ? `Start ${todayWorkout.title}` : 'Start a workout'}
+          onPressCta={() => {
+            if (todayWorkout) router.push(`/workout/${todayWorkout.slug}` as never);
+          }}
+        />
 
         <SectionHeader
           title="This Week's Schedule"
@@ -230,49 +215,6 @@ export default function TrainScreen() {
 void Activity;
 
 const styles = StyleSheet.create({
-  apexCard: {
-    backgroundColor: light.card,
-    borderColor: light.border,
-    borderRadius: 14,
-    borderWidth: 1,
-    gap: 8,
-    marginTop: 14,
-    padding: 16,
-  },
-  apexCardHead: {
-    alignItems: 'center',
-    flexDirection: 'row',
-    gap: 8,
-    marginBottom: 2,
-  },
-  apexCardKicker: {
-    color: light.accent,
-    fontFamily: FONTS.sansBold,
-    fontSize: 10.5,
-    letterSpacing: 1.8,
-  },
-  apexCardNote: {
-    color: light.mutedText,
-    fontFamily: FONTS.sans,
-    fontSize: 12.5,
-    lineHeight: 18,
-    marginTop: 4,
-  },
-  apexScheduleDay: {
-    color: light.text,
-    fontFamily: FONTS.sansBold,
-    fontSize: 13.5,
-  },
-  apexScheduleRow: {
-    alignItems: 'center',
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-  },
-  apexScheduleTime: {
-    color: light.mutedText,
-    fontFamily: FONTS.sansMedium,
-    fontSize: 13,
-  },
   badge: {
     color: light.mutedText,
     fontFamily: FONTS.sansBold,
@@ -289,7 +231,6 @@ const styles = StyleSheet.create({
     paddingTop: 12,
   },
   contentWithPill: { paddingBottom: 200 },
-  heroWrap: { marginTop: 20 },
   helper: {
     color: light.mutedText,
     fontFamily: FONTS.sans,
@@ -355,35 +296,6 @@ const styles = StyleSheet.create({
     left: 16,
     position: 'absolute',
     right: 16,
-  },
-  programBar: {
-    alignItems: 'center',
-    flexDirection: 'row',
-    gap: 12,
-    marginBottom: 4,
-    paddingVertical: 8,
-  },
-  programIcon: {
-    alignItems: 'center',
-    backgroundColor: '#F0E2C2',
-    borderRadius: 12,
-    height: 36,
-    justifyContent: 'center',
-    width: 36,
-  },
-  programKicker: {
-    color: light.mutedText,
-    fontFamily: FONTS.sansMedium,
-    fontSize: 12,
-    letterSpacing: -0.05,
-  },
-  programText: { flex: 1, minWidth: 0 },
-  programTitle: {
-    color: light.text,
-    fontFamily: FONTS.sansBold,
-    fontSize: 17,
-    letterSpacing: -0.3,
-    marginTop: 1,
   },
   row: {
     alignItems: 'center',

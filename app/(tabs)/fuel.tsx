@@ -5,12 +5,12 @@
 // unlock: COMMIT-block "awareness first" — choose a nutrition track + preview
 // of what unlocks. After unlock: ABC POWER MEALS slots for the day.
 
-import { ArrowRight, Lock, UtensilsCrossed } from 'lucide-react-native';
+import { ArrowRight, Lock } from 'lucide-react-native';
 import { router } from 'expo-router';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { PhotoHeroCard } from '../../components/ui/PhotoHeroCard';
+import { ProgramHeroCard } from '../../components/ui/ProgramHeroCard';
 import { SectionHeader } from '../../components/ui/SectionHeader';
 import { useCurrentWeek } from '../../hooks/useCurrentWeek';
 import { COLORS, FONTS, THEME_COLORS } from '../../lib/brand';
@@ -43,32 +43,26 @@ export default function FuelScreen() {
     <SafeAreaView edges={['top']} style={[styles.screen, { backgroundColor: light.background }]}>
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
 
-        {/* Program identity bar — Fuel's own header */}
-        <View style={styles.programBar}>
-          <View style={styles.programIcon}>
-            <UtensilsCrossed color={light.accent} size={16} strokeWidth={2.2} />
-          </View>
-          <View style={styles.programText}>
-            <Text style={styles.programKicker}>
-              {blockTitle} Block · Week {weekNumber}
-            </Text>
-            <Text style={styles.programTitle} numberOfLines={1}>
-              POWER Meals · {mealLoggingUnlocked ? 'log your plate' : 'awareness first'}
-            </Text>
-          </View>
-        </View>
-
-        <View style={styles.heroWrap}>
-          <PhotoHeroCard
-            kicker={mealLoggingUnlocked ? 'TODAY · ABC POWER MEALS' : 'THIS BLOCK · POWER MEALS'}
-            title={mealLoggingUnlocked
-              ? 'Three things, every plate.'
-              : 'Awareness comes first.'
-            }
-            photoUri={fuelHeroPhotoForWeek(weekNumber)}
-            photoSide="full"
-          />
-        </View>
+        {/* Shared program hero — same frame as Train and Grow. */}
+        <ProgramHeroCard
+          kicker={`${blockTitle.toUpperCase()} BLOCK · WEEK ${weekNumber}`}
+          name="POWER MEALS"
+          subtitle={mealLoggingUnlocked ? 'Log your plate' : 'Awareness first'}
+          photoUri={fuelHeroPhotoForWeek(weekNumber)}
+          body={
+            mealLoggingUnlocked
+              ? {
+                  kind: 'note',
+                  label: 'ABC POWER MEALS',
+                  text: 'Anchor, Balance, Complete. Half the plate vegetables, a palm of protein, a thumb of fat.',
+                }
+              : {
+                  kind: 'note',
+                  label: 'THIS BLOCK · POWER MEALS',
+                  text: 'Before you log anything, you learn to see what is on the plate. Logging joins us in REFINE.',
+                }
+          }
+        />
 
         {!mealLoggingUnlocked ? (
           <>
@@ -163,6 +157,24 @@ export default function FuelScreen() {
                 </View>
               </View>
             </Pressable>
+
+            <Pressable
+              onPress={() => router.push('/tool/protein-reference-guide' as never)}
+              style={({ pressed }) => ({ opacity: pressed ? 0.85 : 1 })}
+            >
+              <View style={styles.abcCard}>
+                <Text style={styles.abcKicker}>PROTEIN REFERENCE</Text>
+                <Text style={styles.abcTitle}>Every food, every macro.</Text>
+                <Text style={styles.abcBody}>
+                  Karen and Ryan&apos;s lookup for protein and full macros. Use it
+                  to build plates and hit your targets.
+                </Text>
+                <View style={styles.actionCta}>
+                  <Text style={styles.actionCtaText}>Open the guide</Text>
+                  <ArrowRight color={COLORS.tangerine} size={16} strokeWidth={2.4} />
+                </View>
+              </View>
+            </Pressable>
           </>
         )}
       </ScrollView>
@@ -245,7 +257,6 @@ const styles = StyleSheet.create({
     lineHeight: 18,
     marginTop: 24,
   },
-  heroWrap: { marginTop: 20 },
   mealSlot: {
     backgroundColor: light.card,
     borderColor: light.border,
@@ -316,34 +327,5 @@ const styles = StyleSheet.create({
     letterSpacing: 0.4,
   },
   previewWhen: { alignItems: 'flex-end' },
-  programBar: {
-    alignItems: 'center',
-    flexDirection: 'row',
-    gap: 12,
-    marginBottom: 4,
-    paddingVertical: 8,
-  },
-  programIcon: {
-    alignItems: 'center',
-    backgroundColor: '#F0E2C2',
-    borderRadius: 12,
-    height: 36,
-    justifyContent: 'center',
-    width: 36,
-  },
-  programKicker: {
-    color: light.mutedText,
-    fontFamily: FONTS.sansMedium,
-    fontSize: 12,
-    letterSpacing: -0.05,
-  },
-  programText: { flex: 1, minWidth: 0 },
-  programTitle: {
-    color: light.text,
-    fontFamily: FONTS.sansBold,
-    fontSize: 17,
-    letterSpacing: -0.3,
-    marginTop: 1,
-  },
   screen: { flex: 1 },
 });

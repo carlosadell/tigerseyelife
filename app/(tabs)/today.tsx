@@ -4,12 +4,11 @@ import { router } from 'expo-router';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { FocusHeroCard } from '../../components/today/FocusHeroCard';
-import { GreetingHeader } from '../../components/today/GreetingHeader';
 import { TodayHeader } from '../../components/today/TodayHeader';
 import { WeekStrip } from '../../components/history/WeekStrip';
 import { AnchorRow } from '../../components/ui/AnchorRow';
 import { AwarenessCard, type DailyPrompt } from '../../components/ui/AwarenessCard';
+import { ProgramHeroCard } from '../../components/ui/ProgramHeroCard';
 import { SectionHeader } from '../../components/ui/SectionHeader';
 import { useAuth } from '../../hooks/useAuth';
 import { useConceptTelemetry } from '../../hooks/useConceptTelemetry';
@@ -18,8 +17,9 @@ import { useDailyEngagement } from '../../hooks/useDailyEngagement';
 import { useMembership } from '../../hooks/useMembership';
 import { useProfile } from '../../hooks/useProfile';
 import { COLORS, FONTS, THEME_COLORS } from '../../lib/brand';
+import { coachStillForWeek } from '../../lib/coachStills';
 import type { ConceptScope } from '../../lib/conceptMetadata';
-import { getBlockTagline } from '../../lib/greetings';
+import { getDayPeriod } from '../../lib/greetings';
 import { anchorsForWeek, heroHeadlineFor, resolveAnchorIcon } from '../../lib/heroAnchors';
 import { weekFor } from '../../lib/program';
 import { workoutsForBlock } from '../../lib/workoutSchedule';
@@ -51,10 +51,12 @@ export default function TodayScreen() {
   const blockWorkouts = workoutsForBlock(blockId);
   const todayWorkout = blockWorkouts[0];
   const prompt: DailyPrompt = { kind: 'awareness', body: week.discussionPrompt };
-  const tagline = getBlockTagline(blockId, weekNumber);
   const showDipCallout = blockId === 'COMMIT' && weekNumber === 2;
 
   const blockTitle = `${blockId.charAt(0)}${blockId.slice(1).toLowerCase()}`;
+  const period = getDayPeriod();
+  const firstName = profile.firstName?.trim().split(/\s+/)[0] || 'friend';
+  const greeting = `${period.charAt(0).toUpperCase()}${period.slice(1)}, ${firstName}.`;
 
   const openAnchor = async (anchorId: string, route: string) => {
     await recordEngagement(anchorId);
@@ -72,15 +74,19 @@ export default function TodayScreen() {
         <TodayHeader />
         <WeekStrip />
 
-        <View style={styles.greetingWrap}>
-          <GreetingHeader
-            firstName={profile.firstName}
-            subtitle={`${blockTitle} Block · Week ${weekNumber}`}
+        {/* Shared program hero — same frame as Train/Fuel/Grow, but Today's
+            title is the personal greeting (natural case) and the subtitle is
+            the week's focus. Photo-only: the week strip above is Today's
+            progress readout, so no instrument band. */}
+        <View style={styles.heroWrap}>
+          <ProgramHeroCard
+            kicker={`${blockTitle.toUpperCase()} BLOCK · WEEK ${weekNumber}`}
+            name={greeting}
+            nameTransform="none"
+            subtitle={headline}
+            photoUri={coachStillForWeek(weekNumber)}
           />
-          {tagline ? <Text style={styles.tagline}>{tagline}</Text> : null}
         </View>
-
-        <FocusHeroCard weekIndex={weekNumber} headline={headline} />
 
         {showDipCallout ? (
           <View style={styles.dipCallout}>
@@ -273,15 +279,7 @@ const styles = StyleSheet.create({
     fontSize: 11,
     letterSpacing: 1.6,
   },
-  greetingWrap: { marginBottom: 18, marginTop: 28 },
-  tagline: {
-    color: light.mutedText,
-    fontFamily: FONTS.sansMedium,
-    fontSize: 14,
-    letterSpacing: -0.1,
-    lineHeight: 20,
-    marginTop: 8,
-  },
+  heroWrap: { marginTop: 20 },
   screen: {
     flex: 1,
   },

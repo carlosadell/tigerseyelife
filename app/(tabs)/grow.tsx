@@ -5,12 +5,12 @@
 // of that block. The 3-layer content model lives one level deeper — at the
 // concept/lesson screens that open from a week.
 
-import { ArrowRight, Lock, Sprout } from 'lucide-react-native';
+import { ArrowRight, Lock } from 'lucide-react-native';
 import { router } from 'expo-router';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { PhotoHeroCard } from '../../components/ui/PhotoHeroCard';
+import { ProgramHeroCard } from '../../components/ui/ProgramHeroCard';
 import { SectionHeader } from '../../components/ui/SectionHeader';
 import { useCurrentWeek } from '../../hooks/useCurrentWeek';
 import { FONTS, THEME_COLORS } from '../../lib/brand';
@@ -53,35 +53,28 @@ export default function GrowScreen() {
   const { weekNumber, blockId } = useCurrentWeek();
   const currentBlock = blockFor(blockId);
   const blockTitle = `${blockId.charAt(0)}${blockId.slice(1).toLowerCase()}`;
+  const currentBlockIndex = BLOCK_IDS.indexOf(blockId) + 1;
   const completed = BLOCKS.filter((b) => statusFor(b, weekNumber) === 'complete').length;
 
   return (
     <SafeAreaView edges={['top']} style={[styles.screen, { backgroundColor: light.background }]}>
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
 
-        {/* Program identity bar */}
-        <View style={styles.programBar}>
-          <View style={styles.programIcon}>
-            <Sprout color={light.accent} size={16} strokeWidth={2.2} />
-          </View>
-          <View style={styles.programText}>
-            <Text style={styles.programKicker}>
-              {blockTitle} Block · Week {weekNumber}
-            </Text>
-            <Text style={styles.programTitle} numberOfLines={1}>
-              CREATE POWER · 6 blocks · 12 weeks
-            </Text>
-          </View>
-        </View>
-
-        <View style={styles.heroWrap}>
-          <PhotoHeroCard
-            kicker={`YOU ARE HERE · BLOCK ${BLOCK_IDS.indexOf(blockId) + 1} OF 6`}
-            title={currentBlock.consistencyTarget}
-            photoUri={growHeroPhotoForWeek(weekNumber)}
-            photoSide="full"
-          />
-        </View>
+        {/* Shared program hero — same frame as Train and Fuel. */}
+        <ProgramHeroCard
+          kicker={`${blockTitle.toUpperCase()} BLOCK · WEEK ${weekNumber}`}
+          name="CREATE POWER"
+          subtitle="6 blocks · 12 weeks"
+          photoUri={growHeroPhotoForWeek(weekNumber)}
+          body={{
+            kind: 'stats',
+            items: [
+              { value: `${currentBlockIndex}/6`, label: 'BLOCK' },
+              { value: String(weekNumber), label: 'WEEK' },
+              { value: `${completed}/6`, label: 'DONE' },
+            ],
+          }}
+        />
 
         <SectionHeader
           title="The 6 blocks"
@@ -192,41 +185,11 @@ const styles = StyleSheet.create({
     lineHeight: 18,
     marginTop: 24,
   },
-  heroWrap: { marginTop: 20 },
   helper: {
     color: light.mutedText,
     fontFamily: FONTS.sans,
     fontSize: 12.5,
     lineHeight: 17,
-  },
-  programBar: {
-    alignItems: 'center',
-    flexDirection: 'row',
-    gap: 12,
-    marginBottom: 4,
-    paddingVertical: 8,
-  },
-  programIcon: {
-    alignItems: 'center',
-    backgroundColor: '#F0E2C2',
-    borderRadius: 12,
-    height: 36,
-    justifyContent: 'center',
-    width: 36,
-  },
-  programKicker: {
-    color: light.mutedText,
-    fontFamily: FONTS.sansMedium,
-    fontSize: 12,
-    letterSpacing: -0.05,
-  },
-  programText: { flex: 1, minWidth: 0 },
-  programTitle: {
-    color: light.text,
-    fontFamily: FONTS.sansBold,
-    fontSize: 17,
-    letterSpacing: -0.3,
-    marginTop: 1,
   },
   right: { alignItems: 'flex-end', gap: 6, marginLeft: 8 },
   row: {
