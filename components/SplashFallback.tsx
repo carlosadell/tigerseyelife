@@ -1,30 +1,34 @@
 // components/SplashFallback.tsx
 //
 // The in-app splash shown between the native splash unmount and the point at
-// which fonts finish loading. Brand-dark by design.
+// which fonts finish loading. Brand-dark by design (matches AuthShell and the
+// native splash config, so there is no color jump on launch).
 //
-// Uses the real brand lockup (assets/brand/tel-logo-lockup.png — tiger head +
-// TIGER'S EYE LIFE). The lockup ships on solid black, so the splash ground is
-// pure black too and the artwork blends seamlessly; the gold aura + halo bleed
-// out around it. Motion (ported from the approved study): a slow gold aura
-// drifts, a soft halo breathes behind the lockup, the lockup fades + scales in,
-// CREATE POWER resolves beneath it, a gold dot breathes as a load cue.
+// Motion (ported from the approved browser study):
+//   • a slow gold aura drifts behind everything (dark, restrained)
+//   • a soft halo breathes directly behind the lockup
+//   • the diamond+sparkle mark settles in, the wordmark rises, CREATE POWER fades
+//   • the gold wordmark shimmers on a slow loop (foil catching light)
+//   • a single gold dot breathes at the base as a quiet load cue
 //
-// react-native-svg (Expo-Go safe) draws genuinely soft radial glows; core
-// Animated only (no Reanimated at the root).
+// Sizing is screen-relative and the wordmark auto-fits its width, so the
+// lockup sits centered on any phone. Vector mark + system fonts only — no
+// image asset and no Inter (not loaded yet in this window). Uses react-native-svg
+// (Expo-Go safe) for genuinely soft radial glows; core Animated only.
 
 import { useEffect, useRef } from 'react';
-import { Animated, Dimensions, Image, StyleSheet, View } from 'react-native';
-import Svg, { Defs, RadialGradient, Rect, Stop } from 'react-native-svg';
+import { Animated, Dimensions, Platform, StyleSheet, Text, View } from 'react-native';
+import Svg, { Defs, Path, RadialGradient, Rect, Stop } from 'react-native-svg';
 
 import { COLORS } from '../lib/brand';
 
 const { width: SCREEN_W, height: SCREEN_H } = Dimensions.get('window');
-const LOCKUP_W = Math.min(330, SCREEN_W * 0.82);
-const LOCKUP_H = LOCKUP_W * (115 / 350); // native lockup aspect ratio
-const HALO = Math.round(Math.max(LOCKUP_W * 1.7, Math.min(SCREEN_W, SCREEN_H) * 0.78));
+const HALO = Math.round(Math.min(SCREEN_W, SCREEN_H) * 1.02);
 const AURA = Math.round(Math.max(SCREEN_W, SCREEN_H) * 0.95);
+const MARK_W = Math.min(112, SCREEN_W * 0.28);
+const MARK_H = MARK_W * 0.64;
 
+// A soft radial glow as an SVG rect fill — no blur module required.
 function Glow({ id, size, color, peak }: { id: string; size: number; color: string; peak: number }) {
   return (
     <Svg width={size} height={size} pointerEvents="none">
@@ -41,8 +45,10 @@ function Glow({ id, size, color, peak }: { id: string; size: number; color: stri
 }
 
 export function SplashFallback() {
-  const lockupOpacity = useRef(new Animated.Value(0)).current;
-  const lockupScale = useRef(new Animated.Value(0.92)).current;
+  const markOpacity = useRef(new Animated.Value(0)).current;
+  const markShift = useRef(new Animated.Value(8)).current;
+  const wordOpacity = useRef(new Animated.Value(0)).current;
+  const wordShift = useRef(new Animated.Value(12)).current;
   const tagOpacity = useRef(new Animated.Value(0)).current;
   const haloOpacity = useRef(new Animated.Value(0.5)).current;
   const haloScale = useRef(new Animated.Value(0.96)).current;
@@ -54,10 +60,14 @@ export function SplashFallback() {
   useEffect(() => {
     Animated.sequence([
       Animated.parallel([
-        Animated.timing(lockupOpacity, { toValue: 1, duration: 520, useNativeDriver: true }),
-        Animated.spring(lockupScale, { toValue: 1, damping: 13, stiffness: 90, useNativeDriver: true }),
+        Animated.timing(markOpacity, { toValue: 1, duration: 460, useNativeDriver: true }),
+        Animated.spring(markShift, { toValue: 0, damping: 12, stiffness: 90, useNativeDriver: true }),
       ]),
-      Animated.timing(tagOpacity, { toValue: 0.82, duration: 440, useNativeDriver: true }),
+      Animated.parallel([
+        Animated.timing(wordOpacity, { toValue: 1, duration: 520, useNativeDriver: true }),
+        Animated.spring(wordShift, { toValue: 0, damping: 13, stiffness: 90, useNativeDriver: true }),
+      ]),
+      Animated.timing(tagOpacity, { toValue: 0.82, duration: 420, useNativeDriver: true }),
     ]).start();
 
     const loop = (val: Animated.Value, to: number, from: number, dur: number) =>
@@ -72,7 +82,7 @@ export function SplashFallback() {
       Animated.sequence([
         Animated.parallel([
           Animated.timing(haloOpacity, { toValue: 0.9, duration: 2300, useNativeDriver: true }),
-          Animated.timing(haloScale, { toValue: 1.05, duration: 2300, useNativeDriver: true }),
+          Animated.timing(haloScale, { toValue: 1.04, duration: 2300, useNativeDriver: true }),
         ]),
         Animated.parallel([
           Animated.timing(haloOpacity, { toValue: 0.5, duration: 2300, useNativeDriver: true }),
@@ -80,7 +90,15 @@ export function SplashFallback() {
         ]),
       ]),
     );
-    const shine = loop(shimmer, 1, 0, 1900);
+
+    const shine = Animated.loop(
+      Animated.sequence([
+        Animated.delay(1400),
+        Animated.timing(shimmer, { toValue: 1, duration: 1400, useNativeDriver: true }),
+        Animated.timing(shimmer, { toValue: 0, duration: 0, useNativeDriver: true }),
+      ]),
+    );
+
     const a = loop(driftA, 1, 0, 7000);
     const b = loop(driftB, 1, 0, 9000);
     const dot = loop(dotOpacity, 0.9, 0.25, 900);
@@ -97,7 +115,7 @@ export function SplashFallback() {
       b.stop();
       dot.stop();
     };
-  }, [lockupOpacity, lockupScale, tagOpacity, haloOpacity, haloScale, shimmer, driftA, driftB, dotOpacity]);
+  }, [markOpacity, markShift, wordOpacity, wordShift, tagOpacity, haloOpacity, haloScale, shimmer, driftA, driftB, dotOpacity]);
 
   const auraAStyle = {
     transform: [
@@ -111,35 +129,58 @@ export function SplashFallback() {
       { translateY: driftB.interpolate({ inputRange: [0, 1], outputRange: [0, -SCREEN_H * 0.04] }) },
     ],
   };
-  const lockupShimmer = shimmer.interpolate({ inputRange: [0, 0.5, 1], outputRange: [1, 0.86, 1] });
+  // Wordmark shimmer: a gentle brightening of the gold on each loop.
+  const wordShimmer = shimmer.interpolate({
+    inputRange: [0, 0.5, 1],
+    outputRange: [1, 0.72, 1],
+  });
 
   return (
     <View style={styles.splash}>
       <Animated.View style={[styles.auraA, auraAStyle]} pointerEvents="none">
-        <Glow id="auraA" size={AURA} color={COLORS.tigerGold} peak={0.18} />
+        <Glow id="auraA" size={AURA} color={COLORS.tigerGold} peak={0.16} />
       </Animated.View>
       <Animated.View style={[styles.auraB, auraBStyle]} pointerEvents="none">
-        <Glow id="auraB" size={AURA} color={COLORS.amber} peak={0.15} />
+        <Glow id="auraB" size={AURA} color={COLORS.amber} peak={0.14} />
       </Animated.View>
 
       <View style={styles.center} pointerEvents="none">
         <Animated.View
           style={[styles.halo, { opacity: haloOpacity, transform: [{ scale: haloScale }] }]}
         >
-          <Glow id="halo" size={HALO} color="rgba(212,160,42,1)" peak={0.16} />
+          <Glow id="halo" size={HALO} color="rgba(212,160,42,1)" peak={0.4} />
         </Animated.View>
 
         <Animated.View
-          style={{
-            opacity: Animated.multiply(lockupOpacity, lockupShimmer),
-            transform: [{ scale: lockupScale }],
-          }}
+          style={{ opacity: markOpacity, transform: [{ translateY: markShift }] }}
         >
-          <Image
-            source={require('../assets/brand/tel-logo-lockup.png')}
-            style={styles.lockup}
-            resizeMode="contain"
-          />
+          <Svg width={MARK_W} height={MARK_H} viewBox="0 0 96 62">
+            <Path
+              d="M48 4 L92 31 L48 58 L4 31 Z"
+              stroke={COLORS.tigerGold}
+              strokeWidth={2.4}
+              fill="none"
+            />
+            <Path
+              d="M48 20 L51.5 28.5 L60 31 L51.5 33.5 L48 42 L44.5 33.5 L36 31 L44.5 28.5 Z"
+              fill={COLORS.tigerGold}
+            />
+          </Svg>
+        </Animated.View>
+
+        <Animated.View
+          style={{ opacity: Animated.multiply(wordOpacity, wordShimmer), transform: [{ translateY: wordShift }] }}
+        >
+          <Text
+            style={styles.wordmark}
+            numberOfLines={1}
+            adjustsFontSizeToFit
+            allowFontScaling={false}
+          >
+            <Text style={styles.tigers}>TIGERS</Text>
+            <Text style={styles.eye}>EYE</Text>
+            <Text style={styles.life}> Life</Text>
+          </Text>
         </Animated.View>
 
         <Animated.Text style={[styles.tag, { opacity: tagOpacity }]} allowFontScaling={false}>
@@ -164,6 +205,7 @@ const styles = StyleSheet.create({
     position: 'absolute',
     width: 6,
   },
+  eye: { fontWeight: '800', letterSpacing: 0.5 },
   halo: {
     alignItems: 'center',
     height: HALO,
@@ -171,10 +213,14 @@ const styles = StyleSheet.create({
     position: 'absolute',
     width: HALO,
   },
-  lockup: { height: LOCKUP_H, width: LOCKUP_W },
+  life: {
+    fontFamily: Platform.select({ ios: 'Snell Roundhand', default: undefined }),
+    fontStyle: 'italic',
+    fontWeight: '500',
+  },
   splash: {
     alignItems: 'center',
-    backgroundColor: '#000000',
+    backgroundColor: COLORS.onyx,
     flex: 1,
     justifyContent: 'center',
     overflow: 'hidden',
@@ -184,7 +230,15 @@ const styles = StyleSheet.create({
     fontSize: 11,
     fontWeight: '700',
     letterSpacing: 4,
-    marginTop: 26,
+    marginTop: 18,
     paddingLeft: 4,
+  },
+  tigers: { fontWeight: '500', letterSpacing: 1.5 },
+  wordmark: {
+    color: COLORS.tigerGold,
+    fontSize: Math.min(34, SCREEN_W * 0.085),
+    maxWidth: SCREEN_W * 0.92,
+    paddingHorizontal: 8,
+    textAlign: 'center',
   },
 });
