@@ -52,16 +52,18 @@ export default function ToolScreen() {
 
   return (
     <SafeAreaView style={[styles.screen, { backgroundColor: colors.background }]}>
-      <View style={styles.headerRow}>
+      <View style={styles.topBar}>
         <Pressable onPress={() => router.back()} hitSlop={8}>
           <ChevronLeft color={colors.accent} size={26} />
         </Pressable>
-        <Text style={[styles.headerTitle, { color: colors.text }]} numberOfLines={1}>
-          {tool.title}
-        </Text>
-        <View style={styles.spacer} />
       </View>
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+        <View style={styles.heroHead}>
+          <Text style={[styles.heroKicker, { color: colors.accent }]}>
+            {tool.metadata.block} BLOCK
+          </Text>
+          <Text style={[styles.heroTitle, { color: colors.text }]}>{tool.title}</Text>
+        </View>
         <LayeredConceptBody
           conceptSlug={tool.slug}
           block={tool.metadata.block}
@@ -91,7 +93,26 @@ const styles = StyleSheet.create({
     paddingTop: 4,
   },
   headerTitle: { flex: 1, fontFamily: FONTS.sansBold, fontSize: 17, textAlign: 'center' },
+  heroHead: { gap: 4, marginBottom: 4 },
+  heroKicker: {
+    fontFamily: FONTS.sansBold,
+    fontSize: 11,
+    letterSpacing: 1.8,
+    textTransform: 'uppercase',
+  },
+  heroTitle: {
+    fontFamily: FONTS.sansBold,
+    fontSize: 26,
+    letterSpacing: -0.4,
+    lineHeight: 30,
+  },
   screen: { flex: 1 },
   spacer: { width: 26 },
   title: { fontFamily: FONTS.sansBold, fontSize: 20 },
+  topBar: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    paddingHorizontal: SPACING.screenX,
+    paddingVertical: 8,
+  },
 });
