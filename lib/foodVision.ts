@@ -1,19 +1,12 @@
+import { callAnthropic } from './anthropicProxy';
 import { Macros } from './meals';
 
 /**
  * Food vision — sends a photo to Claude Haiku 4.5 and returns identified
  * meal name + macros + per-component breakdown.
  *
- * We call the Messages API via fetch directly rather than @anthropic-ai/sdk
- * because the SDK has Node-only credential-loading code paths
- * (`await import('node:fs')`) that Metro can't bundle for React Native.
- * The Messages API is plain JSON in/out — fetch is the right tool here.
- *
- * SECURITY: this calls the Anthropic API directly from the device using an
- * API key bundled into the app via EXPO_PUBLIC_ANTHROPIC_API_KEY. That key
- * IS extractable from the app binary — fine for beta, but the production
- * path is a Supabase Edge Function proxy that holds the key server-side.
- * Track that in the spec doc before public launch.
+ * Routes requests through a Supabase Edge Function so the Anthropic API key
+ * remains server-side and is never bundled into the app.
  */
 
 export type FoodConfidence = 'low' | 'medium' | 'high';
@@ -122,43 +115,28 @@ export async function scanFood({
   base64: string;
   mediaType: MediaType;
 }): Promise<FoodVisionResult> {
-  const apiKey = process.env.EXPO_PUBLIC_ANTHROPIC_API_KEY;
-  if (!apiKey) {
-    throw new Error(
-      'Food vision requires EXPO_PUBLIC_ANTHROPIC_API_KEY in your .env. See .env.example.',
-    );
-  }
-
-  const response = await fetch('https://api.anthropic.com/v1/messages', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'x-api-key': apiKey,
-      'anthropic-version': '2023-06-01',
-    },
-    body: JSON.stringify({
-      model: 'claude-haiku-4-5',
-      max_tokens: 1024,
-      system: SYSTEM_PROMPT,
-      messages: [
-        {
-          role: 'user',
-          content: [
-            {
-              type: 'image',
-              source: { type: 'base64', media_type: mediaType, data: base64 },
-            },
-            {
-              type: 'text',
-              text: 'Identify the food and estimate macros for the serving shown. Return the structured JSON only.',
-            },
-          ],
-        },
-      ],
-      output_config: {
-        format: { type: 'json_schema', schema: FOOD_VISION_SCHEMA },
+  const response = await callAnthropic({
+    model: 'claude-haiku-4-5',
+    max_tokens: 1024,
+    system: SYSTEM_PROMPT,
+    messages: [
+      {
+        role: 'user',
+        content: [
+          {
+            type: 'image',
+            source: { type: 'base64', media_type: mediaType, data: base64 },
+          },
+          {
+            type: 'text',
+            text: 'Identify the food and estimate macros for the serving shown. Return the structured JSON only.',
+          },
+        ],
       },
-    }),
+    ],
+    output_config: {
+      format: { type: 'json_schema', schema: FOOD_VISION_SCHEMA },
+    },
   });
 
   if (!response.ok) {

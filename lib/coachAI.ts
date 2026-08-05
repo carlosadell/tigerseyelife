@@ -1,13 +1,11 @@
+import { callAnthropic } from './anthropicProxy';
+
 /**
  * AI coach — sends the conversation history + live member context to
  * Claude Haiku 4.5 and returns a short reply plus 1-3 followup prompts.
  *
- * Mirrors the fetch-based pattern in lib/foodVision.ts (the Anthropic SDK
- * has Node-only credential paths Metro can't bundle for React Native).
- *
- * SECURITY: same caveat as foodVision — the key bundled into the app via
- * EXPO_PUBLIC_ANTHROPIC_API_KEY is extractable. Acceptable for beta, but
- * the production path is a Supabase Edge Function proxy. Track in spec.
+ * Routes requests through a Supabase Edge Function so the Anthropic API key
+ * remains server-side and is never bundled into the app.
  */
 
 export type CoachMessage = { role: 'user' | 'assistant'; content: string };
@@ -126,13 +124,6 @@ export async function askCoach(args: {
   history: CoachMessage[];
   context: CoachContext;
 }): Promise<CoachReplyAI> {
-  const apiKey = process.env.EXPO_PUBLIC_ANTHROPIC_API_KEY;
-  if (!apiKey) {
-    throw new Error(
-      'Coach AI requires EXPO_PUBLIC_ANTHROPIC_API_KEY in your .env. See .env.example.',
-    );
-  }
-
   const contextBlock = formatContextBlock(args.context);
 
   const messages = [
@@ -144,22 +135,14 @@ export async function askCoach(args: {
     ...args.history.map((m) => ({ role: m.role, content: m.content })),
   ];
 
-  const response = await fetch('https://api.anthropic.com/v1/messages', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'x-api-key': apiKey,
-      'anthropic-version': '2023-06-01',
+  const response = await callAnthropic({
+    model: 'claude-haiku-4-5',
+    max_tokens: 512,
+    system: SYSTEM_PROMPT,
+    messages,
+    output_config: {
+      format: { type: 'json_schema', schema: REPLY_SCHEMA },
     },
-    body: JSON.stringify({
-      model: 'claude-haiku-4-5',
-      max_tokens: 512,
-      system: SYSTEM_PROMPT,
-      messages,
-      output_config: {
-        format: { type: 'json_schema', schema: REPLY_SCHEMA },
-      },
-    }),
   });
 
   if (!response.ok) {

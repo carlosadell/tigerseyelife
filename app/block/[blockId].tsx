@@ -17,11 +17,9 @@ import { useMemo } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { PhotoHeroCard } from '../../components/ui/PhotoHeroCard';
 import { SectionHeader } from '../../components/ui/SectionHeader';
 import { useCurrentWeek } from '../../hooks/useCurrentWeek';
 import { COLORS, FONTS, THEME_COLORS } from '../../lib/brand';
-import { growHeroPhotoForWeek } from '../../lib/heroPhotos';
 import { BLOCK_IDS, THREAD_NAMES, WEEKS, blockFor } from '../../lib/program';
 import type { BlockId, ThreadLetter } from '../../lib/program';
 import { toolBySlug } from '../../lib/tools';
@@ -84,19 +82,16 @@ export default function BlockOrientationScreen() {
 
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
 
-        <View style={styles.heroWrap}>
-          <PhotoHeroCard
-            kicker={`BLOCK ${blockIndex} OF 6 · WEEKS ${startWeek}–${endWeek}`}
-            title={
-              isComplete
-                ? 'You moved through this block.'
-                : isUpcoming
-                  ? `Opens Week ${startWeek}`
-                  : block.consistencyTarget
-            }
-            photoUri={growHeroPhotoForWeek(Math.max(startWeek, Math.min(currentWeek, endWeek)))}
-            photoSide="full"
-          />
+        <View style={styles.hero}>
+          <Text style={styles.heroKicker}>
+            {`BLOCK ${blockIndex} OF 6 · WEEKS ${startWeek}–${endWeek} · TARGET: ${block.consistencyTarget} CONSISTENCY`}
+          </Text>
+          <Text style={styles.heroTitle}>{blockTitle.toUpperCase()}</Text>
+          {isUpcoming ? (
+            <Text style={styles.heroState}>{`Opens Week ${startWeek}`}</Text>
+          ) : isComplete ? (
+            <Text style={styles.heroState}>Complete</Text>
+          ) : null}
         </View>
 
         {/* ============= NAVIGATION (always visible, <1 min scan) ============= */}
@@ -148,7 +143,7 @@ export default function BlockOrientationScreen() {
           {featuredTools.length > 0 ? (
             <>
               <Text style={styles.navSubKicker}>START HERE</Text>
-              <View style={styles.toolChips}>
+              <View style={styles.toolGrid}>
                 {featuredTools.map((tool) => (
                   <Pressable
                     key={tool.slug}
@@ -157,16 +152,15 @@ export default function BlockOrientationScreen() {
                     disabled={isUpcoming}
                     onPress={() => router.push(`/tool/${tool.slug}` as never)}
                     style={({ pressed }) => [
-                      styles.toolChip,
-                      tool.isStar && styles.toolChipStar,
+                      styles.toolCard,
                       pressed && { opacity: 0.7 },
                       isUpcoming && { opacity: 0.55 },
                     ]}
                   >
-                    {tool.isStar ? (
-                      <Sparkles color={light.accent} size={11} strokeWidth={2.4} />
-                    ) : null}
-                    <Text style={[styles.toolChipLabel, tool.isStar && styles.toolChipLabelStar]} numberOfLines={1}>
+                    <View style={styles.toolCardIcon}>
+                      <Sparkles color={light.accent} size={14} strokeWidth={2.4} />
+                    </View>
+                    <Text style={styles.toolCardLabel} numberOfLines={2}>
                       {tool.title}
                     </Text>
                   </Pressable>
@@ -417,7 +411,36 @@ const styles = StyleSheet.create({
     fontSize: 16,
     textAlign: 'center',
   },
-  heroWrap: { marginTop: 12 },
+  hero: {
+    backgroundColor: '#2E2F2F',
+    borderColor: 'rgba(200,159,77,0.55)',
+    borderRadius: 18,
+    borderWidth: 1,
+    gap: 8,
+    marginTop: 16,
+    paddingHorizontal: 20,
+    paddingVertical: 26,
+  },
+  heroKicker: {
+    color: '#C89F4D',
+    fontFamily: FONTS.sansBold,
+    fontSize: 10.5,
+    letterSpacing: 1.4,
+    textTransform: 'uppercase',
+  },
+  heroTitle: {
+    color: COLORS.bone,
+    fontFamily: FONTS.sansBold,
+    fontSize: 34,
+    letterSpacing: -0.4,
+    lineHeight: 38,
+    textTransform: 'uppercase',
+  },
+  heroState: {
+    color: 'rgba(245,242,234,0.72)',
+    fontFamily: FONTS.sansMedium,
+    fontSize: 13,
+  },
   mindsetBody: { flex: 1, gap: 6 },
   mindsetCard: {
     backgroundColor: light.card,
@@ -524,33 +547,38 @@ const styles = StyleSheet.create({
     marginTop: 8,
     paddingVertical: 10,
   },
-  toolChip: {
-    alignItems: 'center',
+  toolCard: {
+    alignItems: 'flex-start',
     backgroundColor: light.cardAlt,
     borderColor: light.border,
-    borderRadius: 999,
+    borderRadius: 12,
     borderWidth: 1,
-    flexDirection: 'row',
-    gap: 6,
-    paddingHorizontal: 12,
-    paddingVertical: 7,
+    flexBasis: '47%',
+    flexGrow: 1,
+    gap: 8,
+    minHeight: 78,
+    padding: 12,
   },
-  toolChipLabel: {
+  toolCardIcon: {
+    alignItems: 'center',
+    backgroundColor: '#F0E2C2',
+    borderRadius: 8,
+    height: 26,
+    justifyContent: 'center',
+    width: 26,
+  },
+  toolCardLabel: {
     color: light.text,
     fontFamily: FONTS.sansBold,
-    fontSize: 12,
+    fontSize: 12.5,
     letterSpacing: -0.05,
+    lineHeight: 16,
   },
-  toolChipLabelStar: { color: light.accent },
-  toolChipStar: {
-    backgroundColor: '#F1E6C8',
-    borderColor: 'transparent',
-  },
-  toolChips: {
+  toolGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 6,
-    marginTop: 4,
+    gap: 8,
+    marginTop: 6,
   },
   weekRow: {
     backgroundColor: light.card,

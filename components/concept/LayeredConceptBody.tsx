@@ -224,37 +224,45 @@ function PowerCompassChips({ block }: { block: Exclude<ConceptScope, 'library'> 
   const colors = useThemeColors();
   const blockData = blockFor(block);
   const order: ThreadLetter[] = ['P', 'O', 'W', 'E', 'R'];
+  const firstPrimary = order.find((l) => blockData.powerCompass[l].role === 'PRIMARY') ?? order[0];
+  const [selected, setSelected] = useState<ThreadLetter>(firstPrimary);
+  const sel = blockData.powerCompass[selected];
+  const roleLabel = sel.role === 'PRIMARY' ? 'Primary' : sel.role === 'SECONDARY' ? 'Secondary' : 'Maintain';
 
   return (
     <View style={styles.compassWrap}>
       <Text style={[styles.compassKicker, { color: colors.mutedText }]}>POWER COMPASS · THIS BLOCK</Text>
       <View style={styles.compassRow}>
-        {order.map((letter) => {
-          const entry = blockData.powerCompass[letter];
-          return (
-            <CompassChip
-              key={letter}
-              letter={letter}
-              name={THREAD_NAMES[letter]}
-              role={entry.role}
-              colors={colors}
-            />
-          );
-        })}
+        {order.map((letter) => (
+          <CompassChip
+            key={letter}
+            letter={letter}
+            role={blockData.powerCompass[letter].role}
+            selected={selected === letter}
+            onPress={() => setSelected(letter)}
+            colors={colors}
+          />
+        ))}
       </View>
+      <Text style={[styles.compassCaption, { color: colors.text }]}>
+        <Text style={{ fontFamily: FONTS.sansBold }}>{THREAD_NAMES[selected]}</Text>
+        {`  ·  ${roleLabel}`}
+      </Text>
     </View>
   );
 }
 
 function CompassChip({
   letter,
-  name,
   role,
+  selected,
+  onPress,
   colors,
 }: {
   letter: ThreadLetter;
-  name: string;
   role: CompassRole;
+  selected: boolean;
+  onPress: () => void;
   colors: ReturnType<typeof useThemeColors>;
 }) {
   const isPrimary = role === 'PRIMARY';
@@ -264,23 +272,20 @@ function CompassChip({
     isPrimary
       ? { backgroundColor: '#F1E6C8', borderColor: 'transparent' }
       : isSecondary
-        ? { backgroundColor: colors.cardAlt, borderColor: colors.border }
+        ? { backgroundColor: 'transparent', borderColor: colors.border }
         : { backgroundColor: 'transparent', borderColor: colors.border, borderStyle: 'dashed' as const };
 
   const textColor = isPrimary ? colors.accent : isSecondary ? colors.text : colors.mutedText;
 
   return (
-    <View style={[styles.chip, chipStyle]}>
+    <Pressable
+      accessibilityRole="button"
+      accessibilityLabel={`${THREAD_NAMES[letter]}, ${role === 'PRIMARY' ? 'Primary' : role === 'SECONDARY' ? 'Secondary' : 'Maintain'}`}
+      onPress={onPress}
+      style={[styles.chip, chipStyle, selected && styles.chipSelected]}
+    >
       <Text style={[styles.chipLetter, { color: textColor }]}>{letter}</Text>
-      <View style={styles.chipBody}>
-        <Text style={[styles.chipName, { color: textColor }]} numberOfLines={1}>
-          {name}
-        </Text>
-        <Text style={[styles.chipRole, { color: textColor }]} numberOfLines={1}>
-          {role === 'PRIMARY' ? 'Primary' : role === 'SECONDARY' ? 'Secondary' : 'Maintain'}
-        </Text>
-      </View>
-    </View>
+    </Pressable>
   );
 }
 
@@ -309,31 +314,17 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     borderWidth: 1,
     flex: 1,
-    flexDirection: 'row',
-    gap: 8,
-    paddingHorizontal: 10,
-    paddingVertical: 8,
+    justifyContent: 'center',
+    paddingVertical: 12,
   },
-  chipBody: { flex: 1, minWidth: 0 },
   chipLetter: {
     fontFamily: FONTS.sansBold,
-    fontSize: 16,
+    fontSize: 17,
     letterSpacing: -0.5,
-    width: 14,
     textAlign: 'center',
   },
-  chipName: {
-    fontFamily: FONTS.sansBold,
-    fontSize: 11,
-    letterSpacing: -0.05,
-  },
-  chipRole: {
-    fontFamily: FONTS.sansMedium,
-    fontSize: 9,
-    letterSpacing: 0.3,
-    marginTop: 1,
-    opacity: 0.85,
-  },
+  chipSelected: { borderColor: '#C89F4D', borderWidth: 2 },
+  compassCaption: { fontFamily: FONTS.sansMedium, fontSize: 12.5, marginTop: 2 },
   compassKicker: {
     fontFamily: FONTS.sansBold,
     fontSize: 9.5,

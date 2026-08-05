@@ -51,7 +51,7 @@ export const THEME_COLORS = {
     text: COLORS.bone,
   },
   light: {
-    accent: '#A87414',
+    accent: '#6E4C12',
     accentMuted: COLORS.amber,
     action: COLORS.tangerine,
     background: '#FBF8F1',
@@ -66,7 +66,7 @@ export const THEME_COLORS = {
     glassPanel: 'rgba(255,255,255,0.78)',
     glow: 'rgba(212,160,42,0.24)',
     inverseText: COLORS.onyx,
-    mutedText: '#5F6670',
+    mutedText: '#52585F',
     success: COLORS.deepGreen,
     successText: '#FFFFFF',
     text: '#141416',
