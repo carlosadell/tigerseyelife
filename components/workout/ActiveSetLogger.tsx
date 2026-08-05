@@ -1,5 +1,5 @@
 import * as Haptics from 'expo-haptics';
-import { Check } from 'lucide-react-native';
+import { Check, Dumbbell, Plus, Timer } from 'lucide-react-native';
 import { useMemo, useState } from 'react';
 import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 
@@ -11,25 +11,27 @@ import { useActiveWorkoutStore } from '../../stores/activeWorkout';
 
 // Draft.lb is what the user types — pounds. Storage stays kg
 // (WorkoutSetLog.weight_kg schema) so we convert at logSet time.
-type DraftSet = {
-  reps: string;
-  lb: string;
-  rpe: string;
-};
+type DraftSet = { reps: string; lb: string; rpe: string };
 
 type Props = {
   exercise: WorkoutExercise;
-  // Suggested weight is kg (from historical set logs); the UI
-  // converts to lb for display and input semantics.
+  // Suggested weight is kg (from historical set logs); the UI converts to lb.
   suggestedFromHistory?: number | null;
 };
 
 const emptyDraft = (): DraftSet => ({ lb: '', reps: '', rpe: '7' });
 
+function fmtRest(seconds: number) {
+  const m = Math.floor(seconds / 60);
+  const s = seconds % 60;
+  return `${m}:${s < 10 ? '0' : ''}${s}`;
+}
+
 export function ActiveSetLogger({ exercise, suggestedFromHistory }: Props) {
   const colors = useThemeColors();
   const { currentSession, logSet, setRestTimer } = useActiveWorkoutStore();
   const [drafts, setDrafts] = useState<Record<number, DraftSet>>({});
+  const [extraSets, setExtraSets] = useState(0);
   const logged = currentSession?.set_logs ?? [];
 
   const updateDraft = (setNumber: number, field: keyof DraftSet, value: string) => {
@@ -40,13 +42,12 @@ export function ActiveSetLogger({ exercise, suggestedFromHistory }: Props) {
   };
 
   const rows = useMemo(
-    () => Array.from({ length: exercise.target_sets }, (_, index) => index + 1),
-    [exercise.target_sets],
+    () => Array.from({ length: exercise.target_sets + extraSets }, (_, i) => i + 1),
+    [exercise.target_sets, extraSets],
   );
 
   const completeSet = (setNumber: number) => {
     const draft = drafts[setNumber] ?? { lb: '0', reps: '0', rpe: '7' };
-    const lbEntered = Number(draft.lb || 0);
     logSet({
       exercise_id: exercise.id,
       is_warmup: exercise.is_warmup,
@@ -54,7 +55,7 @@ export function ActiveSetLogger({ exercise, suggestedFromHistory }: Props) {
       reps: Number(draft.reps || 0),
       rpe: Number(draft.rpe || 7),
       set_number: setNumber,
-      weight_kg: lbToKg(lbEntered),
+      weight_kg: lbToKg(Number(draft.lb || 0)),
     });
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     if (exercise.rest_seconds > 0) {
@@ -74,109 +75,133 @@ export function ActiveSetLogger({ exercise, suggestedFromHistory }: Props) {
     }));
   };
 
+  const prevLabel =
+    suggestedFromHistory != null
+      ? `${toLbInputValue(suggestedFromHistory)} x ${exercise.target_reps.split('-')[0]}`
+      : null;
+
   return (
-    <View
-      style={[
-        styles.card,
-        {
-          backgroundColor: colors.card,
-          borderColor: colors.border,
-        },
-      ]}
-    >
-      <View style={styles.headerRow}>
-        <Text style={[styles.title, { color: colors.text }]}>Log today’s sets</Text>
-        {!exercise.is_warmup && suggestedFromHistory != null ? (
-          <Text style={[styles.suggestion, { color: colors.mutedText }]}>
-            Last time: {formatWeight(suggestedFromHistory)}
+    <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border }]}>
+      {/* Exercise header */}
+      <View style={styles.exHeader}>
+        <View style={styles.exIcon}>
+          <Dumbbell color={colors.accent} size={18} strokeWidth={2.2} />
+        </View>
+        <View style={styles.exText}>
+          <Text style={[styles.exName, { color: colors.text }]} numberOfLines={1}>
+            {exercise.name}
           </Text>
-        ) : null}
+          <Text style={[styles.exReps, { color: colors.mutedText }]}>
+            {exercise.target_reps} reps{exercise.is_warmup ? ' · warm-up' : ''}
+          </Text>
+        </View>
       </View>
 
-      <View style={[styles.table, { backgroundColor: colors.cardAlt }]}>
-        <View style={styles.tableHeader}>
-          <Text style={[styles.colHeader, styles.setCol, { color: colors.mutedText }]}>SET</Text>
-          {exercise.is_warmup ? (
-            <Text style={[styles.colHeader, styles.warmupCol, { color: colors.mutedText }]}>
-              CUE
-            </Text>
-          ) : (
-            <>
-              <Text style={[styles.colHeader, styles.numCol, { color: colors.mutedText }]}>LB</Text>
-              <Text style={[styles.colHeader, styles.numCol, { color: colors.mutedText }]}>REPS</Text>
-              <Text style={[styles.colHeader, styles.numCol, { color: colors.mutedText }]}>RPE</Text>
-            </>
-          )}
-          <Text style={[styles.colHeader, styles.checkCol, { color: colors.mutedText }]}>✓</Text>
-        </View>
+      {/* Table header */}
+      <View style={styles.tHead}>
+        <Text style={[styles.hCell, styles.setCol, { color: colors.mutedText }]}>SET</Text>
+        <Text style={[styles.hCell, styles.prevCol, { color: colors.mutedText }]}>PREVIOUS</Text>
+        <Text style={[styles.hCell, styles.numCol, { color: colors.mutedText }]}>LBS</Text>
+        <Text style={[styles.hCell, styles.numCol, { color: colors.mutedText }]}>REPS</Text>
+        <Text style={[styles.hCell, styles.effCol, { color: colors.mutedText }]}>EFFORT</Text>
+      </View>
 
-        {rows.map((setNumber) => {
-          const isLogged = logged.some(
-            (set) => set.exercise_id === exercise.id && set.set_number === setNumber,
-          );
-          const draft = drafts[setNumber] ?? { lb: '', reps: '', rpe: '7' };
+      {rows.map((setNumber) => {
+        const isLogged = logged.some(
+          (s) => s.exercise_id === exercise.id && s.set_number === setNumber,
+        );
+        const draft = drafts[setNumber] ?? { lb: '', reps: '', rpe: '7' };
+        const zebra = setNumber % 2 === 0;
 
-          return (
-            <View key={setNumber} style={styles.tableRow}>
-              <Text style={[styles.setNumber, { color: colors.text }]}>{setNumber}</Text>
+        return (
+          <View
+            key={setNumber}
+            style={[styles.row, zebra && { backgroundColor: colors.cardAlt }]}
+          >
+            <View style={styles.setCol}>
+              <View style={[styles.setTile, { borderColor: colors.border }]}>
+                <Text style={[styles.setNum, { color: colors.text }]}>{setNumber}</Text>
+              </View>
+            </View>
 
-              {exercise.is_warmup ? (
-                <Text style={[styles.warmupHint, { color: colors.mutedText }]}>
-                  {exercise.target_reps}
-                </Text>
+            <View style={styles.prevCol}>
+              {prevLabel ? (
+                <View style={styles.prevInner}>
+                  <Text style={[styles.prevText, { color: colors.mutedText }]}>{prevLabel}</Text>
+                  <View style={[styles.prevDot, { backgroundColor: colors.accent }]} />
+                </View>
               ) : (
-                <>
-                  <Pressable
-                    onLongPress={() => applySuggestion(setNumber)}
-                    style={[styles.numCol]}
-                  >
-                    <TextInput
-                      keyboardType="numeric"
-                      onChangeText={(value) => updateDraft(setNumber, 'lb', value)}
-                      placeholder={suggestedFromHistory != null ? toLbInputValue(suggestedFromHistory) : '0'}
-                      placeholderTextColor={colors.mutedText}
-                      style={[styles.input, { backgroundColor: colors.card, color: colors.text }]}
-                      value={draft.lb}
-                    />
-                  </Pressable>
-                  <TextInput
-                    keyboardType="numeric"
-                    onChangeText={(value) => updateDraft(setNumber, 'reps', value)}
-                    placeholder={exercise.target_reps.split('-')[0]}
-                    placeholderTextColor={colors.mutedText}
-                    style={[styles.input, styles.numCol, { backgroundColor: colors.card, color: colors.text }]}
-                    value={draft.reps}
-                  />
-                  <TextInput
-                    keyboardType="numeric"
-                    onChangeText={(value) => updateDraft(setNumber, 'rpe', value)}
-                    placeholder="7"
-                    placeholderTextColor={colors.mutedText}
-                    style={[styles.input, styles.numCol, { backgroundColor: colors.card, color: colors.text }]}
-                    value={draft.rpe}
-                  />
-                </>
+                <Text style={[styles.prevText, { color: colors.mutedText }]}>-</Text>
               )}
+            </View>
 
+            <Pressable style={styles.numCol} onLongPress={() => applySuggestion(setNumber)}>
+              <TextInput
+                keyboardType="numeric"
+                onChangeText={(v) => updateDraft(setNumber, 'lb', v)}
+                placeholder={suggestedFromHistory != null ? toLbInputValue(suggestedFromHistory) : '0'}
+                placeholderTextColor={colors.mutedText}
+                style={[styles.input, { backgroundColor: colors.background, color: colors.text }]}
+                value={draft.lb}
+              />
+            </Pressable>
+
+            <View style={styles.numCol}>
+              <TextInput
+                keyboardType="numeric"
+                onChangeText={(v) => updateDraft(setNumber, 'reps', v)}
+                placeholder={exercise.target_reps.split('-')[0]}
+                placeholderTextColor={colors.mutedText}
+                style={[styles.input, { backgroundColor: colors.background, color: colors.text }]}
+                value={draft.reps}
+              />
+            </View>
+
+            <View style={styles.effCol}>
               <Pressable
+                accessibilityRole="button"
+                accessibilityLabel={`Complete set ${setNumber}`}
                 onPress={() => completeSet(setNumber)}
                 style={[
-                  styles.check,
-                  styles.checkCol,
-                  { borderColor: colors.accent },
+                  styles.effCircle,
+                  { borderColor: colors.border },
                   isLogged && { backgroundColor: colors.action, borderColor: colors.action },
                 ]}
               >
-                <Check color={isLogged ? COLORS.bone : colors.accent} size={16} strokeWidth={2.6} />
+                {isLogged ? <Check color={COLORS.bone} size={16} strokeWidth={3} /> : null}
               </Pressable>
             </View>
-          );
-        })}
+          </View>
+        );
+      })}
+
+      {/* Rest + Add set */}
+      <View style={styles.actions}>
+        <Pressable
+          accessibilityRole="button"
+          onPress={() =>
+            setRestTimer({ exerciseId: exercise.id, running: true, secondsLeft: exercise.rest_seconds })
+          }
+          style={[styles.actionBtn, { backgroundColor: colors.cardAlt, borderColor: colors.border }]}
+        >
+          <Timer color={colors.text} size={15} strokeWidth={2.2} />
+          <Text style={[styles.actionText, { color: colors.text }]}>
+            Rest: {fmtRest(exercise.rest_seconds)}
+          </Text>
+        </Pressable>
+        <Pressable
+          accessibilityRole="button"
+          onPress={() => setExtraSets((n) => n + 1)}
+          style={[styles.actionBtn, { backgroundColor: colors.cardAlt, borderColor: colors.border }]}
+        >
+          <Plus color={colors.action} size={15} strokeWidth={2.6} />
+          <Text style={[styles.actionText, { color: colors.text }]}>Add Set</Text>
+        </Pressable>
       </View>
 
       {!exercise.is_warmup && suggestedFromHistory != null ? (
         <Text style={[styles.footnote, { color: colors.mutedText }]}>
-          Long-press the lb field to copy last session’s weight.
+          Last time {formatWeight(suggestedFromHistory)}. Long-press the LBS field to copy it.
         </Text>
       ) : null}
     </View>
@@ -184,90 +209,77 @@ export function ActiveSetLogger({ exercise, suggestedFromHistory }: Props) {
 }
 
 const styles = StyleSheet.create({
-  card: {
-    borderRadius: 12,
+  actionBtn: {
+    alignItems: 'center',
+    borderRadius: 10,
     borderWidth: 1,
-    gap: 12,
-    padding: 16,
+    flex: 1,
+    flexDirection: 'row',
+    gap: 6,
+    justifyContent: 'center',
+    paddingVertical: 12,
   },
-  check: {
+  actions: { flexDirection: 'row', gap: 10, marginTop: 12 },
+  actionText: { fontFamily: FONTS.sansBold, fontSize: 13.5 },
+  card: { borderRadius: 16, borderWidth: 1, padding: 16 },
+  effCircle: {
     alignItems: 'center',
     borderRadius: 999,
-    borderWidth: 1.4,
-    height: 32,
+    borderWidth: 1.6,
+    height: 30,
     justifyContent: 'center',
-    width: 32,
+    width: 30,
   },
-  checkCol: {
-    width: 44,
-  },
-  colHeader: {
-    fontFamily: FONTS.sansBold,
-    fontSize: 10,
-    letterSpacing: 1.4,
-    textAlign: 'center',
-  },
-  footnote: {
-    fontFamily: FONTS.sans,
-    fontSize: 11.5,
-    fontStyle: 'italic',
-  },
-  headerRow: {
+  effCol: { alignItems: 'center', width: 60 },
+  exHeader: { alignItems: 'center', flexDirection: 'row', gap: 12, marginBottom: 14 },
+  exIcon: {
     alignItems: 'center',
-    flexDirection: 'row',
-    justifyContent: 'space-between',
+    backgroundColor: '#F0E2C2',
+    borderRadius: 10,
+    height: 40,
+    justifyContent: 'center',
+    width: 40,
   },
+  exName: { fontFamily: FONTS.sansBold, fontSize: 17, letterSpacing: -0.2 },
+  exReps: { fontFamily: FONTS.sansMedium, fontSize: 12.5, marginTop: 1 },
+  exText: { flex: 1, minWidth: 0 },
+  footnote: { fontFamily: FONTS.sans, fontSize: 11.5, fontStyle: 'italic', marginTop: 10 },
+  hCell: { fontFamily: FONTS.sansBold, fontSize: 10, letterSpacing: 1.2, textAlign: 'center' },
   input: {
     borderRadius: 8,
     fontFamily: FONTS.sansBold,
-    fontSize: 14,
-    paddingVertical: 8,
+    fontSize: 15,
+    paddingVertical: 9,
     textAlign: 'center',
   },
-  numCol: {
-    flex: 1,
-  },
-  setCol: {
-    width: 28,
-  },
-  setNumber: {
-    fontFamily: FONTS.sansBold,
-    fontSize: 14,
-    textAlign: 'center',
-    width: 28,
-  },
-  suggestion: {
-    fontFamily: FONTS.sansMedium,
-    fontSize: 11.5,
-  },
-  table: {
+  numCol: { flex: 1 },
+  prevCol: { flex: 1.4 },
+  prevDot: { borderRadius: 999, height: 6, width: 6 },
+  prevInner: { alignItems: 'center', flexDirection: 'row', gap: 6, justifyContent: 'center' },
+  prevText: { fontFamily: FONTS.sansMedium, fontSize: 12.5, textAlign: 'center' },
+  row: {
+    alignItems: 'center',
     borderRadius: 10,
+    flexDirection: 'row',
     gap: 8,
-    padding: 12,
+    paddingHorizontal: 4,
+    paddingVertical: 8,
   },
-  tableHeader: {
+  setCol: { alignItems: 'center', width: 40 },
+  setNum: { fontFamily: FONTS.sansBold, fontSize: 14 },
+  setTile: {
+    alignItems: 'center',
+    borderRadius: 8,
+    borderWidth: 1,
+    height: 34,
+    justifyContent: 'center',
+    width: 34,
+  },
+  tHead: {
     alignItems: 'center',
     flexDirection: 'row',
     gap: 8,
-  },
-  tableRow: {
-    alignItems: 'center',
-    flexDirection: 'row',
-    gap: 8,
-  },
-  title: {
-    fontFamily: FONTS.sansBold,
-    fontSize: 14,
-    letterSpacing: 0.2,
-  },
-  warmupCol: {
-    flex: 3,
-  },
-  warmupHint: {
-    flex: 3,
-    fontFamily: FONTS.sansMedium,
-    fontSize: 13,
-    fontStyle: 'italic',
-    textAlign: 'center',
+    marginBottom: 4,
+    paddingHorizontal: 4,
   },
 });
