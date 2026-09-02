@@ -37,6 +37,7 @@ export default function SignInScreen() {
     setSubmitting(true);
     try {
       await signIn(email, password);
+      router.replace("/");
     } catch (nextError) {
       setError(
         nextError instanceof Error ? nextError.message : "Unable to sign in.",

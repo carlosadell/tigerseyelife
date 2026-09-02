@@ -42,6 +42,8 @@ Set these Supabase Edge Function secrets:
 
 Then deploy `verify-membership` and test with a real active member and a non-member. Never set `ALLOW_DEV_MEMBERSHIP_BYPASS=true` in production.
 
+In Supabase Auth URL Configuration, allow the native redirects `tigerseyelife://membership` and `tigerseyelife://reset-password`, plus the equivalent `https://tigerseyelife.expo.app/` web routes. Test both email confirmation and password recovery from a physical device.
+
 ### 2. Configure and deploy AI
 
 Set `ANTHROPIC_API_KEY` as a Supabase secret, deploy `anthropic-proxy`, and test both coach text and meal-photo analysis. If AI will not ship in version 1.0, hide both entry points before submission instead of leaving a failing control.

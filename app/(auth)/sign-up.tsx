@@ -30,8 +30,12 @@ export default function SignUpScreen() {
     setMessage(null);
     setSubmitting(true);
     try {
-      await signUp(email, password);
-      setMessage("Account created. Sign in when you’re ready.");
+      const result = await signUp(email, password);
+      if (result.requiresEmailConfirmation) {
+        setMessage("Check your email to confirm your account, then sign in.");
+      } else {
+        router.replace("/membership");
+      }
     } catch (nextError) {
       setError(
         nextError instanceof Error

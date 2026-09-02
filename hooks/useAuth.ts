@@ -31,7 +31,10 @@ type AuthContextValue = {
   isDevSession: boolean;
   hasSupabaseConfig: boolean;
   signIn: (email: string, password: string) => Promise<void>;
-  signUp: (email: string, password: string) => Promise<void>;
+  signUp: (
+    email: string,
+    password: string,
+  ) => Promise<{ requiresEmailConfirmation: boolean }>;
   requestPasswordReset: (email: string) => Promise<void>;
   updatePassword: (password: string) => Promise<void>;
   devSignIn: () => void;
@@ -94,14 +97,16 @@ export function AuthProvider({ children }: PropsWithChildren) {
       );
     }
 
-    const { error } = await supabase.auth.signUp({
+    const { data, error } = await supabase.auth.signUp({
       email: email.trim(),
       password,
+      options: { emailRedirectTo: Linking.createURL("membership") },
     });
 
     if (error) {
       throw error;
     }
+    return { requiresEmailConfirmation: !data.session };
   }, []);
 
   const devSignIn = useCallback(() => {
@@ -122,7 +127,7 @@ export function AuthProvider({ children }: PropsWithChildren) {
       );
     }
     const { error } = await supabase.auth.resetPasswordForEmail(email.trim(), {
-      redirectTo: Linking.createURL("/reset-password"),
+      redirectTo: Linking.createURL("reset-password"),
     });
     if (error) throw error;
   }, []);
