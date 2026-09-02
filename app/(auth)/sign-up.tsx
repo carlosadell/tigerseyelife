@@ -1,17 +1,26 @@
-import { Link, router } from 'expo-router';
-import { ArrowRight, Lock, Mail } from 'lucide-react-native';
-import { useState } from 'react';
-import { ActivityIndicator, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Link, router } from "expo-router";
+import { ArrowRight, Lock, Mail } from "lucide-react-native";
+import { useState } from "react";
+import {
+  ActivityIndicator,
+  Pressable,
+  StyleSheet,
+  Text,
+  TextInput,
+  View,
+} from "react-native";
 
-import { AuthShell } from '../../components/auth/AuthShell';
-import { useAuth } from '../../hooks/useAuth';
-import { COLORS, FONTS } from '../../lib/brand';
+import { AuthShell } from "../../components/auth/AuthShell";
+import { useAuth } from "../../hooks/useAuth";
+import { COLORS, FONTS } from "../../lib/brand";
 
 export default function SignUpScreen() {
   const { devSignIn, hasSupabaseConfig, signUp } = useAuth();
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [focusedField, setFocusedField] = useState<'email' | 'password' | null>(null);
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [focusedField, setFocusedField] = useState<"email" | "password" | null>(
+    null,
+  );
   const [error, setError] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
@@ -22,9 +31,13 @@ export default function SignUpScreen() {
     setSubmitting(true);
     try {
       await signUp(email, password);
-      setMessage('Account created. Sign in when you’re ready.');
+      setMessage("Account created. Sign in when you’re ready.");
     } catch (nextError) {
-      setError(nextError instanceof Error ? nextError.message : 'Unable to create account.');
+      setError(
+        nextError instanceof Error
+          ? nextError.message
+          : "Unable to create account.",
+      );
     } finally {
       setSubmitting(false);
     }
@@ -32,7 +45,7 @@ export default function SignUpScreen() {
 
   const handleDevSignIn = () => {
     devSignIn();
-    router.replace('/(tabs)/today');
+    router.replace("/(tabs)/today");
   };
 
   return (
@@ -43,6 +56,9 @@ export default function SignUpScreen() {
           <Link href="/(auth)/sign-in" style={styles.link}>
             <Text style={styles.linkMuted}>Already have an account? </Text>
             <Text style={styles.linkAccent}>Sign in</Text>
+          </Link>
+          <Link href="/privacy" style={styles.privacyLink}>
+            Privacy policy
           </Link>
           {__DEV__ ? (
             <Pressable hitSlop={8} onPress={handleDevSignIn}>
@@ -56,7 +72,8 @@ export default function SignUpScreen() {
         <View style={styles.banner}>
           <Text style={styles.bannerKicker}>DEV MODE</Text>
           <Text style={styles.bannerText}>
-            Supabase keys are empty. Fill .env to create real accounts, or use Skip for dev.
+            Supabase keys are empty. Fill .env to create real accounts, or use
+            Skip for dev.
           </Text>
         </View>
       ) : null}
@@ -73,14 +90,18 @@ export default function SignUpScreen() {
         </View>
       ) : null}
 
-      <FieldGroup focused={focusedField === 'email'} icon={<Mail color={COLORS.tigerGold} size={16} />} label="EMAIL">
+      <FieldGroup
+        focused={focusedField === "email"}
+        icon={<Mail color={COLORS.tigerGold} size={16} />}
+        label="EMAIL"
+      >
         <TextInput
           autoCapitalize="none"
           autoCorrect={false}
           keyboardType="email-address"
           onBlur={() => setFocusedField(null)}
           onChangeText={setEmail}
-          onFocus={() => setFocusedField('email')}
+          onFocus={() => setFocusedField("email")}
           placeholder="you@example.com"
           placeholderTextColor="rgba(168,175,184,0.5)"
           style={styles.input}
@@ -88,11 +109,15 @@ export default function SignUpScreen() {
         />
       </FieldGroup>
 
-      <FieldGroup focused={focusedField === 'password'} icon={<Lock color={COLORS.tigerGold} size={16} />} label="PASSWORD">
+      <FieldGroup
+        focused={focusedField === "password"}
+        icon={<Lock color={COLORS.tigerGold} size={16} />}
+        label="PASSWORD"
+      >
         <TextInput
           onBlur={() => setFocusedField(null)}
           onChangeText={setPassword}
-          onFocus={() => setFocusedField('password')}
+          onFocus={() => setFocusedField("password")}
           placeholder="At least 8 characters"
           placeholderTextColor="rgba(168,175,184,0.5)"
           secureTextEntry
@@ -111,7 +136,7 @@ export default function SignUpScreen() {
         ]}
       >
         <Text style={styles.primaryButtonText}>
-          {submitting ? 'Creating account…' : 'Create account'}
+          {submitting ? "Creating account…" : "Create account"}
         </Text>
         {submitting ? (
           <View style={styles.primaryArrow}>
@@ -142,17 +167,21 @@ function FieldGroup({
     <View style={styles.fieldGroup}>
       <View style={styles.fieldLabelRow}>
         {icon}
-        <Text style={[styles.fieldLabel, focused && styles.fieldLabelFocused]}>{label}</Text>
+        <Text style={[styles.fieldLabel, focused && styles.fieldLabelFocused]}>
+          {label}
+        </Text>
       </View>
-      <View style={[styles.fieldWrap, focused && styles.fieldWrapFocused]}>{children}</View>
+      <View style={[styles.fieldWrap, focused && styles.fieldWrapFocused]}>
+        {children}
+      </View>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   banner: {
-    backgroundColor: 'rgba(200,159,77,0.12)',
-    borderColor: 'rgba(200,159,77,0.34)',
+    backgroundColor: "rgba(200,159,77,0.12)",
+    borderColor: "rgba(200,159,77,0.34)",
     borderRadius: 10,
     borderWidth: 1,
     gap: 4,
@@ -177,14 +206,14 @@ const styles = StyleSheet.create({
     letterSpacing: 0.2,
   },
   errorCard: {
-    backgroundColor: 'rgba(165,72,72,0.16)',
-    borderColor: 'rgba(165,72,72,0.4)',
+    backgroundColor: "rgba(165,72,72,0.16)",
+    borderColor: "rgba(165,72,72,0.4)",
     borderRadius: 10,
     borderWidth: 1,
     padding: 12,
   },
   errorText: {
-    color: '#F2A6A6',
+    color: "#F2A6A6",
     fontFamily: FONTS.sansMedium,
     fontSize: 13,
     lineHeight: 18,
@@ -202,14 +231,14 @@ const styles = StyleSheet.create({
     color: COLORS.tigerGold,
   },
   fieldLabelRow: {
-    alignItems: 'center',
-    flexDirection: 'row',
+    alignItems: "center",
+    flexDirection: "row",
     gap: 6,
     paddingHorizontal: 2,
   },
   fieldWrap: {
-    backgroundColor: 'rgba(245,242,234,0.05)',
-    borderColor: 'rgba(245,242,234,0.12)',
+    backgroundColor: "rgba(245,242,234,0.05)",
+    borderColor: "rgba(245,242,234,0.12)",
     borderRadius: 10,
     borderWidth: 1,
   },
@@ -217,7 +246,7 @@ const styles = StyleSheet.create({
     borderColor: COLORS.tigerGold,
   },
   footerStack: {
-    alignItems: 'center',
+    alignItems: "center",
     gap: 14,
   },
   input: {
@@ -239,8 +268,8 @@ const styles = StyleSheet.create({
     color: COLORS.steel,
   },
   messageCard: {
-    backgroundColor: 'rgba(30,91,69,0.18)',
-    borderColor: 'rgba(30,91,69,0.45)',
+    backgroundColor: "rgba(30,91,69,0.18)",
+    borderColor: "rgba(30,91,69,0.45)",
     borderRadius: 10,
     borderWidth: 1,
     padding: 12,
@@ -253,29 +282,35 @@ const styles = StyleSheet.create({
   },
   primaryArrow: {
     bottom: 0,
-    justifyContent: 'center',
-    position: 'absolute',
+    justifyContent: "center",
+    position: "absolute",
     right: 18,
     top: 0,
   },
   primaryButton: {
-    alignItems: 'center',
+    alignItems: "center",
     backgroundColor: COLORS.tangerine,
     borderRadius: 10,
     elevation: 4,
-    justifyContent: 'center',
+    justifyContent: "center",
     minHeight: 52,
     paddingHorizontal: 18,
-    position: 'relative',
+    position: "relative",
     shadowColor: COLORS.tangerine,
     shadowOffset: { height: 4, width: 0 },
     shadowOpacity: 0.32,
     shadowRadius: 12,
   },
   primaryButtonText: {
-    color: '#FFFFFF',
+    color: "#FFFFFF",
     fontFamily: FONTS.sansBold,
     fontSize: 15.5,
     letterSpacing: 0.2,
+  },
+  privacyLink: {
+    color: COLORS.steel,
+    fontFamily: FONTS.sansMedium,
+    fontSize: 12,
+    textDecorationLine: "underline",
   },
 });

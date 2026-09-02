@@ -1,26 +1,26 @@
-import 'react-native-gesture-handler';
-import '../global.css';
+import "react-native-gesture-handler";
+import "../global.css";
 
 import {
   Inter_400Regular,
   Inter_500Medium,
   Inter_700Bold,
-} from '@expo-google-fonts/inter';
-import { VT323_400Regular } from '@expo-google-fonts/vt323';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { setAudioModeAsync } from 'expo-audio';
-import { useFonts } from 'expo-font';
-import { Stack } from 'expo-router';
-import * as SplashScreen from 'expo-splash-screen';
-import { StatusBar } from 'expo-status-bar';
-import { useEffect, useRef } from 'react';
-import { Animated, Image, StyleSheet, Text, View } from 'react-native';
-import { GestureHandlerRootView } from 'react-native-gesture-handler';
-import { SafeAreaProvider } from 'react-native-safe-area-context';
+} from "@expo-google-fonts/inter";
+import { VT323_400Regular } from "@expo-google-fonts/vt323";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { setAudioModeAsync } from "expo-audio";
+import { useFonts } from "expo-font";
+import { Stack } from "expo-router";
+import * as SplashScreen from "expo-splash-screen";
+import { StatusBar } from "expo-status-bar";
+import { useEffect, useRef } from "react";
+import { Animated, Image, StyleSheet, Text, View } from "react-native";
+import { GestureHandlerRootView } from "react-native-gesture-handler";
+import { SafeAreaProvider } from "react-native-safe-area-context";
 
-import { AuthProvider } from '../hooks/useAuth';
-import { ThemeProvider, useTheme } from '../hooks/useTheme';
-import { COLORS } from '../lib/brand';
+import { AuthProvider } from "../hooks/useAuth";
+import { ThemeProvider, useTheme } from "../hooks/useTheme";
+import { COLORS } from "../lib/brand";
 
 SplashScreen.preventAutoHideAsync();
 
@@ -49,7 +49,7 @@ export default function RootLayout() {
   useEffect(() => {
     setAudioModeAsync({
       playsInSilentMode: true,
-      interruptionMode: 'mixWithOthers',
+      interruptionMode: "mixWithOthers",
       shouldPlayInBackground: false,
       allowsRecording: false,
     }).catch(() => {
@@ -87,10 +87,13 @@ function RootStack() {
 
   return (
     <>
-      <StatusBar backgroundColor={colors.background} style={mode === 'dark' ? 'light' : 'dark'} />
+      <StatusBar
+        backgroundColor={colors.background}
+        style={mode === "dark" ? "light" : "dark"}
+      />
       <Stack
         screenOptions={{
-          animation: 'fade',
+          animation: "fade",
           contentStyle: { backgroundColor: colors.background },
           headerShown: false,
         }}
@@ -99,10 +102,11 @@ function RootStack() {
         <Stack.Screen name="(auth)" />
         <Stack.Screen name="membership" />
         <Stack.Screen name="verify-membership" />
-        <Stack.Screen name="non-member-intake" />
         <Stack.Screen name="non-member" />
-        <Stack.Screen name="onboarding/intake/[step]" />
-        <Stack.Screen name="onboarding/intake/review" />
+        <Stack.Screen name="privacy" />
+        <Stack.Screen name="delete-account" />
+        <Stack.Screen name="reset-password" />
+        <Stack.Screen name="onboarding" />
         <Stack.Screen name="(tabs)" />
         <Stack.Screen name="workout/[id]" />
         <Stack.Screen name="tool/[slug]" />
@@ -111,15 +115,15 @@ function RootStack() {
         <Stack.Screen
           name="workout/active/[sessionId]"
           options={{
-            animation: 'slide_from_bottom',
-            presentation: 'modal',
+            animation: "slide_from_bottom",
+            presentation: "modal",
           }}
         />
         <Stack.Screen
           name="workout/complete/[sessionId]"
           options={{
-            animation: 'slide_from_bottom',
-            presentation: 'modal',
+            animation: "slide_from_bottom",
+            presentation: "modal",
           }}
         />
       </Stack>
@@ -196,7 +200,14 @@ function SplashFallback() {
     );
     pulse.start();
     return () => pulse.stop();
-  }, [logoOpacity, logoScale, glowOpacity, kickerOpacity, wordmarkOpacity, dotOpacity]);
+  }, [
+    logoOpacity,
+    logoScale,
+    glowOpacity,
+    kickerOpacity,
+    wordmarkOpacity,
+    dotOpacity,
+  ]);
 
   return (
     <View style={styles.splash}>
@@ -210,22 +221,24 @@ function SplashFallback() {
             style={{ opacity: logoOpacity, transform: [{ scale: logoScale }] }}
           >
             <Image
-              source={require('../assets/splash-icon.png')}
+              source={require("../assets/splash-icon.png")}
               style={styles.splashLogo}
               resizeMode="contain"
             />
           </Animated.View>
         </View>
-        <Animated.View style={[styles.splashKickerWrap, { opacity: kickerOpacity }]}>
+        <Animated.View
+          style={[styles.splashKickerWrap, { opacity: kickerOpacity }]}
+        >
           <Text style={styles.splashKicker}>CREATE POWER</Text>
         </Animated.View>
-        <Animated.View style={[styles.splashWordmarkWrap, { opacity: wordmarkOpacity }]}>
+        <Animated.View
+          style={[styles.splashWordmarkWrap, { opacity: wordmarkOpacity }]}
+        >
           <Text style={styles.splashWordmark}>Tigers Eye Life</Text>
         </Animated.View>
       </View>
-      <Animated.View
-        style={[styles.splashDot, { opacity: dotOpacity }]}
-      />
+      <Animated.View style={[styles.splashDot, { opacity: dotOpacity }]} />
     </View>
   );
 }
@@ -236,10 +249,10 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   splash: {
-    alignItems: 'center',
+    alignItems: "center",
     backgroundColor: COLORS.onyx,
     flex: 1,
-    justifyContent: 'center',
+    justifyContent: "center",
     paddingBottom: 96,
   },
   splashDot: {
@@ -247,7 +260,7 @@ const styles = StyleSheet.create({
     borderRadius: 999,
     bottom: 96,
     height: 6,
-    position: 'absolute',
+    position: "absolute",
     width: 6,
   },
   splashGlow: {
@@ -255,21 +268,21 @@ const styles = StyleSheet.create({
     borderRadius: 999,
     height: 220,
     left: -44,
-    position: 'absolute',
+    position: "absolute",
     top: -44,
     width: 220,
   },
   splashInner: {
-    alignItems: 'center',
+    alignItems: "center",
   },
   splashKicker: {
     color: COLORS.tigerGold,
     fontSize: 11,
-    fontWeight: '700',
+    fontWeight: "700",
     letterSpacing: 2.6,
   },
   splashKickerWrap: {
-    alignItems: 'center',
+    alignItems: "center",
     marginTop: 32,
   },
   splashLogo: {
@@ -277,19 +290,19 @@ const styles = StyleSheet.create({
     width: 132,
   },
   splashLogoWrap: {
-    alignItems: 'center',
+    alignItems: "center",
     height: 132,
-    justifyContent: 'center',
+    justifyContent: "center",
     width: 132,
   },
   splashWordmark: {
     color: COLORS.bone,
     fontSize: 22,
-    fontWeight: '700',
+    fontWeight: "700",
     letterSpacing: -0.3,
   },
   splashWordmarkWrap: {
-    alignItems: 'center',
+    alignItems: "center",
     marginTop: 8,
   },
 });

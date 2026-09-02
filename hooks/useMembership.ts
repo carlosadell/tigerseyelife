@@ -1,26 +1,29 @@
 // hooks/useMembership.ts
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import { useCallback, useEffect, useState } from 'react';
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { useCallback, useEffect, useState } from "react";
 
-import { useAuth } from './useAuth';
-import { supabase } from '../lib/supabase';
+import { useAuth } from "./useAuth";
+import { supabase } from "../lib/supabase";
+import { currentBlockFor, type WeekNumber } from "../lib/program";
 
-export type Block = 'COMMIT' | 'REFINE' | 'EVOLVE' | 'ADAPT' | 'THRIVE' | 'EXCEL';
+export type Block =
+  | "COMMIT"
+  | "REFINE"
+  | "EVOLVE"
+  | "ADAPT"
+  | "THRIVE"
+  | "EXCEL";
 
-export type CoachingStyle = 'direct' | 'warm' | 'balanced' | 'challenging';
-export type TopObstacle = 'time' | 'motivation' | 'knowledge' | 'injury' | 'cost' | 'other';
+export type CoachingStyle = "direct" | "warm" | "balanced" | "challenging";
+export type TopObstacle =
+  | "time"
+  | "motivation"
+  | "knowledge"
+  | "injury"
+  | "cost"
+  | "other";
 
-/**
- * Non-member intake state — captured optionally via /non-member-intake
- * when the user chooses "Tailor a plan" over Join/Request. An empty
- * `{}` diagnostic still marks the fork as answered so the gate stops
- * sending them back to /membership.
- *
- * (Earlier flow had a 2-question diagnostic for friction + stoppingPoint
- * before the choice surface — retired 2026-06-16 once the Tailor intake
- * landed. The fields remain optional in case we want to bring those
- * questions back via the choice surface.)
- */
+/** An empty object records that a non-member answered the access fork. */
 export type NonMemberDiagnostic = {
   friction?: string;
   stoppingPoint?: string;
@@ -72,30 +75,43 @@ export function useMembership() {
 
     if (isDevSession || !supabase) {
       const raw = await AsyncStorage.getItem(devKey(userId));
-      const diagnosticRaw = await AsyncStorage.getItem(`${devKey(userId)}:diagnostic`);
+      const diagnosticRaw = await AsyncStorage.getItem(
+        `${devKey(userId)}:diagnostic`,
+      );
       const base = raw ? (JSON.parse(raw) as Membership) : EMPTY;
-      const diagnostic = diagnosticRaw ? (JSON.parse(diagnosticRaw) as NonMemberDiagnostic) : null;
-      setMembership({ ...base, currentWeek: base.currentWeek ?? 1, nonMemberDiagnostic: diagnostic });
+      const diagnostic = diagnosticRaw
+        ? (JSON.parse(diagnosticRaw) as NonMemberDiagnostic)
+        : null;
+      setMembership({
+        ...base,
+        currentWeek: base.currentWeek ?? 1,
+        nonMemberDiagnostic: diagnostic,
+      });
       setLoading(false);
       return;
     }
 
     const { data } = await supabase
-      .from('profiles')
-      .select('program_member,join_email,verified_at,current_block,current_week,non_member_diagnostic')
-      .eq('id', userId)
+      .from("profiles")
+      .select(
+        "program_member,join_email,verified_at,current_block,current_week,non_member_diagnostic",
+      )
+      .eq("id", userId)
       .maybeSingle();
 
     setMembership({
       forkAnswered: Boolean(
-        data?.verified_at || data?.non_member_diagnostic || data?.program_member,
+        data?.verified_at ||
+        data?.non_member_diagnostic ||
+        data?.program_member,
       ),
       programMember: Boolean(data?.program_member),
       joinEmail: data?.join_email ?? null,
       verifiedAt: data?.verified_at ?? null,
       currentBlock: (data?.current_block as Block | null) ?? null,
       currentWeek: (data?.current_week as number | null) ?? 1,
-      nonMemberDiagnostic: (data?.non_member_diagnostic as NonMemberDiagnostic | null) ?? null,
+      nonMemberDiagnostic:
+        (data?.non_member_diagnostic as NonMemberDiagnostic | null) ?? null,
     });
     setLoading(false);
   }, [isDevSession, session, userId]);
@@ -118,7 +134,7 @@ export function useMembership() {
         programMember: true,
         joinEmail,
         verifiedAt: new Date().toISOString(),
-        currentBlock: 'COMMIT',
+        currentBlock: "COMMIT",
         currentWeek: 1,
         nonMemberDiagnostic: null,
       };
@@ -137,7 +153,8 @@ export function useMembership() {
     async (updates: Partial<NonMemberDiagnostic>) => {
       if (!userId) return;
 
-      const existing: NonMemberDiagnostic = membership.nonMemberDiagnostic ?? {};
+      const existing: NonMemberDiagnostic =
+        membership.nonMemberDiagnostic ?? {};
       const merged: NonMemberDiagnostic = { ...existing, ...updates };
 
       if (isDevSession || !supabase) {
@@ -151,15 +168,18 @@ export function useMembership() {
           nonMemberDiagnostic: merged,
         };
         await AsyncStorage.setItem(devKey(userId), JSON.stringify(next));
-        await AsyncStorage.setItem(`${devKey(userId)}:diagnostic`, JSON.stringify(merged));
+        await AsyncStorage.setItem(
+          `${devKey(userId)}:diagnostic`,
+          JSON.stringify(merged),
+        );
         setMembership(next);
         return;
       }
 
       await supabase
-        .from('profiles')
+        .from("profiles")
         .update({ non_member_diagnostic: merged })
-        .eq('id', userId);
+        .eq("id", userId);
 
       await load();
     },
@@ -178,5 +198,31 @@ export function useMembership() {
     setMembership(EMPTY);
   }, [userId]);
 
-  return { loading, membership, refresh: load, devMarkVerified, recordNonMember, devReset };
+  const devSetWeek = useCallback(
+    async (weekNumber: WeekNumber) => {
+      if (!userId) return;
+      const next: Membership = {
+        forkAnswered: true,
+        programMember: true,
+        joinEmail: membership.joinEmail ?? "dev@tigerseyelife",
+        verifiedAt: membership.verifiedAt ?? new Date().toISOString(),
+        currentBlock: currentBlockFor(weekNumber) as Block,
+        currentWeek: weekNumber,
+        nonMemberDiagnostic: null,
+      };
+      await AsyncStorage.setItem(devKey(userId), JSON.stringify(next));
+      setMembership(next);
+    },
+    [membership.joinEmail, membership.verifiedAt, userId],
+  );
+
+  return {
+    loading,
+    membership,
+    refresh: load,
+    devMarkVerified,
+    recordNonMember,
+    devReset,
+    devSetWeek,
+  };
 }

@@ -1,22 +1,15 @@
-import { Macros } from './meals';
+import { callAnthropic } from "./anthropicProxy";
+import { Macros } from "./meals";
 
 /**
  * Food vision — sends a photo to Claude Haiku 4.5 and returns identified
  * meal name + macros + per-component breakdown.
  *
- * We call the Messages API via fetch directly rather than @anthropic-ai/sdk
- * because the SDK has Node-only credential-loading code paths
- * (`await import('node:fs')`) that Metro can't bundle for React Native.
- * The Messages API is plain JSON in/out — fetch is the right tool here.
- *
- * SECURITY: this calls the Anthropic API directly from the device using an
- * API key bundled into the app via EXPO_PUBLIC_ANTHROPIC_API_KEY. That key
- * IS extractable from the app binary — fine for beta, but the production
- * path is a Supabase Edge Function proxy that holds the key server-side.
- * Track that in the spec doc before public launch.
+ * Requests go through an authenticated Supabase Edge Function so the
+ * Anthropic API key is never bundled into the mobile app.
  */
 
-export type FoodConfidence = 'low' | 'medium' | 'high';
+export type FoodConfidence = "low" | "medium" | "high";
 
 export type FoodComponent = {
   item: string;
@@ -52,59 +45,76 @@ Karen and Ryan's framework: meals should anchor with protein, build with fiber/c
 If the image does not contain food, return name "Not a food photo", empty components array, all macros at 0, confidence "low", and notes "Photo does not appear to show food."`;
 
 const FOOD_VISION_SCHEMA = {
-  type: 'object',
+  type: "object",
   additionalProperties: false,
   properties: {
     name: {
-      type: 'string',
-      description: 'Concise meal name, 3-7 words (e.g. "Grilled chicken with rice and broccoli")',
+      type: "string",
+      description:
+        'Concise meal name, 3-7 words (e.g. "Grilled chicken with rice and broccoli")',
     },
     components: {
-      type: 'array',
-      description: 'Each distinct food item with its estimated portion',
+      type: "array",
+      description: "Each distinct food item with its estimated portion",
       items: {
-        type: 'object',
+        type: "object",
         additionalProperties: false,
         properties: {
           item: {
-            type: 'string',
-            description: 'Food item with portion estimate (e.g. "Grilled chicken breast, ~5 oz")',
+            type: "string",
+            description:
+              'Food item with portion estimate (e.g. "Grilled chicken breast, ~5 oz")',
           },
-          grams: { type: 'number', description: 'Estimated grams of this component' },
+          grams: {
+            type: "number",
+            description: "Estimated grams of this component",
+          },
         },
-        required: ['item', 'grams'],
+        required: ["item", "grams"],
       },
     },
     macros: {
-      type: 'object',
+      type: "object",
       additionalProperties: false,
       properties: {
-        protein: { type: 'number', description: 'Grams of protein in the serving shown' },
-        fat: { type: 'number', description: 'Grams of fat in the serving shown' },
-        carb: { type: 'number', description: 'Grams of carbohydrates in the serving shown' },
-        fiber: { type: 'number', description: 'Grams of fiber in the serving shown' },
+        protein: {
+          type: "number",
+          description: "Grams of protein in the serving shown",
+        },
+        fat: {
+          type: "number",
+          description: "Grams of fat in the serving shown",
+        },
+        carb: {
+          type: "number",
+          description: "Grams of carbohydrates in the serving shown",
+        },
+        fiber: {
+          type: "number",
+          description: "Grams of fiber in the serving shown",
+        },
       },
-      required: ['protein', 'fat', 'carb', 'fiber'],
+      required: ["protein", "fat", "carb", "fiber"],
     },
     confidence: {
-      type: 'string',
-      enum: ['low', 'medium', 'high'],
-      description: 'Confidence in identification and portion estimates',
+      type: "string",
+      enum: ["low", "medium", "high"],
+      description: "Confidence in identification and portion estimates",
     },
     notes: {
-      type: 'string',
-      description: 'One short sentence flagging uncertainty or framework notes. Empty string if nothing to flag.',
+      type: "string",
+      description:
+        "One short sentence flagging uncertainty or framework notes. Empty string if nothing to flag.",
     },
   },
-  required: ['name', 'components', 'macros', 'confidence', 'notes'],
+  required: ["name", "components", "macros", "confidence", "notes"],
 };
 
-export type MediaType = 'image/jpeg' | 'image/png' | 'image/webp' | 'image/gif';
+export type MediaType = "image/jpeg" | "image/png" | "image/webp" | "image/gif";
 
 type AnthropicMessagesResponse = {
   content: Array<
-    | { type: 'text'; text: string }
-    | { type: string; [k: string]: unknown }
+    { type: "text"; text: string } | { type: string; [k: string]: unknown }
   >;
   stop_reason: string;
   usage?: { input_tokens: number; output_tokens: number };
@@ -122,43 +132,28 @@ export async function scanFood({
   base64: string;
   mediaType: MediaType;
 }): Promise<FoodVisionResult> {
-  const apiKey = process.env.EXPO_PUBLIC_ANTHROPIC_API_KEY;
-  if (!apiKey) {
-    throw new Error(
-      'Food vision requires EXPO_PUBLIC_ANTHROPIC_API_KEY in your .env. See .env.example.',
-    );
-  }
-
-  const response = await fetch('https://api.anthropic.com/v1/messages', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'x-api-key': apiKey,
-      'anthropic-version': '2023-06-01',
-    },
-    body: JSON.stringify({
-      model: 'claude-haiku-4-5',
-      max_tokens: 1024,
-      system: SYSTEM_PROMPT,
-      messages: [
-        {
-          role: 'user',
-          content: [
-            {
-              type: 'image',
-              source: { type: 'base64', media_type: mediaType, data: base64 },
-            },
-            {
-              type: 'text',
-              text: 'Identify the food and estimate macros for the serving shown. Return the structured JSON only.',
-            },
-          ],
-        },
-      ],
-      output_config: {
-        format: { type: 'json_schema', schema: FOOD_VISION_SCHEMA },
+  const response = await callAnthropic({
+    model: "claude-haiku-4-5",
+    max_tokens: 1024,
+    system: SYSTEM_PROMPT,
+    messages: [
+      {
+        role: "user",
+        content: [
+          {
+            type: "image",
+            source: { type: "base64", media_type: mediaType, data: base64 },
+          },
+          {
+            type: "text",
+            text: "Identify the food and estimate macros for the serving shown. Return the structured JSON only.",
+          },
+        ],
       },
-    }),
+    ],
+    output_config: {
+      format: { type: "json_schema", schema: FOOD_VISION_SCHEMA },
+    },
   });
 
   if (!response.ok) {
@@ -174,14 +169,14 @@ export async function scanFood({
 
   const data = (await response.json()) as AnthropicMessagesResponse;
   const textBlock = data.content.find(
-    (b): b is { type: 'text'; text: string } => b.type === 'text',
+    (b): b is { type: "text"; text: string } => b.type === "text",
   );
   if (!textBlock) {
-    throw new Error('Food vision response missing text content.');
+    throw new Error("Food vision response missing text content.");
   }
   try {
     return JSON.parse(textBlock.text) as FoodVisionResult;
   } catch {
-    throw new Error('Food vision response was not valid JSON.');
+    throw new Error("Food vision response was not valid JSON.");
   }
 }

@@ -1,23 +1,21 @@
+import { callAnthropic } from "./anthropicProxy";
+
 /**
  * AI coach — sends the conversation history + live member context to
  * Claude Haiku 4.5 and returns a short reply plus 1-3 followup prompts.
  *
- * Mirrors the fetch-based pattern in lib/foodVision.ts (the Anthropic SDK
- * has Node-only credential paths Metro can't bundle for React Native).
- *
- * SECURITY: same caveat as foodVision — the key bundled into the app via
- * EXPO_PUBLIC_ANTHROPIC_API_KEY is extractable. Acceptable for beta, but
- * the production path is a Supabase Edge Function proxy. Track in spec.
+ * Requests go through an authenticated Supabase Edge Function so the
+ * Anthropic API key is never bundled into the mobile app.
  */
 
-export type CoachMessage = { role: 'user' | 'assistant'; content: string };
+export type CoachMessage = { role: "user" | "assistant"; content: string };
 
 export type CoachContext = {
   firstName: string | null;
   streakDays: number;
   todayWorkout: { name: string; done: boolean } | null;
   loggedMealsToday: Array<{ slot: string; name: string }>;
-  mood: 'strong' | 'steady' | 'drained' | null;
+  mood: "strong" | "steady" | "drained" | null;
   movementTags: string[];
   waterCups: number;
   intention: string | null;
@@ -63,25 +61,28 @@ Return JSON only, matching the schema:
 - "followups": 1-3 short suggested next prompts the member could tap (each ≤ 6 words). Never include recursive deferrals here either. Return [] if no obvious followup. Examples of good followups: "Suggest a snack", "Plan tomorrow's first meal", "What's my next workout?"`;
 
 const REPLY_SCHEMA = {
-  type: 'object',
+  type: "object",
   additionalProperties: false,
   properties: {
     reply: {
-      type: 'string',
-      description: 'The coach reply. 1-2 sentences by default. Plain text.',
+      type: "string",
+      description: "The coach reply. 1-2 sentences by default. Plain text.",
     },
     followups: {
-      type: 'array',
-      description: '1-3 short suggested next prompts (each ≤ 6 words). Empty array if no obvious followup.',
+      type: "array",
+      description:
+        "1-3 short suggested next prompts (each ≤ 6 words). Empty array if no obvious followup.",
       maxItems: 3,
-      items: { type: 'string' },
+      items: { type: "string" },
     },
   },
-  required: ['reply', 'followups'],
+  required: ["reply", "followups"],
 };
 
 type AnthropicMessagesResponse = {
-  content: Array<{ type: 'text'; text: string } | { type: string; [k: string]: unknown }>;
+  content: Array<
+    { type: "text"; text: string } | { type: string; [k: string]: unknown }
+  >;
   stop_reason: string;
 };
 
@@ -90,13 +91,17 @@ type AnthropicErrorResponse = {
 };
 
 function formatContextBlock(context: CoachContext): string {
-  const lines: string[] = ['MEMBER CONTEXT (current state, treat as ground truth):'];
-  lines.push(`- Name: ${context.firstName ?? 'unknown'}`);
-  lines.push(`- Engagement streak: ${context.streakDays} day${context.streakDays === 1 ? '' : 's'}`);
+  const lines: string[] = [
+    "MEMBER CONTEXT (current state, treat as ground truth):",
+  ];
+  lines.push(`- Name: ${context.firstName ?? "unknown"}`);
+  lines.push(
+    `- Engagement streak: ${context.streakDays} day${context.streakDays === 1 ? "" : "s"}`,
+  );
 
   if (context.todayWorkout) {
     lines.push(
-      `- Today's workout: ${context.todayWorkout.name} (${context.todayWorkout.done ? 'completed' : 'not yet done'})`,
+      `- Today's workout: ${context.todayWorkout.name} (${context.todayWorkout.done ? "completed" : "not yet done"})`,
     );
   } else {
     lines.push("- Today's workout: rest day (no workout assigned today)");
@@ -105,61 +110,49 @@ function formatContextBlock(context: CoachContext): string {
   if (context.loggedMealsToday.length > 0) {
     const meals = context.loggedMealsToday
       .map((m) => `slot ${m.slot}: ${m.name}`)
-      .join('; ');
+      .join("; ");
     lines.push(`- Meals logged today: ${meals}`);
   } else {
-    lines.push('- Meals logged today: none yet');
+    lines.push("- Meals logged today: none yet");
   }
 
-  lines.push(`- Water: ${context.waterCups} cup${context.waterCups === 1 ? '' : 's'} so far`);
+  lines.push(
+    `- Water: ${context.waterCups} cup${context.waterCups === 1 ? "" : "s"} so far`,
+  );
 
   if (context.mood) lines.push(`- Mood today: ${context.mood}`);
   if (context.movementTags.length > 0) {
-    lines.push(`- Movement today: ${context.movementTags.join(', ')}`);
+    lines.push(`- Movement today: ${context.movementTags.join(", ")}`);
   }
-  if (context.intention) lines.push(`- Today's intention: "${context.intention}"`);
+  if (context.intention)
+    lines.push(`- Today's intention: "${context.intention}"`);
 
-  return lines.join('\n');
+  return lines.join("\n");
 }
 
 export async function askCoach(args: {
   history: CoachMessage[];
   context: CoachContext;
 }): Promise<CoachReplyAI> {
-  const apiKey = process.env.EXPO_PUBLIC_ANTHROPIC_API_KEY;
-  if (!apiKey) {
-    throw new Error(
-      'Coach AI requires EXPO_PUBLIC_ANTHROPIC_API_KEY in your .env. See .env.example.',
-    );
-  }
-
   const contextBlock = formatContextBlock(args.context);
 
   const messages = [
     {
-      role: 'user' as const,
+      role: "user" as const,
       content: `${contextBlock}\n\nThe member's first message follows.`,
     },
-    { role: 'assistant' as const, content: 'Got it. Ready when you are.' },
+    { role: "assistant" as const, content: "Got it. Ready when you are." },
     ...args.history.map((m) => ({ role: m.role, content: m.content })),
   ];
 
-  const response = await fetch('https://api.anthropic.com/v1/messages', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'x-api-key': apiKey,
-      'anthropic-version': '2023-06-01',
+  const response = await callAnthropic({
+    model: "claude-haiku-4-5",
+    max_tokens: 512,
+    system: SYSTEM_PROMPT,
+    messages,
+    output_config: {
+      format: { type: "json_schema", schema: REPLY_SCHEMA },
     },
-    body: JSON.stringify({
-      model: 'claude-haiku-4-5',
-      max_tokens: 512,
-      system: SYSTEM_PROMPT,
-      messages,
-      output_config: {
-        format: { type: 'json_schema', schema: REPLY_SCHEMA },
-      },
-    }),
   });
 
   if (!response.ok) {
@@ -175,18 +168,20 @@ export async function askCoach(args: {
 
   const data = (await response.json()) as AnthropicMessagesResponse;
   const textBlock = data.content.find(
-    (b): b is { type: 'text'; text: string } => b.type === 'text',
+    (b): b is { type: "text"; text: string } => b.type === "text",
   );
   if (!textBlock) {
-    throw new Error('Coach AI response missing text content.');
+    throw new Error("Coach AI response missing text content.");
   }
   try {
     const parsed = JSON.parse(textBlock.text) as CoachReplyAI;
     return {
-      reply: parsed.reply ?? '',
-      followups: Array.isArray(parsed.followups) ? parsed.followups.slice(0, 3) : [],
+      reply: parsed.reply ?? "",
+      followups: Array.isArray(parsed.followups)
+        ? parsed.followups.slice(0, 3)
+        : [],
     };
   } catch {
-    throw new Error('Coach AI response was not valid JSON.');
+    throw new Error("Coach AI response was not valid JSON.");
   }
 }

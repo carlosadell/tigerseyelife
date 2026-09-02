@@ -5,9 +5,9 @@
 // upstream). The submit CTA validates via the composed Zod schema and
 // dispatches via useOnboardingIntake.
 
-import { router } from 'expo-router';
-import { useFormContext } from 'react-hook-form';
-import { useState } from 'react';
+import { Redirect, router } from "expo-router";
+import { useFormContext } from "react-hook-form";
+import { useState } from "react";
 import {
   Platform,
   Pressable,
@@ -15,73 +15,70 @@ import {
   StyleSheet,
   Text,
   View,
-} from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+} from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 
-import { ReviewCard } from '../../../components/onboarding/ReviewCard';
-import { useOnboardingIntake } from '../../../hooks/useOnboardingIntake';
+import { ReviewCard } from "../../../components/onboarding/ReviewCard";
+import { useOnboardingIntake } from "../../../hooks/useOnboardingIntake";
 import {
   COLORS,
   FONTS,
   SPACING,
   THEME_COLORS,
   ctaTextOnTangerine,
-} from '../../../lib/brand';
+} from "../../../lib/brand";
 import {
   intakeSchema,
   type Intake,
   type PartialIntake,
-} from '../../../lib/onboardingSchema';
+} from "../../../lib/onboardingSchema";
 
 const light = THEME_COLORS.light;
 
 const LABELS: Record<keyof Intake, string> = {
-  age: 'AGE',
-  primary_goal: 'YOUR GOAL',
-  success_vision: 'SUCCESS IN 12 WEEKS',
-  importance_level: 'HOW IMPORTANT',
-  confidence_level: 'HOW CONFIDENT',
-  confidence_barriers: 'WHAT MAKES CONFIDENCE HARD',
-  obstacles: 'ROADBLOCKS',
-  other_obstacle: 'OTHER ROADBLOCK',
-  top_obstacles: 'TOP TWO',
-  obstacle_deep_dive: 'WHY IT IS HARD',
-  work_situation: 'WORK',
-  living_situation: 'LIVING WITH',
-  past_experience: 'WHAT YOU HAVE TRIED',
-  concerns: 'CONCERNS',
-  needle_mover: 'NEEDLE MOVER',
-  specific_habits: 'SPECIFIC HABITS',
-  success_factor: 'SUCCESS FACTOR',
-  other_success_factor: 'OTHER SUCCESS FACTOR',
-  emotion_response: 'WHEN THINGS SLIP',
-  coaching_style: 'COACHING STYLE',
+  age: "AGE",
+  primary_goal: "YOUR GOAL",
+  success_vision: "SUCCESS IN 12 WEEKS",
+  importance_level: "HOW IMPORTANT",
+  confidence_level: "HOW CONFIDENT",
+  confidence_barriers: "WHAT MAKES CONFIDENCE HARD",
+  obstacles: "ROADBLOCKS",
+  other_obstacle: "OTHER ROADBLOCK",
+  top_obstacles: "TOP TWO",
+  obstacle_deep_dive: "WHY IT IS HARD",
+  work_situation: "WORK",
+  living_situation: "LIVING WITH",
+  past_experience: "WHAT YOU HAVE TRIED",
+  concerns: "CONCERNS",
+  needle_mover: "NEEDLE MOVER",
+  specific_habits: "SPECIFIC HABITS",
+  success_factor: "SUCCESS FACTOR",
+  other_success_factor: "OTHER SUCCESS FACTOR",
+  emotion_response: "WHEN THINGS SLIP",
+  coaching_style: "COACHING STYLE",
 };
 
 const FIELD_TO_STEP: Partial<Record<keyof Intake, string>> = {
-  age: 'age',
-  primary_goal: 'primary-goal',
-  success_vision: 'success-vision',
-  importance_level: 'importance-confidence',
-  confidence_level: 'importance-confidence',
-  confidence_barriers: 'confidence-barriers',
-  obstacles: 'obstacles',
-  other_obstacle: 'obstacles',
-  top_obstacles: 'top-obstacles',
-  obstacle_deep_dive: 'obstacle-deep-dive',
-  work_situation: 'work-situation',
-  living_situation: 'living-situation',
-  past_experience: 'past-experience',
-  coaching_style: 'coaching-style',
-  needle_mover: 'final-prompts',
-  success_factor: 'final-prompts',
-  emotion_response: 'final-prompts',
+  age: "age",
+  primary_goal: "goals",
+  success_vision: "goals",
+  importance_level: "readiness",
+  confidence_level: "readiness",
+  confidence_barriers: "readiness",
+  obstacles: "obstacles",
+  other_obstacle: "obstacles",
+  top_obstacles: "obstacles",
+  obstacle_deep_dive: "obstacles",
+  work_situation: "context",
+  living_situation: "context",
+  past_experience: "context",
+  coaching_style: "coaching-style",
 };
 
 function display(value: PartialIntake[keyof PartialIntake]): string {
-  if (value === undefined || value === null) return '';
-  if (Array.isArray(value)) return value.join(', ');
-  if (typeof value === 'number') return String(value);
+  if (value === undefined || value === null) return "";
+  if (Array.isArray(value)) return value.join(", ");
+  if (typeof value === "number") return String(value);
   return String(value);
 }
 
@@ -91,6 +88,10 @@ export default function ReviewScreen() {
   const [submitError, setSubmitError] = useState<string | null>(null);
 
   const values = getValues();
+
+  if (!values.age || !values.primary_goal || !values.success_vision) {
+    return <Redirect href="/onboarding/intake/age" />;
+  }
 
   const onEdit = (field: keyof Intake) => {
     const stepSlug = FIELD_TO_STEP[field];
@@ -103,7 +104,7 @@ export default function ReviewScreen() {
     const parsed = intakeSchema.safeParse(values);
     if (!parsed.success) {
       const firstIssue = parsed.error.issues[0];
-      setSubmitError(`Please complete: ${firstIssue.path.join('.')}`);
+      setSubmitError(`Please complete: ${firstIssue.path.join(".")}`);
       return;
     }
 
@@ -113,43 +114,50 @@ export default function ReviewScreen() {
       return;
     }
 
-    router.replace('/(tabs)/today' as never);
+    router.replace("/(tabs)/today" as never);
   };
 
   // Order matches the spec's logical group.
   const fieldsToReview: (keyof Intake)[] = [
-    'age',
-    'primary_goal',
-    'success_vision',
-    'importance_level',
-    'confidence_level',
-    'confidence_barriers',
-    'obstacles',
-    'top_obstacles',
-    'obstacle_deep_dive',
-    'work_situation',
-    'living_situation',
-    'past_experience',
-    'coaching_style',
-    'needle_mover',
-    'success_factor',
-    'emotion_response',
+    "age",
+    "primary_goal",
+    "success_vision",
+    "importance_level",
+    "confidence_level",
+    "confidence_barriers",
+    "obstacles",
+    "obstacle_deep_dive",
+    "work_situation",
+    "living_situation",
+    "coaching_style",
   ];
 
   return (
-    <SafeAreaView edges={['top']} style={[styles.screen, { backgroundColor: light.background }]}>
+    <SafeAreaView
+      edges={["top"]}
+      style={[styles.screen, { backgroundColor: light.background }]}
+    >
       <View style={styles.frame}>
-        <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+        <ScrollView
+          contentContainerStyle={styles.content}
+          showsVerticalScrollIndicator={false}
+        >
           <View style={styles.header}>
             <Text style={styles.kicker}>REVIEW</Text>
             <Text style={styles.title}>Make sure this is true.</Text>
-            <Text style={styles.helper}>Tap any answer to change it before we send you in.</Text>
+            <Text style={styles.helper}>
+              Tap any answer to change it before we send you in.
+            </Text>
           </View>
 
           <View style={styles.list}>
             {fieldsToReview.map((field) => {
               const v = values[field];
-              if (v === undefined || v === '' || (Array.isArray(v) && v.length === 0)) {
+              if (
+                v === undefined ||
+                v === "" ||
+                (Array.isArray(v) && v.length === 0)
+              ) {
                 // Skip fields the user hasn't filled (e.g., optional past_experience,
                 // skipped confidence_barriers).
                 return null;
@@ -165,7 +173,7 @@ export default function ReviewScreen() {
             })}
           </View>
 
-          {submitError ?? error ? (
+          {(submitError ?? error) ? (
             <Text style={styles.error}>{submitError ?? error}</Text>
           ) : null}
         </ScrollView>
@@ -176,11 +184,15 @@ export default function ReviewScreen() {
             accessibilityLabel="Submit"
             disabled={submitting}
             onPress={onSubmit}
-            style={({ pressed }) => ({ opacity: pressed ? 0.85 : submitting ? 0.5 : 1 })}
+            style={({ pressed }) => ({
+              opacity: pressed ? 0.85 : submitting ? 0.5 : 1,
+            })}
           >
             <View style={styles.cta}>
-              <Text style={[styles.ctaText, { color: ctaTextOnTangerine('light') }]}>
-                {submitting ? 'Saving...' : 'Looks right, let us go'}
+              <Text
+                style={[styles.ctaText, { color: ctaTextOnTangerine("light") }]}
+              >
+                {submitting ? "Saving..." : "Looks right, let us go"}
               </Text>
             </View>
           </Pressable>
@@ -197,7 +209,7 @@ const styles = StyleSheet.create({
     paddingTop: 18,
   },
   cta: {
-    alignItems: 'center',
+    alignItems: "center",
     backgroundColor: COLORS.tangerine,
     borderRadius: 14,
     paddingVertical: 16,
@@ -220,8 +232,8 @@ const styles = StyleSheet.create({
   },
   frame: {
     flex: 1,
-    maxWidth: Platform.OS === 'web' ? 430 : undefined,
-    width: '100%',
+    maxWidth: Platform.OS === "web" ? 430 : undefined,
+    width: "100%",
   },
   header: {
     gap: 6,
@@ -241,7 +253,7 @@ const styles = StyleSheet.create({
   },
   list: {},
   screen: {
-    alignItems: 'center',
+    alignItems: "center",
     flex: 1,
   },
   title: {

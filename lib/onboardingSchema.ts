@@ -5,42 +5,42 @@
 // fields use `.optional()` so partial form state validates while the user
 // is mid-flow; the review screen runs the final composed schema before submit.
 
-import { z } from 'zod';
+import { z } from "zod";
 
 export const obstacleEnum = z.enum([
-  'time',
-  'motivation',
-  'knowledge',
-  'injury',
-  'cost',
-  'other',
+  "time",
+  "motivation",
+  "knowledge",
+  "injury",
+  "cost",
+  "other",
 ]);
 export type Obstacle = z.infer<typeof obstacleEnum>;
 
 export const workSituationEnum = z.enum([
-  'office',
-  'remote',
-  'shift',
-  'unemployed',
-  'retired',
-  'student',
+  "office",
+  "remote",
+  "shift",
+  "unemployed",
+  "retired",
+  "student",
 ]);
 export type WorkSituation = z.infer<typeof workSituationEnum>;
 
 export const livingSituationEnum = z.enum([
-  'alone',
-  'partner',
-  'children',
-  'roommates',
-  'family',
+  "alone",
+  "partner",
+  "children",
+  "roommates",
+  "family",
 ]);
 export type LivingSituation = z.infer<typeof livingSituationEnum>;
 
 export const coachingStyleEnum = z.enum([
-  'direct',
-  'warm',
-  'balanced',
-  'challenging',
+  "direct",
+  "warm",
+  "balanced",
+  "challenging",
 ]);
 export type CoachingStyle = z.infer<typeof coachingStyleEnum>;
 
@@ -59,10 +59,10 @@ export const goalsMotivationSchema = z.object({
 });
 
 export const roadblocksSchema = z.object({
-  obstacles: z.array(obstacleEnum).min(1),
+  obstacles: z.array(obstacleEnum).min(1).max(2),
   other_obstacle: z.string().optional(),
-  top_obstacles: z.array(z.string()).max(2),
-  obstacle_deep_dive: z.string().min(3),
+  top_obstacles: z.array(z.string()).max(2).optional(),
+  obstacle_deep_dive: z.string().optional(),
 });
 
 export const contextSchema = z.object({
@@ -73,11 +73,11 @@ export const contextSchema = z.object({
 
 export const habitsSchema = z.object({
   concerns: z.string().optional(),
-  needle_mover: z.string().min(1),
+  needle_mover: z.string().optional(),
   specific_habits: z.string().optional(),
-  success_factor: z.string().min(1),
+  success_factor: z.string().optional(),
   other_success_factor: z.string().optional(),
-  emotion_response: z.string().min(1),
+  emotion_response: z.string().optional(),
   coaching_style: coachingStyleEnum,
 });
 
@@ -95,23 +95,23 @@ export type PartialIntake = Partial<Intake>;
 // Default (all-empty) form values used to initialize useForm.
 export const intakeDefaults: PartialIntake = {
   age: undefined,
-  primary_goal: '',
-  success_vision: '',
+  primary_goal: "",
+  success_vision: "",
   importance_level: undefined,
   confidence_level: undefined,
-  confidence_barriers: '',
+  confidence_barriers: "",
   obstacles: [],
-  other_obstacle: '',
+  other_obstacle: "",
   top_obstacles: [],
-  obstacle_deep_dive: '',
+  obstacle_deep_dive: "",
   work_situation: undefined,
   living_situation: [],
-  past_experience: '',
-  concerns: '',
-  needle_mover: '',
-  specific_habits: '',
-  success_factor: '',
-  other_success_factor: '',
-  emotion_response: '',
+  past_experience: "",
+  concerns: "",
+  needle_mover: "",
+  specific_habits: "",
+  success_factor: "",
+  other_success_factor: "",
+  emotion_response: "",
   coaching_style: undefined,
 };

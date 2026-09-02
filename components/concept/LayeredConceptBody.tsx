@@ -1,22 +1,21 @@
 // components/concept/LayeredConceptBody.tsx
-import { ChevronDown, Headphones, Play, ScrollText } from 'lucide-react-native';
-import { useCallback, useEffect, useRef, useState } from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
-import YoutubePlayer from 'react-native-youtube-iframe';
+import { ChevronDown, Headphones, Play, ScrollText } from "lucide-react-native";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { Pressable, StyleSheet, Text, View } from "react-native";
+import YoutubePlayer from "react-native-youtube-iframe";
 
-import { useConceptTelemetry } from '../../hooks/useConceptTelemetry';
-import { useThemeColors } from '../../hooks/useTheme';
-import { FONTS } from '../../lib/brand';
-import type { ConceptScope } from '../../lib/conceptMetadata';
-import type { LayeredContent, Layer2Content } from '../../lib/layeredContent';
-import { blockFor, THREAD_NAMES } from '../../lib/program';
-import type { CompassRole, ThreadLetter } from '../../lib/program';
-import { ChecklistBody } from '../tool/ChecklistBody';
-import { FillInTemplateBody } from '../tool/FillInTemplateBody';
-import { MenuListBody } from '../tool/MenuListBody';
-import { ReferenceTablesBody } from '../tool/ReferenceTablesBody';
-import { StaticPageBody } from '../tool/StaticPageBody';
-import { LayerAudioPlayer } from './LayerAudioPlayer';
+import { useConceptTelemetry } from "../../hooks/useConceptTelemetry";
+import { useThemeColors } from "../../hooks/useTheme";
+import { FONTS } from "../../lib/brand";
+import type { ConceptScope } from "../../lib/conceptMetadata";
+import type { LayeredContent, Layer2Content } from "../../lib/layeredContent";
+import { blockFor, THREAD_NAMES } from "../../lib/program";
+import type { CompassRole, ThreadLetter } from "../../lib/program";
+import { ChecklistBody } from "../tool/ChecklistBody";
+import { FillInTemplateBody } from "../tool/FillInTemplateBody";
+import { MenuListBody } from "../tool/MenuListBody";
+import { StaticPageBody } from "../tool/StaticPageBody";
+import { LayerAudioPlayer } from "./LayerAudioPlayer";
 
 type Props = {
   conceptSlug: string;
@@ -29,12 +28,12 @@ type Props = {
 // whichever the concept provides). The mode toggle picks between text and
 // whichever media form is authored; there is never both audio and video on
 // the same concept.
-type L2Mode = 'read' | 'media';
+type L2Mode = "read" | "media";
 
-function layer2MediaKind(layer2?: Layer2Content): 'audio' | 'video' | null {
+function layer2MediaKind(layer2?: Layer2Content): "audio" | "video" | null {
   if (!layer2) return null;
-  if (layer2.kind === 'text-or-audio') return 'audio';
-  if (layer2.kind === 'text-or-video') return 'video';
+  if (layer2.kind === "text-or-audio") return "audio";
+  if (layer2.kind === "text-or-video") return "video";
   return null;
 }
 
@@ -44,7 +43,7 @@ export function LayeredConceptBody({ conceptSlug, block, content }: Props) {
 
   const mediaKind = layer2MediaKind(content.layer2);
   const hasMedia = mediaKind !== null;
-  const [l2Mode, setL2Mode] = useState<L2Mode>(hasMedia ? 'media' : 'read');
+  const [l2Mode, setL2Mode] = useState<L2Mode>(hasMedia ? "media" : "read");
   const [l3Open, setL3Open] = useState(false);
   const layer1Fired = useRef(false);
   const layer2ReadStartFired = useRef(false);
@@ -63,11 +62,11 @@ export function LayeredConceptBody({ conceptSlug, block, content }: Props) {
   // are a follow-up refactor that doesn't block shipping the video path.
   useEffect(() => {
     if (!content.layer2) return;
-    if (l2Mode === 'read' && !layer2ReadStartFired.current) {
+    if (l2Mode === "read" && !layer2ReadStartFired.current) {
       layer2ReadStartFired.current = true;
       t.recordLayer2ReadStart(conceptSlug, block);
     }
-    if (l2Mode === 'media' && !layer2ListenStartFired.current) {
+    if (l2Mode === "media" && !layer2ListenStartFired.current) {
       layer2ListenStartFired.current = true;
       t.recordLayer2ListenStart(conceptSlug, block);
     }
@@ -85,12 +84,21 @@ export function LayeredConceptBody({ conceptSlug, block, content }: Props) {
     <View style={styles.wrap}>
       {/* POWER Compass — which threads this block emphasizes. Only shown
           for block-scoped concepts; 'library' concepts skip this. */}
-      {block !== 'library' ? <PowerCompassChips block={block} /> : null}
+      {block !== "library" ? <PowerCompassChips block={block} /> : null}
 
       {/* Layer 1 — required 30-sec overview */}
-      <View style={[styles.layer1, { backgroundColor: colors.cardAlt, borderColor: colors.border }]}>
-        <Text style={[styles.kicker, { color: colors.accent }]}>30 SECOND OVERVIEW</Text>
-        <Text style={[styles.layer1Body, { color: colors.text }]}>{content.layer1.body}</Text>
+      <View
+        style={[
+          styles.layer1,
+          { backgroundColor: colors.cardAlt, borderColor: colors.border },
+        ]}
+      >
+        <Text style={[styles.kicker, { color: colors.accent }]}>
+          30 SECOND OVERVIEW
+        </Text>
+        <Text style={[styles.layer1Body, { color: colors.text }]}>
+          {content.layer1.body}
+        </Text>
       </View>
 
       {/* Layer 2 — core teaching, read OR listen/watch */}
@@ -99,45 +107,66 @@ export function LayeredConceptBody({ conceptSlug, block, content }: Props) {
           {hasMedia ? (
             <View style={styles.modeRow}>
               <ModeButton
-                active={l2Mode === 'read'}
-                icon={<ScrollText size={16} color={l2Mode === 'read' ? '#FFFFFF' : colors.text} />}
+                active={l2Mode === "read"}
+                icon={
+                  <ScrollText
+                    size={16}
+                    color={l2Mode === "read" ? "#FFFFFF" : colors.text}
+                  />
+                }
                 label="Read"
-                onPress={() => setL2Mode('read')}
+                onPress={() => setL2Mode("read")}
                 colors={colors}
               />
               <ModeButton
-                active={l2Mode === 'media'}
+                active={l2Mode === "media"}
                 icon={
-                  mediaKind === 'video' ? (
-                    <Play size={16} color={l2Mode === 'media' ? '#FFFFFF' : colors.text} />
+                  mediaKind === "video" ? (
+                    <Play
+                      size={16}
+                      color={l2Mode === "media" ? "#FFFFFF" : colors.text}
+                    />
                   ) : (
-                    <Headphones size={16} color={l2Mode === 'media' ? '#FFFFFF' : colors.text} />
+                    <Headphones
+                      size={16}
+                      color={l2Mode === "media" ? "#FFFFFF" : colors.text}
+                    />
                   )
                 }
                 label={
-                  mediaKind === 'video'
-                    ? ((content.layer2.kind === 'text-or-video' && content.layer2.watchCtaLabel) || 'Watch')
-                    : 'Listen'
+                  mediaKind === "video"
+                    ? (content.layer2.kind === "text-or-video" &&
+                        content.layer2.watchCtaLabel) ||
+                      "Watch"
+                    : "Listen"
                 }
-                onPress={() => setL2Mode('media')}
+                onPress={() => setL2Mode("media")}
                 colors={colors}
               />
             </View>
           ) : null}
 
-          {l2Mode === 'media' && content.layer2.kind === 'text-or-audio' ? (
+          {l2Mode === "media" && content.layer2.kind === "text-or-audio" ? (
             <LayerAudioPlayer
               uri={content.layer2.audioUri}
               durationSec={content.layer2.audioDurationSec}
               chapters={content.layer2.chapters}
-              onComplete={() => t.recordLayer2ListenComplete(conceptSlug, block)}
+              onComplete={() =>
+                t.recordLayer2ListenComplete(conceptSlug, block)
+              }
             />
-          ) : l2Mode === 'media' && content.layer2.kind === 'text-or-video' ? (
+          ) : l2Mode === "media" && content.layer2.kind === "text-or-video" ? (
             <View style={styles.videoWrap}>
-              <YoutubePlayer height={220} videoId={content.layer2.youtubeVideoId} />
+              <YoutubePlayer
+                height={220}
+                videoId={content.layer2.youtubeVideoId}
+              />
             </View>
           ) : (
-            <Layer2ReadBody body={content.layer2.body} conceptSlug={conceptSlug} />
+            <Layer2ReadBody
+              body={content.layer2.body}
+              conceptSlug={conceptSlug}
+            />
           )}
         </View>
       ) : null}
@@ -146,22 +175,31 @@ export function LayeredConceptBody({ conceptSlug, block, content }: Props) {
       {content.layer3 ? (
         <Pressable
           accessibilityRole="button"
-          accessibilityLabel={l3Open ? 'Collapse deep dive' : 'Open deep dive'}
+          accessibilityLabel={l3Open ? "Collapse deep dive" : "Open deep dive"}
           onPress={l3Open ? () => setL3Open(false) : openL3}
-          style={[styles.l3Toggle, { backgroundColor: colors.card, borderColor: colors.border }]}
+          style={[
+            styles.l3Toggle,
+            { backgroundColor: colors.card, borderColor: colors.border },
+          ]}
         >
           <View style={styles.l3ToggleRow}>
-            <Text style={[styles.l3Kicker, { color: colors.accent }]}>GO DEEPER · OPTIONAL</Text>
+            <Text style={[styles.l3Kicker, { color: colors.accent }]}>
+              GO DEEPER · OPTIONAL
+            </Text>
             <ChevronDown
               color={colors.mutedText}
               size={18}
               style={l3Open ? styles.chevOpen : undefined}
             />
           </View>
-          <Text style={[styles.l3Title, { color: colors.text }]}>{content.layer3.title}</Text>
+          <Text style={[styles.l3Title, { color: colors.text }]}>
+            {content.layer3.title}
+          </Text>
           {l3Open ? (
             <View style={styles.l3Inner}>
-              <Text style={[styles.l3Body, { color: colors.mutedText }]}>{content.layer3.body}</Text>
+              <Text style={[styles.l3Body, { color: colors.mutedText }]}>
+                {content.layer3.body}
+              </Text>
               <LayerAudioPlayer
                 uri={content.layer3.audioUri}
                 durationSec={content.layer3.audioDurationSec}
@@ -202,10 +240,7 @@ function ModeButton({
     >
       {icon}
       <Text
-        style={[
-          styles.modeLabel,
-          { color: active ? '#FFFFFF' : colors.text },
-        ]}
+        style={[styles.modeLabel, { color: active ? "#FFFFFF" : colors.text }]}
       >
         {label}
       </Text>
@@ -220,14 +255,20 @@ function ModeButton({
 // Maintain emphasis decides prominence." Concepts surface this so the
 // user can see why this content is taught now, without us forcing all
 // four threads to equal weight.
-function PowerCompassChips({ block }: { block: Exclude<ConceptScope, 'library'> }) {
+function PowerCompassChips({
+  block,
+}: {
+  block: Exclude<ConceptScope, "library">;
+}) {
   const colors = useThemeColors();
   const blockData = blockFor(block);
-  const order: ThreadLetter[] = ['P', 'O', 'W', 'E', 'R'];
+  const order: ThreadLetter[] = ["P", "O", "W", "E", "R"];
 
   return (
     <View style={styles.compassWrap}>
-      <Text style={[styles.compassKicker, { color: colors.mutedText }]}>POWER COMPASS · THIS BLOCK</Text>
+      <Text style={[styles.compassKicker, { color: colors.mutedText }]}>
+        POWER COMPASS · THIS BLOCK
+      </Text>
       <View style={styles.compassRow}>
         {order.map((letter) => {
           const entry = blockData.powerCompass[letter];
@@ -257,17 +298,24 @@ function CompassChip({
   role: CompassRole;
   colors: ReturnType<typeof useThemeColors>;
 }) {
-  const isPrimary = role === 'PRIMARY';
-  const isSecondary = role === 'SECONDARY';
+  const isPrimary = role === "PRIMARY";
+  const isSecondary = role === "SECONDARY";
 
-  const chipStyle =
-    isPrimary
-      ? { backgroundColor: '#F1E6C8', borderColor: 'transparent' }
-      : isSecondary
-        ? { backgroundColor: colors.cardAlt, borderColor: colors.border }
-        : { backgroundColor: 'transparent', borderColor: colors.border, borderStyle: 'dashed' as const };
+  const chipStyle = isPrimary
+    ? { backgroundColor: "#F1E6C8", borderColor: "transparent" }
+    : isSecondary
+      ? { backgroundColor: colors.cardAlt, borderColor: colors.border }
+      : {
+          backgroundColor: "transparent",
+          borderColor: colors.border,
+          borderStyle: "dashed" as const,
+        };
 
-  const textColor = isPrimary ? colors.accent : isSecondary ? colors.text : colors.mutedText;
+  const textColor = isPrimary
+    ? colors.accent
+    : isSecondary
+      ? colors.text
+      : colors.mutedText;
 
   return (
     <View style={[styles.chip, chipStyle]}>
@@ -277,7 +325,11 @@ function CompassChip({
           {name}
         </Text>
         <Text style={[styles.chipRole, { color: textColor }]} numberOfLines={1}>
-          {role === 'PRIMARY' ? 'Primary' : role === 'SECONDARY' ? 'Secondary' : 'Maintain'}
+          {role === "PRIMARY"
+            ? "Primary"
+            : role === "SECONDARY"
+              ? "Secondary"
+              : "Maintain"}
         </Text>
       </View>
     </View>
@@ -288,28 +340,38 @@ function Layer2ReadBody({
   body,
   conceptSlug,
 }: {
-  body: import('../../lib/tools').ToolBody;
+  body: import("../../lib/tools").ToolBody;
   conceptSlug: string;
 }) {
-  if (body.kind === 'static-page')
+  if (body.kind === "static-page")
     return <StaticPageBody intro={body.intro} sections={body.sections} />;
-  if (body.kind === 'checklist')
-    return <ChecklistBody toolSlug={conceptSlug} intro={body.intro} items={body.items} />;
-  if (body.kind === 'menu-list')
+  if (body.kind === "checklist")
+    return (
+      <ChecklistBody
+        toolSlug={conceptSlug}
+        intro={body.intro}
+        items={body.items}
+      />
+    );
+  if (body.kind === "menu-list")
     return <MenuListBody intro={body.intro} items={body.items} />;
-  if (body.kind === 'reference-tables')
-    return <ReferenceTablesBody intro={body.intro} views={body.views} footnote={body.footnote} />;
-  return <FillInTemplateBody toolSlug={conceptSlug} intro={body.intro} fields={body.fields} />;
+  return (
+    <FillInTemplateBody
+      toolSlug={conceptSlug}
+      intro={body.intro}
+      fields={body.fields}
+    />
+  );
 }
 
 const styles = StyleSheet.create({
-  chevOpen: { transform: [{ rotate: '180deg' }] },
+  chevOpen: { transform: [{ rotate: "180deg" }] },
   chip: {
-    alignItems: 'center',
+    alignItems: "center",
     borderRadius: 12,
     borderWidth: 1,
     flex: 1,
-    flexDirection: 'row',
+    flexDirection: "row",
     gap: 8,
     paddingHorizontal: 10,
     paddingVertical: 8,
@@ -320,7 +382,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
     letterSpacing: -0.5,
     width: 14,
-    textAlign: 'center',
+    textAlign: "center",
   },
   chipName: {
     fontFamily: FONTS.sansBold,
@@ -339,7 +401,7 @@ const styles = StyleSheet.create({
     fontSize: 9.5,
     letterSpacing: 1.6,
   },
-  compassRow: { flexDirection: 'row', gap: 6 },
+  compassRow: { flexDirection: "row", gap: 6 },
   compassWrap: { gap: 8 },
   kicker: { fontFamily: FONTS.sansBold, fontSize: 10.5, letterSpacing: 1.6 },
   l3Body: { fontFamily: FONTS.sans, fontSize: 14, lineHeight: 20 },
@@ -347,26 +409,30 @@ const styles = StyleSheet.create({
   l3Kicker: { fontFamily: FONTS.sansBold, fontSize: 10.5, letterSpacing: 1.6 },
   l3Title: { fontFamily: FONTS.sansBold, fontSize: 15, marginTop: 4 },
   l3Toggle: { borderRadius: 14, borderWidth: 1, padding: 14 },
-  l3ToggleRow: { alignItems: 'center', flexDirection: 'row', justifyContent: 'space-between' },
+  l3ToggleRow: {
+    alignItems: "center",
+    flexDirection: "row",
+    justifyContent: "space-between",
+  },
   layer1: { borderRadius: 14, borderWidth: 1, gap: 8, padding: 14 },
   layer1Body: { fontFamily: FONTS.sansMedium, fontSize: 15, lineHeight: 22 },
   layer2Wrap: { gap: 12 },
   modeBtn: {
-    alignItems: 'center',
+    alignItems: "center",
     borderRadius: 999,
     borderWidth: 1,
     flex: 1,
-    flexDirection: 'row',
+    flexDirection: "row",
     gap: 6,
-    justifyContent: 'center',
+    justifyContent: "center",
     paddingVertical: 8,
   },
   modeLabel: { fontFamily: FONTS.sansBold, fontSize: 13 },
-  modeRow: { flexDirection: 'row', gap: 8 },
+  modeRow: { flexDirection: "row", gap: 8 },
   videoWrap: {
-    backgroundColor: '#000000',
+    backgroundColor: "#000000",
     borderRadius: 14,
-    overflow: 'hidden',
+    overflow: "hidden",
   },
   wrap: { gap: 16 },
 });

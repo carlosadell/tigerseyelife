@@ -4,17 +4,16 @@
 // matching field component, validates the values for that step before
 // continuing.
 
-import { Redirect, router, useLocalSearchParams } from 'expo-router';
-import { Controller, useFormContext } from 'react-hook-form';
-import { StyleSheet, Text, View } from 'react-native';
+import { Redirect, router, useLocalSearchParams } from "expo-router";
+import { Controller, useFormContext } from "react-hook-form";
+import { StyleSheet, Text, View } from "react-native";
 
-import { ChipMultiSelect } from '../../../components/onboarding/ChipMultiSelect';
-import { IntakeStep } from '../../../components/onboarding/IntakeStep';
-import { SingleSelectStack } from '../../../components/onboarding/SingleSelectStack';
-import { SliderField } from '../../../components/onboarding/SliderField';
-import { TapToRank } from '../../../components/onboarding/TapToRank';
-import { TextAreaField } from '../../../components/onboarding/TextAreaField';
-import { FONTS, THEME_COLORS } from '../../../lib/brand';
+import { ChipMultiSelect } from "../../../components/onboarding/ChipMultiSelect";
+import { IntakeStep } from "../../../components/onboarding/IntakeStep";
+import { SingleSelectStack } from "../../../components/onboarding/SingleSelectStack";
+import { SliderField } from "../../../components/onboarding/SliderField";
+import { TextAreaField } from "../../../components/onboarding/TextAreaField";
+import { FONTS, THEME_COLORS } from "../../../lib/brand";
 import {
   STEPS,
   TOTAL_STEPS,
@@ -23,47 +22,63 @@ import {
   stepBySlug,
   stepIndexFromSlug,
   type StepSlug,
-} from '../../../lib/onboardingSteps';
-import type { Obstacle, PartialIntake } from '../../../lib/onboardingSchema';
+} from "../../../lib/onboardingSteps";
+import type { Obstacle, PartialIntake } from "../../../lib/onboardingSchema";
 
 const light = THEME_COLORS.light;
 
 const OBSTACLE_OPTIONS: readonly { value: Obstacle; label: string }[] = [
-  { value: 'time', label: 'Time' },
-  { value: 'motivation', label: 'Motivation' },
-  { value: 'knowledge', label: 'Knowledge' },
-  { value: 'injury', label: 'Injury' },
-  { value: 'cost', label: 'Cost' },
-  { value: 'other', label: 'Other' },
+  { value: "time", label: "Time" },
+  { value: "motivation", label: "Motivation" },
+  { value: "knowledge", label: "Knowledge" },
+  { value: "injury", label: "Injury" },
+  { value: "cost", label: "Cost" },
+  { value: "other", label: "Other" },
 ];
 
 const WORK_OPTIONS = [
-  { value: 'office', label: 'Office' },
-  { value: 'remote', label: 'Remote' },
-  { value: 'shift', label: 'Shift work' },
-  { value: 'unemployed', label: 'Between jobs' },
-  { value: 'retired', label: 'Retired' },
-  { value: 'student', label: 'Student' },
+  { value: "office", label: "Office" },
+  { value: "remote", label: "Remote" },
+  { value: "shift", label: "Shift work" },
+  { value: "unemployed", label: "Between jobs" },
+  { value: "retired", label: "Retired" },
+  { value: "student", label: "Student" },
 ] as const;
 
 const LIVING_OPTIONS = [
-  { value: 'alone', label: 'Alone' },
-  { value: 'partner', label: 'Partner' },
-  { value: 'children', label: 'Children' },
-  { value: 'roommates', label: 'Roommates' },
-  { value: 'family', label: 'Other family' },
+  { value: "alone", label: "Alone" },
+  { value: "partner", label: "Partner" },
+  { value: "children", label: "Children" },
+  { value: "roommates", label: "Roommates" },
+  { value: "family", label: "Other family" },
 ] as const;
 
 const COACHING_OPTIONS = [
-  { value: 'direct', label: 'Direct, data-driven', description: 'Tell me what works. Show the numbers.' },
-  { value: 'warm', label: 'Warm and encouraging', description: 'Meet me where I am.' },
-  { value: 'balanced', label: 'Balanced', description: 'A mix of both, depending on the day.' },
-  { value: 'challenging', label: 'Challenge me', description: 'Push me. Hold me to it.' },
+  {
+    value: "direct",
+    label: "Direct, data-driven",
+    description: "Tell me what works. Show the numbers.",
+  },
+  {
+    value: "warm",
+    label: "Warm and encouraging",
+    description: "Meet me where I am.",
+  },
+  {
+    value: "balanced",
+    label: "Balanced",
+    description: "A mix of both, depending on the day.",
+  },
+  {
+    value: "challenging",
+    label: "Challenge me",
+    description: "Push me. Hold me to it.",
+  },
 ] as const;
 
 export default function IntakeStepScreen() {
   const params = useLocalSearchParams<{ step?: string }>();
-  const slug = String(params.step ?? '');
+  const slug = String(params.step ?? "");
   const def = stepBySlug(slug);
   const { control, watch, setValue } = useFormContext<PartialIntake>();
   const values = watch();
@@ -72,22 +87,16 @@ export default function IntakeStepScreen() {
     return <Redirect href={`/onboarding/intake/${STEPS[0].slug}` as never} />;
   }
 
-  // Skip if this step's predicate says so (e.g., entered via back button after
-  // confidence_level rose above 7).
-  if (def.skipIf?.(values)) {
-    const next = nextSlug(def.slug, values);
-    const target = next === 'review' ? '/onboarding/intake/review' : `/onboarding/intake/${next}`;
-    return <Redirect href={target as never} />;
-  }
-
   const stepIndex = stepIndexFromSlug(def.slug);
   const back = prevSlug(def.slug, values);
-  const onBack = back ? () => router.replace(`/onboarding/intake/${back}` as never) : undefined;
+  const onBack = back
+    ? () => router.replace(`/onboarding/intake/${back}` as never)
+    : undefined;
 
   const goNext = () => {
     const next = nextSlug(def.slug, values);
-    if (next === 'review') {
-      router.replace('/onboarding/intake/review' as never);
+    if (next === "review") {
+      router.replace("/onboarding/intake/review" as never);
     } else {
       router.replace(`/onboarding/intake/${next}` as never);
     }
@@ -106,53 +115,53 @@ export default function IntakeStepScreen() {
       canContinue={canContinue}
       onContinue={goNext}
       onBack={onBack}
-      showSkip={slug === 'past-experience'}
-      onSkip={slug === 'past-experience' ? goNext : undefined}
     >
-      <StepBody slug={slug as StepSlug} control={control} values={values} setValue={setValue} />
+      <StepBody
+        slug={slug as StepSlug}
+        control={control}
+        values={values}
+        setValue={setValue}
+      />
     </IntakeStep>
   );
 }
 
 function computeCanContinue(slug: StepSlug, v: PartialIntake): boolean {
   switch (slug) {
-    case 'welcome':                return true;
-    case 'age':                    return typeof v.age === 'number' && v.age >= 13 && v.age <= 120;
-    case 'primary-goal':           return (v.primary_goal ?? '').trim().length > 2;
-    case 'success-vision':         return (v.success_vision ?? '').trim().length > 2;
-    case 'importance-confidence':  return typeof v.importance_level === 'number' && typeof v.confidence_level === 'number';
-    case 'confidence-barriers':    return (v.confidence_barriers ?? '').trim().length > 1;
-    case 'obstacles':              return (v.obstacles ?? []).length > 0;
-    case 'top-obstacles':          return (v.top_obstacles ?? []).length === Math.min(2, (v.obstacles ?? []).length);
-    case 'obstacle-deep-dive':     return (v.obstacle_deep_dive ?? '').trim().length > 2;
-    case 'work-situation':         return typeof v.work_situation === 'string';
-    case 'living-situation':       return (v.living_situation ?? []).length > 0;
-    case 'past-experience':        return true; // optional + skip-able
-    case 'coaching-style':         return typeof v.coaching_style === 'string';
-    case 'final-prompts':          return (v.needle_mover ?? '').trim().length > 1 && (v.success_factor ?? '').trim().length > 1 && (v.emotion_response ?? '').trim().length > 1;
+    case "age":
+      return typeof v.age === "number" && v.age >= 13 && v.age <= 120;
+    case "goals":
+      return (
+        (v.primary_goal ?? "").trim().length > 2 &&
+        (v.success_vision ?? "").trim().length > 2
+      );
+    case "readiness":
+      return (
+        typeof v.importance_level === "number" &&
+        typeof v.confidence_level === "number"
+      );
+    case "obstacles":
+      return (v.obstacles ?? []).length > 0;
+    case "context":
+      return (
+        typeof v.work_situation === "string" &&
+        (v.living_situation ?? []).length > 0
+      );
+    case "coaching-style":
+      return typeof v.coaching_style === "string";
   }
 }
 
 type BodyProps = {
   slug: StepSlug;
-  control: ReturnType<typeof useFormContext<PartialIntake>>['control'];
+  control: ReturnType<typeof useFormContext<PartialIntake>>["control"];
   values: PartialIntake;
-  setValue: ReturnType<typeof useFormContext<PartialIntake>>['setValue'];
+  setValue: ReturnType<typeof useFormContext<PartialIntake>>["setValue"];
 };
 
 function StepBody({ slug, control, values, setValue }: BodyProps) {
   switch (slug) {
-    case 'welcome':
-      return (
-        <View>
-          <Text style={styles.welcomeBody}>
-            We will ask about your goal, what gets in the way, and how you want us to coach you.
-            Nothing is locked in. You can edit any answer on the review screen before we begin.
-          </Text>
-        </View>
-      );
-
-    case 'age':
+    case "age":
       return (
         <Controller
           control={control}
@@ -170,39 +179,47 @@ function StepBody({ slug, control, values, setValue }: BodyProps) {
         />
       );
 
-    case 'primary-goal':
+    case "goals":
       return (
-        <Controller
-          control={control}
-          name="primary_goal"
-          render={({ field }) => (
-            <TextAreaField
-              value={field.value ?? ''}
-              onChange={field.onChange}
-              placeholder="e.g. lose 20 lbs and keep it off"
-              maxLength={240}
+        <View style={styles.stack}>
+          <View>
+            <Text style={styles.subPrompt}>Your main goal</Text>
+            <Controller
+              control={control}
+              name="primary_goal"
+              render={({ field }) => (
+                <TextAreaField
+                  value={field.value ?? ""}
+                  onChange={field.onChange}
+                  placeholder="What do you want to change?"
+                  minHeight={88}
+                  numberOfLines={3}
+                  maxLength={240}
+                />
+              )}
             />
-          )}
-        />
+          </View>
+          <View>
+            <Text style={styles.subPrompt}>Success after 12 weeks</Text>
+            <Controller
+              control={control}
+              name="success_vision"
+              render={({ field }) => (
+                <TextAreaField
+                  value={field.value ?? ""}
+                  onChange={field.onChange}
+                  placeholder="What would be noticeably different?"
+                  minHeight={88}
+                  numberOfLines={3}
+                  maxLength={300}
+                />
+              )}
+            />
+          </View>
+        </View>
       );
 
-    case 'success-vision':
-      return (
-        <Controller
-          control={control}
-          name="success_vision"
-          render={({ field }) => (
-            <TextAreaField
-              value={field.value ?? ''}
-              onChange={field.onChange}
-              placeholder="Paint the picture."
-              maxLength={400}
-            />
-          )}
-        />
-      );
-
-    case 'importance-confidence':
+    case "readiness":
       return (
         <View style={styles.stack}>
           <Controller
@@ -231,132 +248,110 @@ function StepBody({ slug, control, values, setValue }: BodyProps) {
               />
             )}
           />
+          {(values.confidence_level ?? 10) < 7 ? (
+            <View>
+              <Text style={styles.subPrompt}>
+                What makes confidence hard? (optional)
+              </Text>
+              <Controller
+                control={control}
+                name="confidence_barriers"
+                render={({ field }) => (
+                  <TextAreaField
+                    value={field.value ?? ""}
+                    onChange={field.onChange}
+                    placeholder="A short note helps us adapt the plan."
+                    minHeight={80}
+                    numberOfLines={3}
+                    maxLength={240}
+                  />
+                )}
+              />
+            </View>
+          ) : null}
         </View>
       );
 
-    case 'confidence-barriers':
+    case "obstacles":
       return (
-        <Controller
-          control={control}
-          name="confidence_barriers"
-          render={({ field }) => (
-            <TextAreaField
-              value={field.value ?? ''}
-              onChange={field.onChange}
-              placeholder="What gets in the way of feeling sure?"
-              maxLength={300}
+        <View style={styles.stack}>
+          <Controller
+            control={control}
+            name="obstacles"
+            render={({ field }) => (
+              <ChipMultiSelect
+                options={OBSTACLE_OPTIONS}
+                value={(field.value ?? []) as Obstacle[]}
+                maxSelections={2}
+                onChange={(next) => {
+                  field.onChange(next);
+                  setValue("top_obstacles", next);
+                  if (!next.includes("other")) setValue("other_obstacle", "");
+                }}
+                otherValue={"other"}
+                otherText={values.other_obstacle ?? ""}
+                onOtherTextChange={(v) => setValue("other_obstacle", v)}
+              />
+            )}
+          />
+          <View>
+            <Text style={styles.subPrompt}>
+              What makes the biggest one hard? (optional)
+            </Text>
+            <Controller
+              control={control}
+              name="obstacle_deep_dive"
+              render={({ field }) => (
+                <TextAreaField
+                  value={field.value ?? ""}
+                  onChange={field.onChange}
+                  placeholder="Add context if you want to."
+                  minHeight={80}
+                  numberOfLines={3}
+                  maxLength={240}
+                />
+              )}
             />
-          )}
-        />
+          </View>
+        </View>
       );
 
-    case 'obstacles':
+    case "context":
       return (
-        <Controller
-          control={control}
-          name="obstacles"
-          render={({ field }) => (
-            <ChipMultiSelect
-              options={OBSTACLE_OPTIONS}
-              value={(field.value ?? []) as Obstacle[]}
-              onChange={(next) => {
-                field.onChange(next);
-                // Also prune top_obstacles to those still selected.
-                const prunedRanking = (values.top_obstacles ?? []).filter((v) => next.includes(v as Obstacle));
-                setValue('top_obstacles', prunedRanking);
-                if (!next.includes('other')) setValue('other_obstacle', '');
-              }}
-              otherValue={'other'}
-              otherText={values.other_obstacle ?? ''}
-              onOtherTextChange={(v) => setValue('other_obstacle', v)}
+        <View style={styles.stack}>
+          <View>
+            <Text style={styles.subPrompt}>Work</Text>
+            <Controller
+              control={control}
+              name="work_situation"
+              render={({ field }) => (
+                <SingleSelectStack
+                  options={WORK_OPTIONS}
+                  value={field.value}
+                  onChange={field.onChange}
+                />
+              )}
             />
-          )}
-        />
+          </View>
+          <View>
+            <Text style={styles.subPrompt}>Home</Text>
+            <Controller
+              control={control}
+              name="living_situation"
+              render={({ field }) => (
+                <ChipMultiSelect
+                  options={LIVING_OPTIONS}
+                  value={(field.value ?? []) as string[]}
+                  onChange={field.onChange}
+                  otherValue={null}
+                />
+              )}
+            />
+          </View>
+        </View>
       );
 
-    case 'top-obstacles':
-      return (
-        <Controller
-          control={control}
-          name="top_obstacles"
-          render={({ field }) => (
-            <TapToRank
-              items={(values.obstacles ?? []).map((v) => {
-                const found = OBSTACLE_OPTIONS.find((o) => o.value === v);
-                return { value: v, label: found?.label ?? v };
-              })}
-              ranking={(field.value ?? []) as string[]}
-              onChange={field.onChange}
-              maxRanks={2}
-            />
-          )}
-        />
-      );
-
-    case 'obstacle-deep-dive':
-      return (
-        <Controller
-          control={control}
-          name="obstacle_deep_dive"
-          render={({ field }) => (
-            <TextAreaField
-              value={field.value ?? ''}
-              onChange={field.onChange}
-              placeholder="What makes it stick around?"
-              maxLength={400}
-            />
-          )}
-        />
-      );
-
-    case 'work-situation':
-      return (
-        <Controller
-          control={control}
-          name="work_situation"
-          render={({ field }) => (
-            <SingleSelectStack
-              options={WORK_OPTIONS}
-              value={field.value}
-              onChange={field.onChange}
-            />
-          )}
-        />
-      );
-
-    case 'living-situation':
-      return (
-        <Controller
-          control={control}
-          name="living_situation"
-          render={({ field }) => (
-            <ChipMultiSelect
-              options={LIVING_OPTIONS}
-              value={(field.value ?? []) as string[]}
-              onChange={field.onChange}
-              otherValue={null}
-            />
-          )}
-        />
-      );
-
-    case 'past-experience':
-      return (
-        <Controller
-          control={control}
-          name="past_experience"
-          render={({ field }) => (
-            <TextAreaField
-              value={field.value ?? ''}
-              onChange={field.onChange}
-              placeholder="What helped or hurt?"
-              maxLength={400}
-            />
-          )}
-        />
-      );
-
-    case 'coaching-style':
+    case "coaching-style":
       return (
         <Controller
           control={control}
@@ -369,63 +364,6 @@ function StepBody({ slug, control, values, setValue }: BodyProps) {
             />
           )}
         />
-      );
-
-    case 'final-prompts':
-      return (
-        <View style={styles.stack}>
-          <View>
-            <Text style={styles.subPrompt}>What single change would help most?</Text>
-            <Controller
-              control={control}
-              name="needle_mover"
-              render={({ field }) => (
-                <TextAreaField
-                  value={field.value ?? ''}
-                  onChange={field.onChange}
-                  placeholder="One change."
-                  numberOfLines={3}
-                  minHeight={80}
-                  maxLength={200}
-                />
-              )}
-            />
-          </View>
-          <View>
-            <Text style={styles.subPrompt}>What must change for you to succeed?</Text>
-            <Controller
-              control={control}
-              name="success_factor"
-              render={({ field }) => (
-                <TextAreaField
-                  value={field.value ?? ''}
-                  onChange={field.onChange}
-                  placeholder="One factor."
-                  numberOfLines={3}
-                  minHeight={80}
-                  maxLength={200}
-                />
-              )}
-            />
-          </View>
-          <View>
-            <Text style={styles.subPrompt}>How do you typically respond to setbacks?</Text>
-            <Controller
-              control={control}
-              name="emotion_response"
-              render={({ field }) => (
-                <TextAreaField
-                  value={field.value ?? ''}
-                  onChange={field.onChange}
-                  placeholder="Be honest."
-                  numberOfLines={3}
-                  minHeight={80}
-                  maxLength={200}
-                />
-              )}
-            />
-          </View>
-        </View>
       );
   }
 }
@@ -440,11 +378,5 @@ const styles = StyleSheet.create({
     fontSize: 15,
     letterSpacing: -0.1,
     marginBottom: 8,
-  },
-  welcomeBody: {
-    color: light.text,
-    fontFamily: FONTS.sans,
-    fontSize: 16,
-    lineHeight: 24,
   },
 });

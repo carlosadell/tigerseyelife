@@ -1,3 +1,4 @@
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import {
   createContext,
   createElement,
@@ -7,11 +8,12 @@ import {
   useEffect,
   useMemo,
   useState,
-} from 'react';
-import { router } from 'expo-router';
-import type { Session } from '@supabase/supabase-js';
+} from "react";
+import { router } from "expo-router";
+import * as Linking from "expo-linking";
+import type { Session } from "@supabase/supabase-js";
 
-import { hasSupabaseConfig, supabase } from '../lib/supabase';
+import { hasSupabaseConfig, supabase } from "../lib/supabase";
 
 type DevSession = {
   isDevSession: true;
@@ -30,8 +32,11 @@ type AuthContextValue = {
   hasSupabaseConfig: boolean;
   signIn: (email: string, password: string) => Promise<void>;
   signUp: (email: string, password: string) => Promise<void>;
+  requestPasswordReset: (email: string) => Promise<void>;
+  updatePassword: (password: string) => Promise<void>;
   devSignIn: () => void;
   signOut: () => Promise<void>;
+  deleteAccount: () => Promise<void>;
 };
 
 const AuthContext = createContext<AuthContextValue | null>(null);
@@ -53,9 +58,11 @@ export function AuthProvider({ children }: PropsWithChildren) {
 
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, nextSession) => {
+    } = supabase.auth.onAuthStateChange((event, nextSession) => {
       setSession(nextSession);
-      router.replace(nextSession ? '/(tabs)/today' : '/(auth)/sign-in');
+      if (event === "PASSWORD_RECOVERY") {
+        router.replace("/reset-password");
+      }
     });
 
     return () => {
@@ -65,7 +72,9 @@ export function AuthProvider({ children }: PropsWithChildren) {
 
   const signIn = useCallback(async (email: string, password: string) => {
     if (!supabase) {
-      throw new Error('Supabase is not configured yet. Fill .env or use Skip for dev.');
+      throw new Error(
+        "Supabase is not configured yet. Fill .env or use Skip for dev.",
+      );
     }
 
     const { error } = await supabase.auth.signInWithPassword({
@@ -80,7 +89,9 @@ export function AuthProvider({ children }: PropsWithChildren) {
 
   const signUp = useCallback(async (email: string, password: string) => {
     if (!supabase) {
-      throw new Error('Supabase is not configured yet. Fill .env or use Skip for dev.');
+      throw new Error(
+        "Supabase is not configured yet. Fill .env or use Skip for dev.",
+      );
     }
 
     const { error } = await supabase.auth.signUp({
@@ -97,34 +108,81 @@ export function AuthProvider({ children }: PropsWithChildren) {
     setSession({
       isDevSession: true,
       user: {
-        id: 'dev-user',
-        email: 'dev@tigerseyelife.local',
+        id: "dev-user",
+        email: "dev@tigerseyelife.local",
       },
     });
-    router.replace('/(tabs)/today');
+    router.replace("/(tabs)/today");
+  }, []);
+
+  const requestPasswordReset = useCallback(async (email: string) => {
+    if (!supabase) {
+      throw new Error(
+        "Password reset is unavailable until the app is connected.",
+      );
+    }
+    const { error } = await supabase.auth.resetPasswordForEmail(email.trim(), {
+      redirectTo: Linking.createURL("/reset-password"),
+    });
+    if (error) throw error;
+  }, []);
+
+  const updatePassword = useCallback(async (password: string) => {
+    if (!supabase) throw new Error("Password reset is unavailable.");
+    const { error } = await supabase.auth.updateUser({ password });
+    if (error) throw error;
   }, []);
 
   const signOut = useCallback(async () => {
-    if (supabase && !('isDevSession' in (session ?? {}))) {
+    if (supabase && !("isDevSession" in (session ?? {}))) {
       await supabase.auth.signOut();
     }
 
     setSession(null);
-    router.replace('/(auth)/sign-in');
+    router.replace("/(auth)/sign-in");
+  }, [session]);
+
+  const deleteAccount = useCallback(async () => {
+    if (!session) return;
+
+    if ("isDevSession" in session || !supabase) {
+      const keys = await AsyncStorage.getAllKeys();
+      const appKeys = keys.filter((key) => key.startsWith("tel:"));
+      if (appKeys.length) await AsyncStorage.multiRemove(appKeys);
+    } else {
+      const { error } = await supabase.rpc("delete_own_account");
+      if (error) throw error;
+    }
+
+    setSession(null);
+    router.replace("/(auth)/sign-in");
   }, [session]);
 
   const value = useMemo<AuthContextValue>(
     () => ({
       loading,
       session,
-      isDevSession: Boolean(session && 'isDevSession' in session),
+      isDevSession: Boolean(session && "isDevSession" in session),
       hasSupabaseConfig,
       signIn,
       signUp,
+      requestPasswordReset,
+      updatePassword,
       devSignIn,
       signOut,
+      deleteAccount,
     }),
-    [devSignIn, loading, session, signIn, signOut, signUp],
+    [
+      deleteAccount,
+      devSignIn,
+      loading,
+      requestPasswordReset,
+      session,
+      signIn,
+      signOut,
+      signUp,
+      updatePassword,
+    ],
   );
 
   return createElement(AuthContext.Provider, { value }, children);
@@ -134,7 +192,7 @@ export function useAuth() {
   const value = useContext(AuthContext);
 
   if (!value) {
-    throw new Error('useAuth must be used within AuthProvider');
+    throw new Error("useAuth must be used within AuthProvider");
   }
 
   return value;

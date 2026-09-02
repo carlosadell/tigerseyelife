@@ -1,7 +1,7 @@
 // components/onboarding/ChipMultiSelect.tsx
-import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Pressable, StyleSheet, Text, TextInput, View } from "react-native";
 
-import { FONTS, THEME_COLORS } from '../../lib/brand';
+import { FONTS, THEME_COLORS } from "../../lib/brand";
 
 const light = THEME_COLORS.light;
 
@@ -14,9 +14,10 @@ type Props<T extends string> = {
   options: readonly Option<T>[];
   value: T[];
   onChange: (next: T[]) => void;
-  otherValue: T | null;             // e.g., 'other' — when selected, reveal the text input
+  otherValue: T | null; // e.g., 'other' — when selected, reveal the text input
   otherText?: string;
   onOtherTextChange?: (v: string) => void;
+  maxSelections?: number;
 };
 
 export function ChipMultiSelect<T extends string>({
@@ -26,10 +27,12 @@ export function ChipMultiSelect<T extends string>({
   otherValue,
   otherText,
   onOtherTextChange,
+  maxSelections,
 }: Props<T>) {
   const toggle = (v: T) => {
     if (value.includes(v)) onChange(value.filter((x) => x !== v));
-    else onChange([...value, v]);
+    else if (!maxSelections || value.length < maxSelections)
+      onChange([...value, v]);
   };
 
   const otherSelected = otherValue !== null && value.includes(otherValue);
@@ -48,7 +51,11 @@ export function ChipMultiSelect<T extends string>({
               style={({ pressed }) => ({ opacity: pressed ? 0.85 : 1 })}
             >
               <View style={[styles.chip, active && styles.chipActive]}>
-                <Text style={[styles.chipText, active && styles.chipTextActive]}>{opt.label}</Text>
+                <Text
+                  style={[styles.chipText, active && styles.chipTextActive]}
+                >
+                  {opt.label}
+                </Text>
               </View>
             </Pressable>
           );
@@ -63,7 +70,7 @@ export function ChipMultiSelect<T extends string>({
           placeholder="What else?"
           placeholderTextColor={light.mutedText}
           style={styles.otherInput}
-          value={otherText ?? ''}
+          value={otherText ?? ""}
         />
       ) : null}
     </View>
@@ -80,8 +87,8 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
   },
   chipActive: {
-    backgroundColor: '#F4E9D2',
-    borderColor: '#E3CC92',
+    backgroundColor: "#F4E9D2",
+    borderColor: "#E3CC92",
   },
   chipText: {
     color: light.text,
@@ -103,8 +110,8 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
   },
   row: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
+    flexDirection: "row",
+    flexWrap: "wrap",
     gap: 10,
   },
   stack: {

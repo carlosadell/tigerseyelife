@@ -6,119 +6,61 @@
 // the matching field component.
 //
 // Conditional steps use `skipIf` which receives the current form values and
-// returns true to skip. Today only `confidence-barriers` is conditional
-// (skip when confidence_level >= 7).
+// The flow is intentionally linear so progress and back navigation stay clear.
 
-import type { PartialIntake } from './onboardingSchema';
+import type { PartialIntake } from "./onboardingSchema";
 
 export type StepSlug =
-  | 'welcome'
-  | 'age'
-  | 'primary-goal'
-  | 'success-vision'
-  | 'importance-confidence'
-  | 'confidence-barriers'
-  | 'obstacles'
-  | 'top-obstacles'
-  | 'obstacle-deep-dive'
-  | 'work-situation'
-  | 'living-situation'
-  | 'past-experience'
-  | 'coaching-style'
-  | 'final-prompts';
+  | "age"
+  | "goals"
+  | "readiness"
+  | "obstacles"
+  | "context"
+  | "coaching-style";
 
 export type IntakeStepDef = {
   slug: StepSlug;
   kicker?: string;
   prompt: string;
   helper?: string;
-  skipIf?: (values: PartialIntake) => boolean;
 };
 
 export const STEPS: readonly IntakeStepDef[] = [
   {
-    slug: 'welcome',
-    kicker: 'YOUR PLAN',
-    prompt: 'Three minutes. Then we get to work.',
-    helper: "We ask just enough to point Karen and Ryan at the right starting line.",
+    slug: "age",
+    kicker: "ABOUT YOU",
+    prompt: "How old are you?",
+    helper: "We use this to scale the workouts safely.",
   },
   {
-    slug: 'age',
-    kicker: 'ABOUT YOU',
-    prompt: 'How old are you?',
-    helper: 'We use this to scale the workouts safely.',
+    slug: "goals",
+    kicker: "GOAL",
+    prompt: "What are you working toward?",
+    helper: "Name the goal and what success would look like after 12 weeks.",
   },
   {
-    slug: 'primary-goal',
-    kicker: 'GOAL',
-    prompt: 'What are you trying to do?',
-    helper: 'One sentence. Just the shape of it.',
+    slug: "readiness",
+    kicker: "READINESS",
+    prompt: "How ready do you feel?",
+    helper: "Two quick ratings help us set the right pace.",
   },
   {
-    slug: 'success-vision',
-    kicker: 'SUCCESS',
-    prompt: 'What does success look like in 12 weeks?',
-    helper: 'Be specific. We will check this against where you start.',
+    slug: "obstacles",
+    kicker: "ROADBLOCKS",
+    prompt: "What gets in the way most?",
+    helper: "Choose up to two. Add a short note only if it helps.",
   },
   {
-    slug: 'importance-confidence',
-    kicker: 'WHERE YOU STAND',
-    prompt: 'How important is this, and how confident do you feel?',
-    helper: '0 means not at all, 10 means absolutely.',
+    slug: "context",
+    kicker: "CONTEXT",
+    prompt: "What does daily life look like?",
+    helper: "Work and home context help us make the plan realistic.",
   },
   {
-    slug: 'confidence-barriers',
-    kicker: 'CONFIDENCE',
-    prompt: 'What makes confidence hard?',
-    helper: 'No wrong answers. The real ones help us help you.',
-    skipIf: (v) => (v.confidence_level ?? 10) >= 7,
-  },
-  {
-    slug: 'obstacles',
-    kicker: 'ROADBLOCKS',
-    prompt: 'What gets in the way?',
-    helper: 'Pick all that apply.',
-  },
-  {
-    slug: 'top-obstacles',
-    kicker: 'TOP TWO',
-    prompt: 'Which two bite you the most?',
-    helper: 'Tap to rank. First tap is 1st, next is 2nd.',
-  },
-  {
-    slug: 'obstacle-deep-dive',
-    kicker: 'DEEP DIVE',
-    prompt: 'What makes the top one feel so hard?',
-    helper: 'A sentence or two. Whatever is true.',
-  },
-  {
-    slug: 'work-situation',
-    kicker: 'CONTEXT',
-    prompt: 'How does work usually look?',
-  },
-  {
-    slug: 'living-situation',
-    kicker: 'CONTEXT',
-    prompt: 'Who are you living with?',
-    helper: 'Pick all that apply.',
-  },
-  {
-    slug: 'past-experience',
-    kicker: 'WHAT YOU HAVE TRIED',
-    prompt: 'What has worked or not worked before?',
-    helper: 'Optional. Skip if it does not feel relevant.',
-  },
-  {
-    slug: 'coaching-style',
-    kicker: 'YOUR COACH',
-    prompt: 'How do you want us to coach you?',
-    helper: 'You can change this any time later.',
-  },
-  {
-    slug: 'final-prompts',
-    kicker: 'LAST FEW',
-    prompt: 'Three small things to land it.',
-    helper: 'Then we send you in.',
+    slug: "coaching-style",
+    kicker: "YOUR COACH",
+    prompt: "How do you want us to coach you?",
+    helper: "You can change this later.",
   },
 ];
 
@@ -136,29 +78,29 @@ export function stepIndexFromSlug(slug: string): number {
 }
 
 /**
- * Returns the next slug forward, skipping any whose `skipIf` predicate returns
- * true. Returns 'review' if we run off the end.
+ * Returns the next slug forward, or 'review' after the final step.
  */
-export function nextSlug(currentSlug: StepSlug, values: PartialIntake): StepSlug | 'review' {
+export function nextSlug(
+  currentSlug: StepSlug,
+  _values: PartialIntake,
+): StepSlug | "review" {
   const idx = stepIndexFromSlug(currentSlug);
   for (let i = idx + 1; i < STEPS.length; i++) {
-    const candidate = STEPS[i];
-    if (candidate.skipIf?.(values)) continue;
-    return candidate.slug;
+    return STEPS[i].slug;
   }
-  return 'review';
+  return "review";
 }
 
 /**
- * Returns the previous slug backward, skipping any whose `skipIf` predicate
- * returns true. Returns null if we hit the start.
+ * Returns the previous slug backward, or null at the start.
  */
-export function prevSlug(currentSlug: StepSlug, values: PartialIntake): StepSlug | null {
+export function prevSlug(
+  currentSlug: StepSlug,
+  _values: PartialIntake,
+): StepSlug | null {
   const idx = stepIndexFromSlug(currentSlug);
   for (let i = idx - 1; i >= 0; i--) {
-    const candidate = STEPS[i];
-    if (candidate.skipIf?.(values)) continue;
-    return candidate.slug;
+    return STEPS[i].slug;
   }
   return null;
 }

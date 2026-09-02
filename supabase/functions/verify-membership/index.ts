@@ -28,8 +28,11 @@ const SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 const GHL_API_KEY = Deno.env.get("GHL_API_KEY") ?? "";
 const GHL_LOCATION_ID = Deno.env.get("GHL_LOCATION_ID") ?? "";
 const GHL_MEMBER_TAG = Deno.env.get("GHL_MEMBER_TAG") ?? "create-power-member";
-const OTP_DEV_BYPASS_CODE = Deno.env.get("OTP_DEV_BYPASS_CODE") ?? "123456";
-const OTP_PROVIDER = Deno.env.get("OTP_PROVIDER") ?? "dev";
+const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY") ?? "";
+const OTP_FROM_EMAIL = Deno.env.get("OTP_FROM_EMAIL") ?? "";
+const ALLOW_DEV_MEMBERSHIP_BYPASS =
+  Deno.env.get("ALLOW_DEV_MEMBERSHIP_BYPASS") === "true";
+const OTP_DEV_BYPASS_CODE = Deno.env.get("OTP_DEV_BYPASS_CODE") ?? "";
 
 function json(status: number, body: unknown) {
   return new Response(JSON.stringify(body), {
@@ -48,7 +51,10 @@ function normaliseEmail(input: string): string {
 
 async function lookupMembership(email: string): Promise<{ found: boolean }> {
   if (!GHL_API_KEY || !GHL_LOCATION_ID) {
-    return { found: email.includes("+member") };
+    if (ALLOW_DEV_MEMBERSHIP_BYPASS) {
+      return { found: email.includes("+member") };
+    }
+    throw new Error("membership_provider_not_configured");
   }
 
   const url = `https://services.leadconnectorhq.com/contacts/?query=${encodeURIComponent(email)}&locationId=${encodeURIComponent(GHL_LOCATION_ID)}`;
@@ -60,7 +66,7 @@ async function lookupMembership(email: string): Promise<{ found: boolean }> {
     },
   });
 
-  if (!res.ok) return { found: false };
+  if (!res.ok) throw new Error("membership_provider_unavailable");
 
   const data = (await res.json()) as {
     contacts?: Array<{ tags?: string[]; email?: string }>;
@@ -81,21 +87,64 @@ async function sendOtp(
   admin: ReturnType<typeof createClient>,
   email: string,
 ): Promise<void> {
-  const code = OTP_PROVIDER === "dev"
-    ? OTP_DEV_BYPASS_CODE
-    : String(Math.floor(100000 + Math.random() * 900000));
+  const { data: recent } = await admin
+    .from("membership_verification_otps")
+    .select("created_at")
+    .eq("email", email)
+    .maybeSingle();
 
-  await admin.from("membership_verification_otps").upsert(
-    {
-      email,
-      code,
-      expires_at: new Date(Date.now() + 10 * 60 * 1000).toISOString(),
+  if (
+    recent &&
+    Date.now() - new Date(recent.created_at).getTime() < 60 * 1000
+  ) {
+    throw new Error("otp_rate_limited");
+  }
+
+  const random = new Uint32Array(1);
+  crypto.getRandomValues(random);
+  const code =
+    ALLOW_DEV_MEMBERSHIP_BYPASS && OTP_DEV_BYPASS_CODE
+      ? OTP_DEV_BYPASS_CODE
+      : String(100000 + (random[0] % 900000));
+
+  const { error: storeError } = await admin
+    .from("membership_verification_otps")
+    .upsert(
+      {
+        email,
+        code,
+        expires_at: new Date(Date.now() + 10 * 60 * 1000).toISOString(),
+        created_at: new Date().toISOString(),
+      },
+      { onConflict: "email" },
+    );
+  if (storeError) throw new Error("otp_store_failed");
+
+  if (ALLOW_DEV_MEMBERSHIP_BYPASS) return;
+  if (!RESEND_API_KEY || !OTP_FROM_EMAIL) {
+    throw new Error("otp_provider_not_configured");
+  }
+
+  const response = await fetch("https://api.resend.com/emails", {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${RESEND_API_KEY}`,
+      "Content-Type": "application/json",
     },
-    { onConflict: "email" },
-  );
+    body: JSON.stringify({
+      from: OTP_FROM_EMAIL,
+      to: [email],
+      subject: "Your Tigers Eye Life verification code",
+      text: `Your Tigers Eye Life verification code is ${code}. It expires in 10 minutes.`,
+    }),
+  });
 
-  if (OTP_PROVIDER !== "dev") {
-    // TODO(prod): integrate Resend / SES here.
+  if (!response.ok) {
+    await admin
+      .from("membership_verification_otps")
+      .delete()
+      .eq("email", email);
+    throw new Error("otp_delivery_failed");
   }
 }
 
@@ -104,7 +153,13 @@ async function validateOtp(
   email: string,
   code: string,
 ): Promise<boolean> {
-  if (OTP_PROVIDER === "dev" && code === OTP_DEV_BYPASS_CODE) return true;
+  if (
+    ALLOW_DEV_MEMBERSHIP_BYPASS &&
+    OTP_DEV_BYPASS_CODE &&
+    code === OTP_DEV_BYPASS_CODE
+  ) {
+    return true;
+  }
 
   const { data } = await admin
     .from("membership_verification_otps")
@@ -161,10 +216,18 @@ Deno.serve(async (req) => {
   const email = normaliseEmail(body.email);
 
   if (body.mode === "start") {
-    const { found } = await lookupMembership(email);
-    if (!found) return json(200, { found: false, otpSent: false });
-    await sendOtp(admin, email);
-    return json(200, { found: true, otpSent: true });
+    try {
+      const { found } = await lookupMembership(email);
+      if (!found) return json(200, { found: false, otpSent: false });
+      await sendOtp(admin, email);
+      return json(200, { found: true, otpSent: true });
+    } catch (error) {
+      if (error instanceof Error && error.message === "otp_rate_limited") {
+        return json(429, { error: "try_again_in_one_minute" });
+      }
+      console.error("Membership verification start failed", error);
+      return json(503, { error: "verification_service_unavailable" });
+    }
   }
 
   if (body.mode === "confirm") {
@@ -174,8 +237,15 @@ Deno.serve(async (req) => {
     const ok = await validateOtp(admin, email, body.code);
     if (!ok) return json(200, { verified: false, reason: "code_invalid" });
 
-    const { found } = await lookupMembership(email);
-    if (!found) return json(200, { verified: false, reason: "no_longer_member" });
+    let found = false;
+    try {
+      ({ found } = await lookupMembership(email));
+    } catch (error) {
+      console.error("Membership re-check failed", error);
+      return json(503, { error: "verification_service_unavailable" });
+    }
+    if (!found)
+      return json(200, { verified: false, reason: "no_longer_member" });
 
     const { error: updateError } = await admin
       .from("profiles")
@@ -187,7 +257,8 @@ Deno.serve(async (req) => {
       })
       .eq("id", user.id);
 
-    if (updateError) return json(500, { verified: false, reason: "profile_update_failed" });
+    if (updateError)
+      return json(500, { verified: false, reason: "profile_update_failed" });
     return json(200, { verified: true });
   }
 

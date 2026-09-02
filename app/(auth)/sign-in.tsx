@@ -1,34 +1,67 @@
-import { Link, router } from 'expo-router';
-import { ArrowRight, Lock, Mail } from 'lucide-react-native';
-import { useState } from 'react';
-import { ActivityIndicator, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Link, router } from "expo-router";
+import { ArrowRight, Lock, Mail } from "lucide-react-native";
+import { useState } from "react";
+import {
+  ActivityIndicator,
+  Pressable,
+  StyleSheet,
+  Text,
+  TextInput,
+  View,
+} from "react-native";
 
-import { AuthShell } from '../../components/auth/AuthShell';
-import { useAuth } from '../../hooks/useAuth';
-import { COLORS, FONTS } from '../../lib/brand';
+import { AuthShell } from "../../components/auth/AuthShell";
+import { useAuth } from "../../hooks/useAuth";
+import { COLORS, FONTS } from "../../lib/brand";
 
 export default function SignInScreen() {
-  const { devSignIn, hasSupabaseConfig, signIn } = useAuth();
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [focusedField, setFocusedField] = useState<'email' | 'password' | null>(null);
+  const { devSignIn, hasSupabaseConfig, requestPasswordReset, signIn } =
+    useAuth();
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [focusedField, setFocusedField] = useState<"email" | "password" | null>(
+    null,
+  );
   const [error, setError] = useState<string | null>(null);
+  const [message, setMessage] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
   const handleDevSignIn = () => {
     devSignIn();
-    router.replace('/(tabs)/today');
+    router.replace("/(tabs)/today");
   };
 
   const handleSignIn = async () => {
     setError(null);
+    setMessage(null);
     setSubmitting(true);
     try {
       await signIn(email, password);
     } catch (nextError) {
-      setError(nextError instanceof Error ? nextError.message : 'Unable to sign in.');
+      setError(
+        nextError instanceof Error ? nextError.message : "Unable to sign in.",
+      );
     } finally {
       setSubmitting(false);
+    }
+  };
+
+  const handlePasswordReset = async () => {
+    setError(null);
+    setMessage(null);
+    if (!email.trim()) {
+      setError("Enter your email first, then choose Forgot password.");
+      return;
+    }
+    try {
+      await requestPasswordReset(email);
+      setMessage("Check your email for a secure password-reset link.");
+    } catch (nextError) {
+      setError(
+        nextError instanceof Error
+          ? nextError.message
+          : "Unable to send the reset email.",
+      );
     }
   };
 
@@ -40,6 +73,9 @@ export default function SignInScreen() {
           <Link href="/(auth)/sign-up" style={styles.link}>
             <Text style={styles.linkMuted}>New here? </Text>
             <Text style={styles.linkAccent}>Create an account</Text>
+          </Link>
+          <Link href="/privacy" style={styles.privacyLink}>
+            Privacy policy
           </Link>
           {__DEV__ ? (
             <Pressable hitSlop={8} onPress={handleDevSignIn}>
@@ -53,8 +89,8 @@ export default function SignInScreen() {
         <View style={styles.banner}>
           <Text style={styles.bannerKicker}>DEV MODE</Text>
           <Text style={styles.bannerText}>
-            Supabase keys are empty. Use Skip for dev preview, or add them in .env to test real
-            auth.
+            Supabase keys are empty. Use Skip for dev preview, or add them in
+            .env to test real auth.
           </Text>
         </View>
       ) : null}
@@ -65,14 +101,24 @@ export default function SignInScreen() {
         </View>
       ) : null}
 
-      <FieldGroup focused={focusedField === 'email'} icon={<Mail color={COLORS.tigerGold} size={16} />} label="EMAIL">
+      {message ? (
+        <View style={styles.messageCard}>
+          <Text style={styles.messageText}>{message}</Text>
+        </View>
+      ) : null}
+
+      <FieldGroup
+        focused={focusedField === "email"}
+        icon={<Mail color={COLORS.tigerGold} size={16} />}
+        label="EMAIL"
+      >
         <TextInput
           autoCapitalize="none"
           autoCorrect={false}
           keyboardType="email-address"
           onBlur={() => setFocusedField(null)}
           onChangeText={setEmail}
-          onFocus={() => setFocusedField('email')}
+          onFocus={() => setFocusedField("email")}
           placeholder="you@example.com"
           placeholderTextColor="rgba(168,175,184,0.5)"
           style={styles.input}
@@ -80,11 +126,15 @@ export default function SignInScreen() {
         />
       </FieldGroup>
 
-      <FieldGroup focused={focusedField === 'password'} icon={<Lock color={COLORS.tigerGold} size={16} />} label="PASSWORD">
+      <FieldGroup
+        focused={focusedField === "password"}
+        icon={<Lock color={COLORS.tigerGold} size={16} />}
+        label="PASSWORD"
+      >
         <TextInput
           onBlur={() => setFocusedField(null)}
           onChangeText={setPassword}
-          onFocus={() => setFocusedField('password')}
+          onFocus={() => setFocusedField("password")}
           placeholder="••••••••"
           placeholderTextColor="rgba(168,175,184,0.5)"
           secureTextEntry
@@ -95,6 +145,14 @@ export default function SignInScreen() {
 
       <Pressable
         accessibilityRole="button"
+        hitSlop={8}
+        onPress={handlePasswordReset}
+      >
+        <Text style={styles.forgotText}>Forgot password?</Text>
+      </Pressable>
+
+      <Pressable
+        accessibilityRole="button"
         disabled={submitting}
         onPress={handleSignIn}
         style={({ pressed }) => [
@@ -102,7 +160,9 @@ export default function SignInScreen() {
           { opacity: submitting || pressed ? 0.92 : 1 },
         ]}
       >
-        <Text style={styles.primaryButtonText}>{submitting ? 'Signing in…' : 'Sign in'}</Text>
+        <Text style={styles.primaryButtonText}>
+          {submitting ? "Signing in…" : "Sign in"}
+        </Text>
         {submitting ? (
           <View style={styles.primaryArrow}>
             <ActivityIndicator color={COLORS.bone} size="small" />
@@ -132,17 +192,21 @@ function FieldGroup({
     <View style={styles.fieldGroup}>
       <View style={styles.fieldLabelRow}>
         {icon}
-        <Text style={[styles.fieldLabel, focused && styles.fieldLabelFocused]}>{label}</Text>
+        <Text style={[styles.fieldLabel, focused && styles.fieldLabelFocused]}>
+          {label}
+        </Text>
       </View>
-      <View style={[styles.fieldWrap, focused && styles.fieldWrapFocused]}>{children}</View>
+      <View style={[styles.fieldWrap, focused && styles.fieldWrapFocused]}>
+        {children}
+      </View>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   banner: {
-    backgroundColor: 'rgba(200,159,77,0.12)',
-    borderColor: 'rgba(200,159,77,0.34)',
+    backgroundColor: "rgba(200,159,77,0.12)",
+    borderColor: "rgba(200,159,77,0.34)",
     borderRadius: 10,
     borderWidth: 1,
     gap: 4,
@@ -167,14 +231,14 @@ const styles = StyleSheet.create({
     letterSpacing: 0.2,
   },
   errorCard: {
-    backgroundColor: 'rgba(165,72,72,0.16)',
-    borderColor: 'rgba(165,72,72,0.4)',
+    backgroundColor: "rgba(165,72,72,0.16)",
+    borderColor: "rgba(165,72,72,0.4)",
     borderRadius: 10,
     borderWidth: 1,
     padding: 12,
   },
   errorText: {
-    color: '#F2A6A6',
+    color: "#F2A6A6",
     fontFamily: FONTS.sansMedium,
     fontSize: 13,
     lineHeight: 18,
@@ -192,14 +256,14 @@ const styles = StyleSheet.create({
     color: COLORS.tigerGold,
   },
   fieldLabelRow: {
-    alignItems: 'center',
-    flexDirection: 'row',
+    alignItems: "center",
+    flexDirection: "row",
     gap: 6,
     paddingHorizontal: 2,
   },
   fieldWrap: {
-    backgroundColor: 'rgba(245,242,234,0.05)',
-    borderColor: 'rgba(245,242,234,0.12)',
+    backgroundColor: "rgba(245,242,234,0.05)",
+    borderColor: "rgba(245,242,234,0.12)",
     borderRadius: 10,
     borderWidth: 1,
   },
@@ -207,7 +271,7 @@ const styles = StyleSheet.create({
     borderColor: COLORS.tigerGold,
   },
   footerStack: {
-    alignItems: 'center',
+    alignItems: "center",
     gap: 14,
   },
   input: {
@@ -228,31 +292,56 @@ const styles = StyleSheet.create({
   linkMuted: {
     color: COLORS.steel,
   },
+  forgotText: {
+    color: COLORS.tigerGold,
+    fontFamily: FONTS.sansMedium,
+    fontSize: 12.5,
+    textAlign: "right",
+  },
+  messageCard: {
+    backgroundColor: "rgba(30,91,69,0.18)",
+    borderColor: "rgba(30,91,69,0.5)",
+    borderRadius: 10,
+    borderWidth: 1,
+    padding: 12,
+  },
+  messageText: {
+    color: COLORS.bone,
+    fontFamily: FONTS.sansMedium,
+    fontSize: 13,
+    lineHeight: 18,
+  },
   primaryArrow: {
-    position: 'absolute',
+    position: "absolute",
     right: 18,
     top: 0,
     bottom: 0,
-    justifyContent: 'center',
+    justifyContent: "center",
   },
   primaryButton: {
-    alignItems: 'center',
+    alignItems: "center",
     backgroundColor: COLORS.tangerine,
     borderRadius: 10,
     elevation: 4,
-    justifyContent: 'center',
+    justifyContent: "center",
     minHeight: 52,
     paddingHorizontal: 18,
-    position: 'relative',
+    position: "relative",
     shadowColor: COLORS.tangerine,
     shadowOffset: { height: 4, width: 0 },
     shadowOpacity: 0.32,
     shadowRadius: 12,
   },
   primaryButtonText: {
-    color: '#FFFFFF',
+    color: "#FFFFFF",
     fontFamily: FONTS.sansBold,
     fontSize: 15.5,
     letterSpacing: 0.2,
+  },
+  privacyLink: {
+    color: COLORS.steel,
+    fontFamily: FONTS.sansMedium,
+    fontSize: 12,
+    textDecorationLine: "underline",
   },
 });

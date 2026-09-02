@@ -1,42 +1,29 @@
 # Tigers Eye Life
 
-Expo + React Native app for Tigers Eye Life.
+Tigers Eye Life is the Expo/React Native companion app for active Create Power members. It combines a 12-week program, strength training, nutrition logging, progress check-ins, and an in-app coach.
 
-## Current Build
-
-- Round 1: Auth shell, Today dashboard, floating navigation, local coach sheet, and Supabase-ready daily entries.
-- Round 2: Branded onboarding, POWER baseline capture, training/fuel setup, recommendation step, and First Five Minutes placeholder practice.
-- Train build: Pick a Workout library, workout detail, active logger, rest timer, completion screen, persisted in-progress sessions, and Today training signals.
-- Deferred: Program progression/admin workout publishing in Round 4, Fuel logger in Round 4, Grow/AI coach wiring in Round 5.
-
-Use `Skip for dev` on the sign-in screen while `.env` is empty. The dev path stores onboarding and daily-entry data locally with AsyncStorage.
-
-## Supabase CLI
-
-The project is initialized for the Supabase CLI in `supabase/config.toml`.
-
-Useful commands:
+## Local development
 
 ```bash
-npx supabase start
-npx supabase status
-npx supabase db reset
+npm ci
+cp .env.example .env
+npm run start
 ```
 
-For a hosted Supabase project:
+Set the public Supabase project URL and publishable key in `.env`. Without them, the app exposes a local-only development preview path.
+
+## Quality checks
 
 ```bash
-npx supabase login
-npx supabase link --project-ref YOUR_PROJECT_REF
-npx supabase db push
+npm run typecheck
+npx expo-doctor
+npx expo export --platform ios
+npx expo export --platform android
+npx expo export --platform web
 ```
 
-Then copy your hosted API URL and anon key into `.env`:
+## Backend and releases
 
-```bash
-EXPO_PUBLIC_SUPABASE_URL=
-EXPO_PUBLIC_SUPABASE_ANON_KEY=
-```
+Supabase migrations and Edge Functions live in `supabase/`. EAS Build configuration lives in `eas.json`; the permanent iOS and Android application ID is `com.tigerseyelife.app`.
 
-Round 1 schema lives in `supabase/migrations/0001_initial.sql`.
-Workout library/session schema and seed workouts live in `supabase/migrations/0002_workouts.sql`.
+See [docs/release-readiness.md](docs/release-readiness.md) for launch status and [docs/store-listing-copy.md](docs/store-listing-copy.md) for App Store and Google Play metadata.

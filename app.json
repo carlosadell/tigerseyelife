@@ -45,12 +45,16 @@
           "speechRecognitionPermission": "Allow Tigers Eye Life to convert your spoken questions into text for the coach."
         }
       ],
-      "expo-audio"
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Allow Tigers Eye Life to access a meal photo you choose to scan.",
+          "cameraPermission": "Allow Tigers Eye Life to use your camera when you choose to scan a meal."
+        }
+      ],
+      "expo-audio",
+      "expo-asset"
     ],
-    "statusBar": {
-      "style": "light",
-      "backgroundColor": "#0B0B0C"
-    },
     "extra": {
       "router": {},
       "eas": {

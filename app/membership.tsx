@@ -1,14 +1,21 @@
 // app/membership.tsx
-import { Redirect, router } from 'expo-router';
-import { BadgeCheck, MapPinned } from 'lucide-react-native';
-import { ActivityIndicator, Platform, ScrollView, StyleSheet, Text, View } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { Redirect, router } from "expo-router";
+import { BadgeCheck, MapPinned } from "lucide-react-native";
+import {
+  ActivityIndicator,
+  Platform,
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
+} from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 
-import { BrandLockup } from '../components/brand/BrandLockup';
-import { AnchorRow } from '../components/ui/AnchorRow';
-import { useAuth } from '../hooks/useAuth';
-import { useMembership } from '../hooks/useMembership';
-import { COLORS, FONTS, SPACING, THEME_COLORS } from '../lib/brand';
+import { BrandLockup } from "../components/brand/BrandLockup";
+import { AnchorRow } from "../components/ui/AnchorRow";
+import { useAuth } from "../hooks/useAuth";
+import { useMembership } from "../hooks/useMembership";
+import { COLORS, FONTS, SPACING, THEME_COLORS } from "../lib/brand";
 
 const light = THEME_COLORS.light;
 
@@ -19,11 +26,15 @@ const light = THEME_COLORS.light;
  *
  * Yes → /verify-membership (server proves the claim).
  * No  → record empty non-member state (forkAnswered = true) → /non-member,
- *       which is the choice surface (Join / Request / Tailor a plan).
+ *       which explains access and offers support.
  */
 export default function MembershipForkScreen() {
   const { loading: authLoading, session } = useAuth();
-  const { loading: membershipLoading, membership, recordNonMember } = useMembership();
+  const {
+    loading: membershipLoading,
+    membership,
+    recordNonMember,
+  } = useMembership();
 
   if (authLoading || membershipLoading) {
     return (
@@ -34,35 +45,45 @@ export default function MembershipForkScreen() {
   }
 
   if (!session) return <Redirect href="/(auth)/sign-in" />;
-  if (membership.programMember) return <Redirect href="/onboarding" />;
+  if (membership.programMember)
+    return <Redirect href="/onboarding/intake/age" />;
 
   const onNotYet = async () => {
     await recordNonMember({});
-    router.replace('/non-member' as never);
+    router.replace("/non-member" as never);
   };
 
   return (
-    <SafeAreaView style={[styles.screen, { backgroundColor: light.background }]}>
+    <SafeAreaView
+      style={[styles.screen, { backgroundColor: light.background }]}
+    >
       <View style={styles.frame}>
         <View style={styles.topBar}>
           <BrandLockup width={170} />
         </View>
-        <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+        <ScrollView
+          contentContainerStyle={styles.content}
+          showsVerticalScrollIndicator={false}
+        >
           <Text style={styles.headline}>Welcome to Tigers Eye Life.</Text>
-          <Text style={styles.lede}>Quick question so we send you to the right place.</Text>
-          <Text style={styles.q}>Are you part of the Create Power program?</Text>
+          <Text style={styles.lede}>
+            Quick question so we send you to the right place.
+          </Text>
+          <Text style={styles.q}>
+            Are you part of the Create Power program?
+          </Text>
 
           <View style={styles.choices}>
             <AnchorRow
               Icon={BadgeCheck}
               title="Yes, I'm a Create Power member"
               sub="We'll verify your join email and unlock the program experience."
-              onPress={() => router.push('/verify-membership' as never)}
+              onPress={() => router.push("/verify-membership" as never)}
             />
             <AnchorRow
               Icon={MapPinned}
               title="Not yet"
-              sub="Pick a path. Join, message Ryan, or get a tailored plan."
+              sub="Learn about the program or contact Tigers Eye Life."
               onPress={onNotYet}
             />
           </View>
@@ -74,8 +95,16 @@ export default function MembershipForkScreen() {
 
 const styles = StyleSheet.create({
   choices: { marginTop: 24 },
-  content: { paddingBottom: 32, paddingHorizontal: SPACING.screenX, paddingTop: 24 },
-  frame: { flex: 1, maxWidth: Platform.OS === 'web' ? 430 : undefined, width: '100%' },
+  content: {
+    paddingBottom: 32,
+    paddingHorizontal: SPACING.screenX,
+    paddingTop: 24,
+  },
+  frame: {
+    flex: 1,
+    maxWidth: Platform.OS === "web" ? 430 : undefined,
+    width: "100%",
+  },
   headline: {
     color: light.text,
     fontFamily: FONTS.sansBold,
@@ -91,7 +120,12 @@ const styles = StyleSheet.create({
     marginBottom: 32,
     marginTop: 8,
   },
-  loading: { alignItems: 'center', backgroundColor: light.background, flex: 1, justifyContent: 'center' },
+  loading: {
+    alignItems: "center",
+    backgroundColor: light.background,
+    flex: 1,
+    justifyContent: "center",
+  },
   q: {
     color: light.text,
     fontFamily: FONTS.sansBold,
@@ -100,6 +134,6 @@ const styles = StyleSheet.create({
     lineHeight: 23,
     marginBottom: 4,
   },
-  screen: { alignItems: 'center', flex: 1 },
+  screen: { alignItems: "center", flex: 1 },
   topBar: { paddingHorizontal: SPACING.screenX, paddingTop: 12 },
 });
