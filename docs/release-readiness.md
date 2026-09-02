@@ -68,7 +68,7 @@ Use these HTTPS URLs in App Store Connect and Play Console. Google requires an e
 
 ### 6. Produce signed builds
 
-- Run an internal iOS build and test it on a physical iPhone; no iOS EAS build exists yet.
+- Register at least one test iPhone (or configure an ad hoc provisioning profile) in EAS, then run an internal iOS build; the first non-interactive attempt confirmed that no internal-distribution credentials are currently available.
 - Run an Android preview build after backend deployment.
 - Complete a full smoke test on both platforms, then create production `.ipa` and `.aab` builds.
 
