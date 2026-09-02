@@ -27,10 +27,12 @@ export default function PrivacyScreen() {
       </LegalSection>
       <LegalSection title="Service providers">
         Supabase provides authentication, database, and server functions.
-        Anthropic processes the prompts or meal photos you intentionally submit
-        to AI features. Apple, Google, and Expo may process limited technical
-        information needed to distribute and operate the app. Each provider
-        handles information under its own contractual and security obligations.
+        GoHighLevel is used to confirm Create Power membership, and Resend
+        delivers membership verification email. Anthropic processes the prompts
+        or meal photos you intentionally submit to AI features. Apple, Google,
+        and Expo may process limited technical information needed to distribute
+        and operate the app. Each provider handles information under its own
+        contractual and security obligations.
       </LegalSection>
       <LegalSection title="Health and wellness information">
         Workout, nutrition, mood, and progress information is used to support
